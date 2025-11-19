@@ -193,24 +193,30 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
       {/* Search Section */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Job Listings</h1>
+      <div className="bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-8">
+            <button className="bg-white text-gray-900 px-6 py-2 rounded-full font-medium flex items-center space-x-2">
+              <Search className="w-4 h-4" />
+              <span>Search Jobs</span>
+            </button>
+            <button className="text-gray-300 hover:text-white px-6 py-2 rounded-full font-medium">
+              Recommended Jobs
+            </button>
           </div>
 
           {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex gap-4 mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Job title, skills, or company"
+                placeholder="Job title, skill, company, keyword"
                 value={searchTerm}
                 onChange={handleJobInputChange}
                 onFocus={() => searchTerm.length >= 1 && setShowJobSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowJobSuggestions(false), 200)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {showJobSuggestions && jobSuggestions.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -219,7 +225,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                       key={index}
                       type="button"
                       onMouseDown={() => selectJobSuggestion(suggestion)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center text-gray-900"
                     >
                       <Search className="w-4 h-4 text-gray-400 mr-3" />
                       {suggestion}
@@ -229,15 +235,14 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
               )}
             </div>
             <div className="flex-1 relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Location"
+                placeholder="Location (ex. Denver, remote)"
                 value={location}
                 onChange={handleLocationInputChange}
                 onFocus={() => location.length >= 1 && setShowLocationSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {showLocationSuggestions && locationSuggestions.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -246,7 +251,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                       key={index}
                       type="button"
                       onMouseDown={() => selectLocationSuggestion(suggestion)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center text-gray-900"
                     >
                       <MapPin className="w-4 h-4 text-gray-400 mr-3" />
                       {suggestion}
@@ -255,27 +260,31 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                 </div>
               )}
             </div>
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+              <Search className="w-5 h-5" />
+            </button>
           </div>
+
+          {/* All Filters Button */}
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2 text-white hover:text-gray-300 font-medium"
+          >
+            <Filter className="w-4 h-4" />
+            <span>All filters</span>
+          </button>
         </div>
       </div>
 
       {/* Job Listings */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <p className="text-gray-600">
             {loading ? 'Searching...' : (
-              `${filteredJobs.length} jobs found` +
-              (searchTerm ? ` for "${searchTerm}"` : '') +
-              (location ? ` in "${location}"` : '')
+              `${filteredJobs.length} results` +
+              (filteredJobs.length > 0 ? ` (${Math.floor(filteredJobs.length * 0.6)} new)` : '')
             )}
           </p>
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 border border-gray-300 px-4 py-2 rounded-lg"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-          </button>
         </div>
 
         {/* Filter Panel */}

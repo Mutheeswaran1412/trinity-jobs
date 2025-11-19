@@ -65,7 +65,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate, token
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token, new_password: password }),
+        body: JSON.stringify({ token, newPassword: password }),
       });
 
       if (response.ok) {

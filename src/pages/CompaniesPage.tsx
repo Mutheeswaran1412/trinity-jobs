@@ -59,35 +59,66 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
     <div className="min-h-screen bg-gray-50">
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
-      {/* Search Section */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
-          </div>
-
+      {/* Hero Section */}
+      <div className="bg-white py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-gray-600 text-lg mb-4">Browse Companies</p>
+          <h1 className="text-5xl font-bold text-gray-900 mb-12">Find your happy place</h1>
+          
           {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="mb-8">
+            <div className="relative max-w-2xl mx-auto">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search companies, industries, or locations"
+                placeholder="Search by cities"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
               />
             </div>
+          </div>
 
+          {/* Filter Dropdowns */}
+          <div className="flex flex-wrap justify-center gap-4 mb-4">
+            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
+              <option>Industry</option>
+              <option>Technology</option>
+              <option>Healthcare</option>
+              <option>Finance</option>
+              <option>Education</option>
+            </select>
+            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
+              <option>Size</option>
+              <option>1-50 employees</option>
+              <option>51-200 employees</option>
+              <option>201-1000 employees</option>
+              <option>1000+ employees</option>
+            </select>
+            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
+              <option>Work Setting</option>
+              <option>Remote</option>
+              <option>Hybrid</option>
+              <option>On-site</option>
+            </select>
+            <button className="px-6 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg font-medium flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>Hiring</span>
+            </button>
+            <button className="px-4 py-3 text-blue-600 font-medium hover:text-blue-800">
+              Clear filters
+            </button>
           </div>
         </div>
       </div>
 
       {/* Company Listings */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <p className="text-gray-600">
-            {loading ? 'Loading...' : `${companies.length} companies found`}
+        <div className="mb-8">
+          <p className="text-gray-700 text-lg font-medium">
+            {loading ? 'Loading...' : `${companies.length} tech companies`}
           </p>
         </div>
 
@@ -103,56 +134,23 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
             <p className="text-gray-500">Try adjusting your search terms or browse all companies.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {companies.map((company) => (
-            <div key={company._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-start space-x-4 mb-4">
+            <div key={company._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-center justify-center mb-6">
                 <img 
                   src={getCompanyLogo(company.name)} 
                   alt={company.name}
                   className="w-16 h-16 rounded-lg object-cover border border-gray-200"
                 />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                    {company.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">{company.industry}</p>
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600">{company.rating}</span>
-                  </div>
-                </div>
               </div>
-
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {company.description}
-              </p>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span>{company.location}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Users className="w-4 h-4" />
-                  <span>{company.employees} employees</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Globe className="w-4 h-4" />
-                  <span>{company.website}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <span className="text-sm text-blue-600 font-medium">
-                  {company.openJobs} open positions
-                </span>
-                <button 
-                  onClick={() => onNavigate && onNavigate('company-view', { companyName: company.name })}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  View Profile
-                </button>
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{company.name}</h3>
+                <p className="text-gray-600 mb-1">{company.location}</p>
+                <p className="text-sm text-gray-500 mb-4">{company.industry}</p>
+                {company.openJobs > 0 && (
+                  <p className="text-sm text-blue-600 font-medium">{company.openJobs} open jobs</p>
+                )}
               </div>
             </div>
             ))}
