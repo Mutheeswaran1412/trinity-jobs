@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, MapPin, Filter, Briefcase, Clock, DollarSign, X } from 'lucide-react';
+import { Search, MapPin, Filter, Briefcase, Clock, DollarSign, X, Bookmark, BookmarkCheck } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { aiSuggestions } from '../utils/aiSuggestions';
@@ -25,6 +25,15 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+
+  // Load saved jobs from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('savedJobs');
+    if (saved) {
+      setSavedJobs(JSON.parse(saved));
+    }
+  }, []);
 
   // Fetch jobs from MongoDB
   const fetchJobs = async () => {
@@ -156,6 +165,27 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const selectLocationSuggestion = (suggestion: string) => {
     setLocation(suggestion);
     setShowLocationSuggestions(false);
+  };
+
+  const handleSaveJob = (job: any) => {
+    const jobId = job._id || job.id;
+    const isAlreadySaved = savedJobs.includes(jobId);
+    
+    let updatedSavedJobs;
+    if (isAlreadySaved) {
+      // Remove from saved jobs
+      updatedSavedJobs = savedJobs.filter(id => id !== jobId);
+    } else {
+      // Add to saved jobs
+      updatedSavedJobs = [...savedJobs, jobId];
+      // Also save the job details
+      const existingSavedJobDetails = JSON.parse(localStorage.getItem('savedJobDetails') || '[]');
+      const updatedJobDetails = [...existingSavedJobDetails.filter((j: any) => (j._id || j.id) !== jobId), job];
+      localStorage.setItem('savedJobDetails', JSON.stringify(updatedJobDetails));
+    }
+    
+    setSavedJobs(updatedSavedJobs);
+    localStorage.setItem('savedJobs', JSON.stringify(updatedSavedJobs));
   };
 
   return (
@@ -356,7 +386,22 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                   )}
                 </div>
 
-                <div className="mt-4 lg:mt-0 lg:ml-6">
+                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col space-y-2">
+                  <button 
+                    onClick={() => handleSaveJob(job)}
+                    className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                      savedJobs.includes(job._id || job.id)
+                        ? 'bg-blue-50 border-blue-200 text-blue-700'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {savedJobs.includes(job._id || job.id) ? (
+                      <BookmarkCheck className="w-4 h-4" />
+                    ) : (
+                      <Bookmark className="w-4 h-4" />
+                    )}
+                    <span>{savedJobs.includes(job._id || job.id) ? 'Saved' : 'Save'}</span>
+                  </button>
                   <button 
                     onClick={() => handleApplyNow(job)}
                     className="w-full lg:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"

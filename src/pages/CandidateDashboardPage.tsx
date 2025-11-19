@@ -128,42 +128,112 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-start space-x-6">
-            {/* Profile Picture */}
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePhotoChange}
-                className="hidden"
-                id="profile-photo-upload"
-              />
-              <label htmlFor="profile-photo-upload" className="cursor-pointer">
-                {user?.profilePhoto ? (
-                  <img 
-                    src={user.profilePhoto} 
-                    alt="Profile" 
-                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 hover:border-blue-400 transition-colors"
-                  />
-                ) : (
-                  <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-semibold text-gray-600 hover:bg-gray-400 transition-colors">
-                    {getInitials(user?.name || 'mutheeswaran ganesan')}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+          {/* Banner Section */}
+          <div className="relative">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (file.size > 5 * 1024 * 1024) {
+                    setNotification({
+                      type: 'error',
+                      message: 'Banner image must be less than 5MB',
+                      isVisible: true
+                    });
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    const imageUrl = event.target?.result as string;
+                    const updatedUser = { ...user, bannerPhoto: imageUrl };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    setNotification({
+                      type: 'success',
+                      message: 'Banner updated successfully!',
+                      isVisible: true
+                    });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="hidden"
+              id="banner-photo-upload"
+            />
+            {user?.bannerPhoto ? (
+              <div className="relative h-48 bg-gradient-to-r from-blue-500 to-purple-600">
+                <img 
+                  src={user.bannerPhoto} 
+                  alt="Profile Banner" 
+                  className="w-full h-48 object-cover"
+                />
+                <button 
+                  onClick={() => document.getElementById('banner-photo-upload')?.click()}
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors"
+                  title="Change banner"
+                >
+                  <Camera className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+            ) : (
+              <div className="h-48 bg-gray-300 relative">
+                <button 
+                  onClick={() => document.getElementById('banner-photo-upload')?.click()}
+                  className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors"
+                  title="Add banner image"
+                >
+                  <Camera className="w-4 h-4 text-gray-600" />
+                </button>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-gray-600">
+                    <Camera className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-sm">Add banner image</p>
                   </div>
-                )}
-              </label>
-              <button 
-                onClick={() => document.getElementById('profile-photo-upload')?.click()}
-                className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md border hover:bg-gray-50 transition-colors"
-                title="Change profile photo"
-              >
-                <Camera className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-            
-            {/* Profile Info */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Profile Content */}
+          <div className="relative px-6 pb-6">
+            <div className="flex items-start space-x-6 -mt-16">
+              {/* Profile Picture */}
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePhotoChange}
+                  className="hidden"
+                  id="profile-photo-upload"
+                />
+                <label htmlFor="profile-photo-upload" className="cursor-pointer">
+                  {user?.profilePhoto ? (
+                    <img 
+                      src={user.profilePhoto} 
+                      alt="Profile" 
+                      className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg hover:shadow-xl transition-shadow"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center text-3xl font-semibold text-gray-600 border-4 border-white shadow-lg hover:shadow-xl transition-shadow">
+                      {getInitials(user?.name || 'mutheeswaran ganesan')}
+                    </div>
+                  )}
+                </label>
+                <button 
+                  onClick={() => document.getElementById('profile-photo-upload')?.click()}
+                  className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-md transition-colors"
+                  title="Change profile photo"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Profile Info */}
+              <div className="flex-1 mt-4">
+                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                 {user?.name || 'mutheeswaran ganesan'}
               </h1>
               {user?.title || user?.jobTitle ? (
@@ -243,6 +313,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <span>Improve Your Profile</span>
                     <ChevronDown className="w-4 h-4" />
                   </button>
+                </div>
                 </div>
               </div>
             </div>
@@ -369,6 +440,120 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           </div>
         </div>
 
+        {/* Resume Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-6">Resume</h2>
+          {user?.resume ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{user.resume.name || 'Resume.pdf'}</p>
+                    <p className="text-sm text-gray-500">Uploaded {user.resume.uploadDate || 'recently'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = '.pdf,.doc,.docx';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          const updatedUser = { 
+                            ...user, 
+                            resume: { 
+                              name: file.name, 
+                              uploadDate: new Date().toLocaleDateString() 
+                            } 
+                          };
+                          setUser(updatedUser);
+                          localStorage.setItem('user', JSON.stringify(updatedUser));
+                          setNotification({
+                            type: 'success',
+                            message: 'Resume updated successfully!',
+                            isVisible: true
+                          });
+                        }
+                      };
+                      input.click();
+                    }}
+                    className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-medium mb-2">Upload your resume</p>
+              <p className="text-sm text-gray-500 mb-6">
+                Upload your resume to help employers find you and apply to jobs faster.
+              </p>
+              <button 
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.pdf,.doc,.docx';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      // Check file size (max 10MB)
+                      if (file.size > 10 * 1024 * 1024) {
+                        setNotification({
+                          type: 'error',
+                          message: 'File size must be less than 10MB',
+                          isVisible: true
+                        });
+                        return;
+                      }
+                      
+                      const updatedUser = { 
+                        ...user, 
+                        resume: { 
+                          name: file.name, 
+                          uploadDate: new Date().toLocaleDateString() 
+                        } 
+                      };
+                      setUser(updatedUser);
+                      localStorage.setItem('user', JSON.stringify(updatedUser));
+                      calculateProfileCompletion(updatedUser);
+                      setNotification({
+                        type: 'success',
+                        message: 'Resume uploaded successfully!',
+                        isVisible: true
+                      });
+                    }
+                  };
+                  input.click();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center mx-auto transition-colors cursor-pointer"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload Resume
+              </button>
+              <p className="text-xs text-gray-400 mt-2">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
+            </div>
+          )}
+        </div>
+
         {/* Education and Skills Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Education Section */}
@@ -448,7 +633,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           </div>
         </div>
       </div>
-    </div>
+      </div>
     </>
   );
 };

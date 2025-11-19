@@ -53,6 +53,8 @@ import HireTalentPage from './pages/HireTalentPage';
 import JobManagementPage from './pages/JobManagementPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import SettingsPage from './pages/SettingsPage';
+import MyJobsPage from './pages/MyJobsPage';
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
 
@@ -469,6 +471,35 @@ function App() {
 
   if (currentPage === 'complete-resume-builder') {
     return <CompleteResumeBuilder onNavigate={handleNavigation} user={user} onLogout={handleLogout} selectedTemplate={currentData?.selectedTemplate} />;
+  }
+
+  if (currentPage === 'settings') {
+    if (!user) {
+      // Not logged in, redirect to login
+      setShowRoleSelectionModal(true);
+      return null;
+    }
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <SettingsPage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'my-jobs') {
+    if (!user) {
+      // Not logged in, redirect to login
+      setShowRoleSelectionModal(true);
+      return null;
+    }
+    return (
+      <>
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <MyJobsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+      </>
+    );
   }
 
   if (currentPage === 'login') {
