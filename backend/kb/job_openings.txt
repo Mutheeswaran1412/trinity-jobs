@@ -1,0 +1,19 @@
+Trinity Jobs - Current Job Openings
+
+Software Engineer - Full Stack
+Location: Chennai, Tamil Nadu
+Experience: 2-5 years
+Skills: React, Node.js, MongoDB, Python
+Salary: ₹8-15 LPA
+
+Data Scientist
+Location: Bangalore, Karnataka  
+Experience: 3-6 years
+Skills: Python, Machine Learning, SQL, TensorFlow
+Salary: ₹12-20 LPA
+
+DevOps Engineer
+Location: Hyderabad, Telangana
+Experience: 2-4 years
+Skills: AWS, Docker, Kubernetes, Jenkins
+Salary: ₹10-18 LPA

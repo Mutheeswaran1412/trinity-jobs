@@ -1,0 +1,21 @@
+{
+  "name": "ZyncJobs - AI Skills. Bigger Chances. Better Jobs",
+  "short_name": "ZyncJobs",
+  "description": "Showcase your AI expertise with ZyncJobs — where the most sought-after tech skills give you the edge in the industry.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/images/trinity-logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/images/trinity-logo.svg", 
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

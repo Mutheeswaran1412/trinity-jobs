@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trinitejob - AI Skills. Bigger Chances. Better Jobs.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-2xl font-bold text-blue-600">Trinitejob</div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="home.html" class="text-blue-600 font-semibold">Home</a>
+                    <a href="jobs.html" class="text-gray-600 hover:text-blue-600">Jobs</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600">Companies</a>
+                    <a href="hire-talent.html" class="text-gray-600 hover:text-blue-600">For Employers</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button onclick="toggleLoginDropdown()" class="text-gray-600 hover:text-blue-600 flex items-center">
+                            Sign In
+                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="login-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                            <div class="py-1">
+                                <a href="login.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Job Seeker Login</a>
+                                <a href="employer-login.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Employer Login</a>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="window.location.href='employer-login.html'" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Post Job</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+                    AI Skills. Bigger Chances. <br>
+                    <span class="text-blue-600">Better Jobs.</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    Showcase your AI expertise with Trinitejob — where the most sought-after tech skills give you the edge in the industry.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="window.location.href='jobs.html'" class="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200">
+                        Find Jobs
+                    </button>
+                    <button onclick="window.location.href='hire-talent.html'" class="bg-white text-blue-600 border-2 border-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transform hover:scale-105 transition-all duration-200">
+                        Hire Talent
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">10K+</div>
+                    <div class="text-gray-600">Active Jobs</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">50K+</div>
+                    <div class="text-gray-600">Professionals</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">500+</div>
+                    <div class="text-gray-600">Companies</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">95%</div>
+                    <div class="text-gray-600">Success Rate</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Choose Trinitejob?</h2>
+                <p class="text-xl text-gray-600">The platform built for AI and tech professionals</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">AI-Powered Matching</h3>
+                    <p class="text-gray-600">Our AI matches you with the perfect opportunities based on your skills and preferences.</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Fast Applications</h3>
+                    <p class="text-gray-600">Apply to multiple jobs with one click using our streamlined application process.</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Top Companies</h3>
+                    <p class="text-gray-600">Connect with leading tech companies actively hiring AI and tech professionals.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-blue-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-4">Ready to Find Your Dream Job?</h2>
+            <p class="text-xl text-blue-100 mb-8">Join thousands of professionals who found their perfect match</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="window.location.href='login.html'" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transform hover:scale-105 transition-all duration-200">
+                    Get Started as Job Seeker
+                </button>
+                <button onclick="window.location.href='employer-login.html'" class="bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-800 transform hover:scale-105 transition-all duration-200">
+                    Post Jobs as Employer
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="text-2xl font-bold text-blue-400 mb-4">Trinitejob</div>
+                    <p class="text-gray-300">The premier platform for AI and tech professionals to find their next opportunity.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">For Job Seekers</h3>
+                    <ul class="space-y-2">
+                        <li><a href="jobs.html" class="text-gray-300 hover:text-white">Browse Jobs</a></li>
+                        <li><a href="login.html" class="text-gray-300 hover:text-white">Create Profile</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Career Resources</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">For Employers</h3>
+                    <ul class="space-y-2">
+                        <li><a href="employer-login.html" class="text-gray-300 hover:text-white">Post Jobs</a></li>
+                        <li><a href="hire-talent.html" class="text-gray-300 hover:text-white">Find Talent</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Contact</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-300">© 2025 Trinitejob. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleLoginDropdown() {
+            const dropdown = document.getElementById('login-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('login-dropdown');
+            const button = event.target.closest('button');
+            
+            if (!button || !button.onclick || button.onclick.toString().indexOf('toggleLoginDropdown') === -1) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+
+    <script src="js/toast.js"></script>
+    <script>
+        // Check login status on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (user) {
+                showToast(`Welcome back, ${user.fullName}!`, 'success');
+                // Update header to show user is logged in
+                const signInButton = document.querySelector('button[onclick="toggleLoginDropdown()"]');
+                if (signInButton) {
+                    signInButton.innerHTML = `${user.fullName} <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                    // Update dropdown to show logout option
+                    document.getElementById('login-dropdown').innerHTML = `
+                        <div class="py-1">
+                            <a href="${user.userType === 'employer' ? 'employer-dashboard.html' : 'candidate-dashboard.html'}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                        </div>
+                    `;
+                }
+            }
+        });
+        
+        function logout() {
+            localStorage.removeItem('user');
+            showToast('Logged out successfully!', 'info');
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
