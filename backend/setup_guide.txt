@@ -1,0 +1,28 @@
+MongoDB Atlas Connection Setup
+==============================
+
+❌ CONNECTION FAILED: Authentication failed
+
+🔧 TO FIX THIS:
+
+1. REPLACE PASSWORD:
+   - Open: backend/.env
+   - Replace: <db_password>
+   - With: Your actual MongoDB Atlas password
+
+2. VERIFY SETTINGS:
+   - IP Address is whitelisted in MongoDB Atlas
+   - MongoDB Atlas cluster is running
+   - Username: jobportal_user
+   - Database: jobportal
+
+3. TEST CONNECTION:
+   - Run: python test_connection.py
+   - Should show: "Successfully connected to MongoDB Atlas!"
+
+4. START FLASK SERVER:
+   - Run: python run.py
+   - Test: http://localhost:5000/api/test
+
+Your connection string:
+mongodb+srv://jobportal_user:YOUR_PASSWORD@jobportal.pnp4szn.mongodb.net/?retryWrites=true&w=majority&appName=Jobportal

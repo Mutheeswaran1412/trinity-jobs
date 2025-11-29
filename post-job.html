@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Job - Trinitejob</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-2xl font-bold text-blue-600">Trinitejob</div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600">Home</a>
+                    <a href="jobs.html" class="text-gray-600 hover:text-blue-600">Jobs</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Post a New Job</h1>
+        
+        <form id="jobForm" class="bg-white p-6 rounded-lg shadow">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="title" class="block text-sm font-medium mb-2">Job Title *</label>
+                    <input type="text" id="title" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="company" class="block text-sm font-medium mb-2">Company *</label>
+                    <input type="text" id="company" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-sm font-medium mb-2">Location *</label>
+                    <input type="text" id="location" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="jobType" class="block text-sm font-medium mb-2">Job Type *</label>
+                    <select id="jobType" required class="w-full p-3 border rounded-lg">
+                        <option value="">Select Type</option>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Remote">Remote</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="salary" class="block text-sm font-medium mb-2">Salary Range</label>
+                    <input type="text" id="salary" placeholder="e.g. $80k - $120k" class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="experience" class="block text-sm font-medium mb-2">Experience Level *</label>
+                    <select id="experience" required class="w-full p-3 border rounded-lg">
+                        <option value="">Select Level</option>
+                        <option value="Entry Level">Entry Level</option>
+                        <option value="Mid Level">Mid Level</option>
+                        <option value="Senior Level">Senior Level</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label for="description" class="block text-sm font-medium mb-2">Job Description *</label>
+                <textarea id="description" required rows="6" class="w-full p-3 border rounded-lg"></textarea>
+            </div>
+            
+            <div class="mt-6">
+                <label for="skills" class="block text-sm font-medium mb-2">Required Skills (comma separated)</label>
+                <input type="text" id="skills" placeholder="JavaScript, React, Node.js" class="w-full p-3 border rounded-lg">
+            </div>
+            
+            <button type="submit" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
+                Post Job
+            </button>
+        </form>
+        
+        <div id="result" class="mt-6"></div>
+    </main>
+
+    <script src="js/toast.js"></script>
+    <script>
+        // Check login status on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (user && user.userType === 'employer') {
+                showToast(`Welcome ${user.fullName}! Ready to post a job?`, 'success');
+            } else if (user && user.userType !== 'employer') {
+                showToast('Only employers can post jobs', 'error');
+                setTimeout(() => {
+                    window.location.href = 'employer-login.html';
+                }, 2000);
+            } else {
+                showToast('Please login as employer to post jobs', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'employer-login.html';
+                }, 2000);
+            }
+        });
+        document.getElementById('jobForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const jobData = {
+                title: document.getElementById('title').value,
+                company: document.getElementById('company').value,
+                location: document.getElementById('location').value,
+                jobType: document.getElementById('jobType').value,
+                salary: document.getElementById('salary').value,
+                experience: document.getElementById('experience').value,
+                description: document.getElementById('description').value,
+                skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s),
+                employer_id: 'temp_employer_id' // In real app, get from logged in user
+            };
+            
+            try {
+                showToast('Posting job...', 'info');
+                
+                const response = await fetch('http://127.0.0.1:5000/api/jobs', {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jobData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to post job');
+                }
+                
+                const data = await response.json();
+                showToast('Job posted successfully!', 'success');
+                
+                document.getElementById('result').innerHTML = `
+                    <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                        <h3 class="font-bold">✅ Job Posted Successfully!</h3>
+                        <p>Job ID: ${data.id}</p>
+                        <p>✅ Saved to MongoDB Atlas!</p>
+                    </div>
+                `;
+                
+                document.getElementById('jobForm').reset();
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+                document.getElementById('result').innerHTML = `
+                    <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                        <h3 class="font-bold">❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
