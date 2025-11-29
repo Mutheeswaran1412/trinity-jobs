@@ -1,6 +1,8 @@
 import React, { useState, lazy, Suspense, ErrorBoundary } from 'react';
 import Header from '../components/Header';
 import aiService from '../services/aiService';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 class TemplateErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   constructor(props: {children: React.ReactNode}) {
@@ -192,90 +194,41 @@ const ResumeEditorPage: React.FC<ResumeEditorPageProps> = ({ onNavigate, user, o
     );
   };
 
-  const downloadResume = (format: 'pdf' | 'docx') => {
+  const downloadResume = async (format: 'pdf' | 'docx') => {
     try {
       if (format === 'pdf') {
-        // Create a clean HTML version for PDF printing
-        const printContent = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Resume - ${resumeData.firstName} ${resumeData.lastName}</title>
-            <style>
-              body { 
-                margin: 0; 
-                padding: 20px; 
-                font-family: Arial, sans-serif; 
-                line-height: 1.6;
-                color: #333;
-              }
-              h1 { color: #2c3e50; margin-bottom: 5px; }
-              h2 { color: #34495e; margin-bottom: 10px; }
-              h3 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-              .contact-info { margin-bottom: 20px; }
-              .section { margin-bottom: 25px; }
-              .experience-item, .education-item { margin-bottom: 15px; }
-              .skills { display: flex; flex-wrap: wrap; gap: 10px; }
-              .skill { background: #ecf0f1; padding: 5px 10px; border-radius: 15px; }
-              @media print { 
-                body { margin: 0; padding: 15px; }
-                .no-print { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <h1>${resumeData.firstName} ${resumeData.lastName}</h1>
-            <h2>${resumeData.jobTitle}</h2>
-            
-            <div class="contact-info">
-              <p><strong>Email:</strong> ${resumeData.email} | <strong>Phone:</strong> ${resumeData.phone}</p>
-              <p><strong>Location:</strong> ${resumeData.city}, ${resumeData.country}</p>
-            </div>
-            
-            <div class="section">
-              <h3>Professional Summary</h3>
-              <p>${resumeData.summary}</p>
-            </div>
-            
-            <div class="section">
-              <h3>Experience</h3>
-              <div class="experience-item">
-                <h4>${resumeData.role} - ${resumeData.company}</h4>
-                <p>${resumeData.workDescription.replace(/\n/g, '<br>')}</p>
-              </div>
-            </div>
-            
-            <div class="section">
-              <h3>Education</h3>
-              ${resumeData.education.map(edu => `
-                <div class="education-item">
-                  <h4>${edu.degree} - ${edu.school}</h4>
-                  <p><strong>Location:</strong> ${edu.location}</p>
-                  ${edu.description ? `<p>${edu.description}</p>` : ''}
-                </div>
-              `).join('')}
-            </div>
-            
-            <div class="section">
-              <h3>Skills</h3>
-              <div class="skills">
-                ${resumeData.skills.map(skill => `<span class="skill">${skill}</span>`).join('')}
-              </div>
-            </div>
-            
-            <div class="no-print" style="margin-top: 30px; text-align: center;">
-              <button onclick="window.print()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">Print to PDF</button>
-              <button onclick="window.close()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Close</button>
-            </div>
-          </body>
-          </html>
-        `;
-        
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(printContent);
-          printWindow.document.close();
-          printWindow.focus();
+        const resumeElement = document.querySelector('[data-resume-content]');
+        if (resumeElement) {
+          // Generate PDF from the resume element
+          const canvas = await html2canvas(resumeElement as HTMLElement, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          
+          const imgWidth = 210; // A4 width in mm
+          const pageHeight = 295; // A4 height in mm
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          let heightLeft = imgHeight;
+          
+          let position = 0;
+          
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+          
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+          
+          pdf.save(`${resumeData.firstName}_${resumeData.lastName}_Resume.pdf`);
+        } else {
+          alert('Resume template not found. Please try again.');
         }
       } else if (format === 'docx') {
         // Create a Word-compatible HTML file
