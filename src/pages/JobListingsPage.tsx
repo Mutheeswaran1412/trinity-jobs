@@ -399,7 +399,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     </div>
                     <div className="flex items-center space-x-1">
                       <DollarSign className="w-4 h-4" />
-                      <span>{job.salary || 'Competitive'}</span>
+                      <span>{typeof job.salary === 'object' && job.salary ? `$${job.salary.min} - $${job.salary.max} ${job.salary.period}` : job.salary || 'Competitive'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Briefcase className="w-4 h-4" />

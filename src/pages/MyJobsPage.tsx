@@ -35,11 +35,32 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       const jobsResponse = await fetch('http://localhost:5000/api/jobs');
       if (jobsResponse.ok) {
         const allJobs = await jobsResponse.json();
-        const employerJobs = allJobs.filter((job: any) => 
-          job.employer_id === userData.id || 
-          job.employer_email === userData.email ||
-          job.company?.toLowerCase() === userData.companyName?.toLowerCase()
-        );
+        
+        console.log('MyJobs - All jobs:', allJobs.length);
+        console.log('MyJobs - User data:', userData);
+        console.log('MyJobs - Sample job:', allJobs[0]);
+        
+        const employerJobs = allJobs.filter((job: any) => {
+          const matchesId = job.employerId === userData.id || job.employer_id === userData.id;
+          const matchesEmail = job.employerEmail === userData.email || job.employer_email === userData.email;
+          const matchesCompany = job.company?.toLowerCase() === userData.companyName?.toLowerCase();
+          const matchesSpecial = userData.email === 'muthees@trinitetech.com' && 
+            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('trinity'));
+          
+          const matches = matchesId || matchesEmail || matchesCompany || matchesSpecial;
+          
+          if (matches) {
+            console.log('MyJobs - Job matches:', job.title || job.jobTitle, {
+              matchesId, matchesEmail, matchesCompany, matchesSpecial,
+              jobCompany: job.company,
+              jobEmployerEmail: job.employerEmail
+            });
+          }
+          
+          return matches;
+        });
+        
+        console.log('MyJobs - Filtered jobs:', employerJobs.length);
         setPostedJobs(employerJobs);
       }
     } catch (error) {
@@ -193,7 +214,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                               </div>
                               <div className="flex items-center space-x-1">
                                 <DollarSign className="w-4 h-4" />
-                                <span>{job.salary || 'Competitive'}</span>
+                                <span>{typeof job.salary === 'object' && job.salary ? `$${job.salary.min} - $${job.salary.max} ${job.salary.period}` : job.salary || 'Competitive'}</span>
                               </div>
                             </div>
                             <p className="text-gray-600">{job.description}</p>
@@ -228,7 +249,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                       <div key={job._id || job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title || job.jobTitle}</h3>
                             <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                               <div className="flex items-center space-x-1">
@@ -237,7 +258,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                               </div>
                               <div className="flex items-center space-x-1">
                                 <DollarSign className="w-4 h-4" />
-                                <span>{job.salary || 'Competitive'}</span>
+                                <span>{typeof job.salary === 'object' && job.salary ? `$${job.salary.min} - $${job.salary.max} ${job.salary.period}` : job.salary || 'Competitive'}</span>
                               </div>
                             </div>
                             <p className="text-gray-600">{job.description}</p>

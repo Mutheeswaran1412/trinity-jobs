@@ -53,13 +53,9 @@ class MistralAIService {
     }
   }
 
-  async generateJobDescription(jobTitle: string, company?: string, location?: string): Promise<string> {
-    try {
-      const response = await this.callBackendAPI('job-description', { jobTitle, company, location });
-      return response.description || '';
-    } catch (error) {
-      return this.getFallbackJobDescription(jobTitle);
-    }
+  async generateJobDescription(jobTitle: string, company?: string, location?: string, additionalContext?: any): Promise<string> {
+    // Use fallback system directly since backend AI endpoint doesn't exist
+    return this.getFallbackJobDescription(jobTitle, additionalContext);
   }
 
   // Fallback methods for when API fails
@@ -125,28 +121,125 @@ class MistralAIService {
     return ['New York', 'San Francisco', 'London', 'Bangalore'];
   }
 
-  private getFallbackJobDescription(jobTitle: string): string {
-    return `We are seeking a talented ${jobTitle} to join our dynamic team.
+  private getFallbackJobDescription(jobTitle: string, context?: any): string {
+    const title = jobTitle.toLowerCase();
+    const skills = context?.skills?.length > 0 ? context.skills.join(', ') : 'relevant skills';
+    const salary = context?.salary || 'competitive salary';
+    const jobType = context?.jobType || 'full-time';
+    const education = context?.educationLevel || 'Bachelor\'s degree';
+    
+    // Accounting/Finance roles
+    if (title.includes('accountant') || title.includes('accounting') || title.includes('finance')) {
+      return `We are seeking a detail-oriented ${jobTitle} to join our finance team.
+
+Position Overview:
+This is a ${jobType} position offering ${salary} with excellent career growth opportunities.
 
 Key Responsibilities:
-• Develop and maintain high-quality software solutions
-• Collaborate with cross-functional teams to deliver projects
+• Prepare and maintain accurate financial records and statements
+• Process accounts payable and receivable transactions
+• Assist with monthly, quarterly, and annual financial reporting
+• Reconcile bank statements and general ledger accounts
+• Support budget preparation and financial analysis
+• Ensure compliance with accounting standards and regulations
+
+Required Qualifications:
+• ${education} in Accounting, Finance, or related field
+• 2+ years of accounting experience
+• Proficiency in accounting software (QuickBooks, SAP, Excel)
+• Strong attention to detail and analytical skills
+• Knowledge of GAAP and tax regulations
+• Excellent organizational and time management skills
+
+What We Offer:
+• ${salary} based on experience
+• Comprehensive health, dental, and vision insurance
+• Professional development and certification support
+• Stable work environment with growth opportunities
+• Modern accounting tools and technology
+• Flexible working arrangements
+
+Join our team and contribute to our financial success!`;
+    }
+    
+    // Software/Tech roles
+    if (title.includes('developer') || title.includes('engineer') || title.includes('programmer')) {
+      return `We are seeking a talented ${jobTitle} to join our dynamic team.
+
+Position Overview:
+This is a ${jobType} position offering ${salary} and excellent growth opportunities.
+
+Key Responsibilities:
+• Design, develop, and maintain high-quality software solutions
+• Collaborate with cross-functional teams to deliver innovative projects
 • Write clean, efficient, and well-documented code
 • Participate in code reviews and technical discussions
 • Stay updated with latest industry trends and technologies
+• Mentor junior team members and contribute to team knowledge sharing
 
 Required Qualifications:
-• Bachelor's degree in Computer Science or related field
-• 3+ years of relevant experience
-• Strong problem-solving and analytical skills
-• Excellent communication and teamwork abilities
+• ${education} in Computer Science, Engineering, or related field
+• 3+ years of professional experience in software development
+• Strong expertise in: ${skills}
+• Excellent problem-solving and analytical skills
+• Strong communication and teamwork abilities
+• Experience with version control systems (Git)
 
 What We Offer:
-• Competitive salary and benefits package
-• Flexible working arrangements
-• Professional development opportunities
-• Collaborative and innovative work environment`;
+• ${salary} based on experience
+• Comprehensive health, dental, and vision insurance
+• Flexible working arrangements and remote work options
+• Professional development opportunities and training budget
+• Collaborative and innovative work environment
+• Modern tech stack and cutting-edge projects
+
+Join our team and help us build the future of technology!`;
+    }
+    
+    // Generic fallback for other roles
+    return `We are seeking a qualified ${jobTitle} to join our team.
+
+Position Overview:
+This is a ${jobType} position offering ${salary} with opportunities for professional growth.
+
+Key Responsibilities:
+• Execute core responsibilities related to ${jobTitle}
+• Collaborate with team members and stakeholders
+• Maintain high standards of work quality and professionalism
+• Contribute to organizational goals and objectives
+• Support continuous improvement initiatives
+• Participate in training and development programs
+
+Required Qualifications:
+• ${education} or equivalent experience
+• Relevant experience in the field
+• Strong analytical and problem-solving skills
+• Excellent communication and interpersonal abilities
+• Attention to detail and accuracy
+• Ability to work independently and as part of a team
+
+What We Offer:
+• ${salary} based on experience
+• Comprehensive benefits package
+• Professional growth opportunities
+• Supportive and collaborative work environment
+• Training and development programs
+• Work-life balance initiatives
+
+Join our team and make a meaningful impact!`;
   }
 }
 
-export default new MistralAIService();
+// Export additional function for direct use
+export const generateJobDescription = async (jobTitle: string, context?: {
+  jobType?: string;
+  skills?: string;
+  salaryRange?: string;
+  benefits?: string;
+  education?: string;
+}): Promise<string> => {
+  return mistralAIService.generateJobDescription(jobTitle, undefined, undefined, context);
+};
+
+const mistralAIService = new MistralAIService();
+export default mistralAIService;

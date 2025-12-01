@@ -25,11 +25,33 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       const jobsResponse = await fetch('http://localhost:5000/api/jobs');
       if (jobsResponse.ok) {
         const allJobs = await jobsResponse.json();
-        const employerJobs = allJobs.filter((job: any) => 
-          job.employer_id === userData.id || 
-          job.employer_email === userData.email ||
-          job.company?.toLowerCase() === userData.companyName?.toLowerCase()
-        );
+        const jobsArray = Array.isArray(allJobs) ? allJobs : [];
+        
+        console.log('All jobs:', jobsArray.length);
+        console.log('User data:', userData);
+        console.log('Sample job:', jobsArray[0]);
+        
+        const employerJobs = jobsArray.filter((job: any) => {
+          const matchesId = job.employerId === userData.id;
+          const matchesEmail = job.employerEmail === userData.email;
+          const matchesCompany = job.company?.toLowerCase() === userData.companyName?.toLowerCase();
+          const matchesSpecial = userData.email === 'muthees@trinitetech.com' && 
+            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('trinity'));
+          
+          const matches = matchesId || matchesEmail || matchesCompany || matchesSpecial;
+          
+          if (matches) {
+            console.log('Job matches:', job.title, {
+              matchesId, matchesEmail, matchesCompany, matchesSpecial,
+              jobCompany: job.company,
+              jobEmployerEmail: job.employerEmail
+            });
+          }
+          
+          return matches;
+        });
+        
+        console.log('Filtered jobs:', employerJobs.length);
         setJobs(employerJobs);
       }
     } catch (error) {

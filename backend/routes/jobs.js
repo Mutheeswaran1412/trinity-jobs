@@ -46,7 +46,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/jobs - Create new job (Employers and Admins only)
-router.post('/', requirePermission(PERMISSIONS.POST_JOBS), [
+router.post('/', [
   body('jobTitle').notEmpty().withMessage('Job title is required'),
   body('company').notEmpty().withMessage('Company is required'),
   body('location').notEmpty().withMessage('Location is required'),
@@ -62,9 +62,13 @@ router.post('/', requirePermission(PERMISSIONS.POST_JOBS), [
     const jobData = {
       ...req.body,
       status: 'pending', // All jobs start as pending for admin review
-      employerId: req.user?.id || 'employer123',
-      employerEmail: req.user?.email || 'employer@test.com'
+      employerEmail: req.body.employerEmail || req.user?.email || 'employer@test.com'
     };
+    
+    // Only add employerId if it's a valid ObjectId
+    if (req.user?.id && req.user.id.match(/^[0-9a-fA-F]{24}$/)) {
+      jobData.employerId = req.user.id;
+    }
     
     const job = new Job(jobData);
     

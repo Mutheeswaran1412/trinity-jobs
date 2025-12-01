@@ -209,7 +209,7 @@ app.post('/api/login', async (req, res) => {
     } else if (email === 'admin@trinity.com' && password === '123456') {
       user = { id: '6', email: email, fullName: 'Trinity Admin', userType: 'employer' };
     } else if (email === 'muthees@trinitetech.com' && password === '123456') {
-      user = { id: '7', email: email, fullName: 'Muthees Trinity', userType: 'employer' };
+      user = { id: '7', email: email, fullName: 'Muthees Trinity', companyName: 'Trinity Technology Solutions', userType: 'employer' };
     }
     
     if (user) {

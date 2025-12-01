@@ -57,15 +57,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     maxSalary: '131,230.20',
     payRate: 'per year',
     benefits: [],
-    jobDescription: `• Strong knowledge of IT infrastructure management including Linux environments, cloud services (AWS & Azure), and RESTful API design.
-• Hands-on experience with front-end development frameworks such as React and Express.js.
-• Familiarity with version control systems like GitHub, SVN, and Git for collaborative development.
-• Experience working within Agile methodologies to deliver iterative project milestones effectively.
-• Knowledge of web security standards including RBAC for access control.
-• Ability to develop scalable applications leveraging REST APIs for seamless integration across platforms.
-• Excellent problem-solving skills with the ability to troubleshoot complex technical issues efficiently.
-• Bachelor's degree in Computer Science or related field; advanced certifications or quantum engineering experience are a plus. Join our team to contribute your expertise in building innovative software solutions that drive our company's success while advancing your career in a collaborative environment focused on growth and excellence.`,
-    skills: ['AWS', 'Azure', 'GitHub', 'IT', 'Java', 'Linux', 'Python', 'SQL', 'Version control'],
+    jobDescription: '',
+    skills: [],
     educationLevel: "Bachelor's degree",
     certifications: [],
     companyName: '',
@@ -96,8 +89,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     setJobData(prev => ({ ...prev, [field]: value }));
     
     // Auto-generate job description when job title is selected
-    if (field === 'jobTitle' && value.length > 3) {
-      generateJobDescription(value);
+    if (field === 'jobTitle' && value.length > 2) {
+      setTimeout(() => generateJobDescription(value), 500);
     }
   };
 
@@ -248,7 +241,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     return ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Git', 'AWS', 'Docker'];
   };
 
-  // Auto-generate job description
+  // Auto-generate job description and populate skills/education
   const generateJobDescription = async (jobTitle: string) => {
     if (!jobTitle || jobTitle.length < 3) return;
     
@@ -256,15 +249,87 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     try {
       const description = await mistralAIService.generateJobDescription(
         jobTitle,
-        'Trinity Technologies',
-        jobData.jobLocation
+        jobData.companyName || 'Trinity Technologies',
+        jobData.jobLocation || 'Remote',
+        {
+          jobType: jobData.jobType.join(', '),
+          skills: jobData.skills,
+          salary: `$${jobData.minSalary} - $${jobData.maxSalary} ${jobData.payRate}`,
+          benefits: jobData.benefits,
+          educationLevel: jobData.educationLevel
+        }
       );
       updateJobData('jobDescription', description);
+      
+      // Auto-populate skills and education based on job title
+      const { skills, education } = getJobTitleDefaults(jobTitle);
+      if (jobData.skills.length === 0 || jobData.skills.every(skill => ['AWS', 'Azure', 'GitHub', 'IT', 'Java', 'Linux', 'Python', 'SQL', 'Version control'].includes(skill))) {
+        updateJobData('skills', skills);
+      }
+      if (jobData.educationLevel === "Bachelor's degree") {
+        updateJobData('educationLevel', education);
+      }
+      
+      setNotification({
+        type: 'success',
+        message: 'Job details generated successfully with AI! 🤖',
+        isVisible: true
+      });
     } catch (error) {
       console.error('Job description generation failed:', error);
+      setNotification({
+        type: 'error',
+        message: 'Failed to generate job description. Please try again.',
+        isVisible: true
+      });
     } finally {
       setIsGeneratingDescription(false);
     }
+  };
+
+  // Get default skills and education based on job title
+  const getJobTitleDefaults = (jobTitle: string) => {
+    const title = jobTitle.toLowerCase();
+    
+    if (title.includes('accountant') || title.includes('accounting')) {
+      return {
+        skills: ['QuickBooks', 'Excel', 'Financial Reporting', 'GAAP', 'Tax Preparation', 'Accounts Payable', 'Accounts Receivable', 'SAP'],
+        education: "Bachelor's degree in Accounting or Finance"
+      };
+    }
+    
+    if (title.includes('marketing')) {
+      return {
+        skills: ['Digital Marketing', 'Social Media', 'Google Analytics', 'SEO', 'Content Marketing', 'Email Marketing', 'Adobe Creative Suite', 'Campaign Management'],
+        education: "Bachelor's degree in Marketing or Communications"
+      };
+    }
+    
+    if (title.includes('sales')) {
+      return {
+        skills: ['CRM Software', 'Lead Generation', 'Negotiation', 'Customer Relationship Management', 'Sales Forecasting', 'Presentation Skills', 'Cold Calling', 'Salesforce'],
+        education: "Bachelor's degree in Business or Sales"
+      };
+    }
+    
+    if (title.includes('hr') || title.includes('human resources')) {
+      return {
+        skills: ['HRIS', 'Recruitment', 'Employee Relations', 'Performance Management', 'Benefits Administration', 'Training & Development', 'Employment Law', 'Payroll'],
+        education: "Bachelor's degree in Human Resources or related field"
+      };
+    }
+    
+    if (title.includes('developer') || title.includes('engineer') || title.includes('programmer')) {
+      return {
+        skills: ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Git', 'AWS', 'Docker'],
+        education: "Bachelor's degree in Computer Science or Engineering"
+      };
+    }
+    
+    return {
+      skills: ['Communication', 'Problem Solving', 'Team Collaboration', 'Time Management', 'Analytical Thinking', 'Microsoft Office', 'Project Management'],
+      education: "Bachelor's degree or equivalent experience"
+    };
   };
 
   // Select suggestions
@@ -733,10 +798,29 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
             />
           </div>
           
-          <div className="flex items-center space-x-4 mt-4">
-            <p className="text-gray-600 text-sm">Did you find the AI generated job description useful?</p>
-            <button className="text-gray-400 hover:text-gray-600">👍</button>
-            <button className="text-gray-400 hover:text-gray-600">👎</button>
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center space-x-4">
+              <p className="text-gray-600 text-sm">Did you find the AI generated job description useful?</p>
+              <button className="text-gray-400 hover:text-gray-600">👍</button>
+              <button className="text-gray-400 hover:text-gray-600">👎</button>
+            </div>
+            <button
+              onClick={() => generateJobDescription(jobData.jobTitle)}
+              disabled={!jobData.jobTitle || isGeneratingDescription}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
+            >
+              {isGeneratingDescription ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <span>🤖</span>
+                  <span>Generate with AI</span>
+                </>
+              )}
+            </button>
           </div>
           
           <p className="text-gray-500 text-xs mt-2">
@@ -1026,20 +1110,20 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     const user = userData ? JSON.parse(userData) : null;
     
     const jobPostData = {
-      title: jobData.jobTitle,
-      company: user?.companyName || user?.fullName || 'Trinity Technologies',
+      jobTitle: jobData.jobTitle,
+      company: user?.companyName || 'Trinity Technology Solutions',
       location: jobData.jobLocation,
-      type: jobData.jobType.join(', '),
-      salary: `$${jobData.minSalary} - $${jobData.maxSalary} ${jobData.payRate}`,
+      jobType: jobData.jobType[0] || 'Full-time',
       description: jobData.jobDescription,
-      requirements: jobData.skills.join(', '),
+      requirements: jobData.skills,
       skills: jobData.skills,
-      employer_id: user?.id,
-      employer_email: user?.email,
-      hiring_timeline: jobData.hiringTimeline,
-      number_of_people: jobData.numberOfPeople,
-      benefits: jobData.benefits,
-      education_level: jobData.educationLevel
+      salary: {
+        min: parseFloat(jobData.minSalary.replace(/,/g, '')) || 0,
+        max: parseFloat(jobData.maxSalary.replace(/,/g, '')) || 0,
+        currency: 'USD',
+        period: jobData.payRate === 'per year' ? 'yearly' : jobData.payRate === 'per month' ? 'monthly' : 'hourly'
+      },
+      employerEmail: user?.email || 'employer@test.com'
     };
     
     try {
@@ -1065,9 +1149,10 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
         }, 2000);
       } else {
         const error = await response.json();
+        console.error('Job posting failed:', error);
         setNotification({
           type: 'error',
-          message: 'Failed to post job: ' + (error.error || 'Unknown error'),
+          message: 'Failed to post job: ' + (error.error || JSON.stringify(error)),
           isVisible: true
         });
       }

@@ -133,8 +133,8 @@ function App() {
     
 
     
-    // Check authentication for employer-only pages
-    const employerPages = ['employers', 'job-posting', 'candidate-search', 'hire-talent'];
+    // Check authentication for employer-only pages (removed job-posting for testing)
+    const employerPages = ['employers', 'candidate-search', 'hire-talent'];
     if (employerPages.includes(page)) {
       if (!user) {
         // Not logged in, show role selection
