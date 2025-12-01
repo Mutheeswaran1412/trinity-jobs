@@ -1,0 +1,377 @@
+// AI-powered suggestion system
+export class AISuggestionService {
+  private static instance: AISuggestionService;
+  private cache: Map<string, { data: string[], timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  static getInstance(): AISuggestionService {
+    if (!AISuggestionService.instance) {
+      AISuggestionService.instance = new AISuggestionService();
+    }
+    return AISuggestionService.instance;
+  }
+
+  private async callAI(prompt: string): Promise<string[]> {
+    try {
+      // Simulate AI response for demo purposes
+      // In production, replace with actual AI API call
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+      
+      return this.fallbackSuggestions(prompt);
+    } catch (error) {
+      console.error('AI API error:', error);
+      return this.fallbackSuggestions(prompt);
+    }
+  }
+
+  private fallbackSuggestions(input: string): string[] {
+    const inputLower = input.toLowerCase();
+    
+    if (inputLower.includes('job') || inputLower.includes('develop') || inputLower.includes('engineer') || inputLower.includes('manager') || inputLower.includes('analyst')) {
+      return this.generateJobSuggestions(inputLower);
+    }
+    
+    if (this.isLocationQuery(inputLower)) {
+      return this.generateLocationSuggestions(inputLower);
+    }
+    
+    return this.generateSkillSuggestions(inputLower);
+  }
+
+  private generateJobSuggestions(input: string): string[] {
+    const patterns = new Map([
+      ['react', ['React Developer', 'Senior React Developer', 'React Native Developer', 'Frontend React Developer']],
+      ['python', ['Python Developer', 'Senior Python Developer', 'Python Data Scientist', 'Backend Python Developer']],
+      ['java', ['Java Developer', 'Senior Java Developer', 'Java Full Stack Developer', 'Java Spring Developer']],
+      ['node', ['Node.js Developer', 'Backend Node Developer', 'Full Stack Node Developer']],
+      ['data', ['Data Scientist', 'Data Analyst', 'Data Engineer', 'Machine Learning Engineer']],
+      ['ai', ['AI Engineer', 'Machine Learning Engineer', 'Deep Learning Engineer', 'AI Research Scientist']],
+      ['design', ['UI/UX Designer', 'Product Designer', 'Graphic Designer', 'Web Designer']],
+      ['marketing', ['Marketing Manager', 'Digital Marketing Specialist', 'Content Marketing Manager', 'Growth Marketing Manager']],
+      ['sales', ['Sales Executive', 'Sales Manager', 'Business Development Manager', 'Account Executive']],
+      ['product', ['Product Manager', 'Senior Product Manager', 'Product Owner', 'Product Marketing Manager']],
+      ['engineer', ['Software Engineer', 'DevOps Engineer', 'Systems Engineer', 'Cloud Engineer']],
+      ['manager', ['Engineering Manager', 'Project Manager', 'Operations Manager', 'Team Lead']],
+      ['analyst', ['Business Analyst', 'Financial Analyst', 'Systems Analyst', 'Research Analyst']]
+    ]);
+
+    for (const [key, suggestions] of patterns) {
+      if (input.includes(key)) {
+        return suggestions;
+      }
+    }
+
+    return ['Software Developer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer'];
+  }
+
+  private generateLocationSuggestions(input: string): string[] {
+    const patterns = new Map([
+      ['che', ['Chennai', 'Chennai, India']],
+      ['ban', ['Bangalore', 'Bengaluru', 'Bangalore, India']],
+      ['hyd', ['Hyderabad', 'Hyderabad, India']],
+      ['mum', ['Mumbai', 'Mumbai, India']],
+      ['del', ['Delhi', 'New Delhi', 'Delhi NCR']],
+      ['new', ['New York', 'New York City', 'NYC']],
+      ['san', ['San Francisco', 'San Jose', 'San Diego']],
+      ['lon', ['London', 'London, UK']],
+      ['ber', ['Berlin', 'Berlin, Germany']],
+      ['tok', ['Tokyo', 'Tokyo, Japan']],
+      ['sin', ['Singapore']],
+      ['dub', ['Dubai', 'Dubai, UAE']],
+      ['remote', ['Remote', 'Work from Home', 'Hybrid']]
+    ]);
+
+    for (const [key, suggestions] of patterns) {
+      if (input.includes(key)) {
+        return suggestions;
+      }
+    }
+
+    return ['Remote', 'New York', 'London', 'Singapore', 'Bangalore', 'San Francisco'];
+  }
+
+  private generateSkillSuggestions(input: string): string[] {
+    const skills = [
+      'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'Angular', 'Vue.js', 'TypeScript',
+      'AWS', 'Azure', 'Docker', 'Kubernetes', 'MongoDB', 'PostgreSQL', 'MySQL',
+      'Machine Learning', 'Data Science', 'AI', 'DevOps', 'Cloud Computing',
+      'UI/UX Design', 'Figma', 'Adobe Photoshop', 'Digital Marketing', 'SEO',
+      'Project Management', 'Agile', 'Scrum', 'Business Analysis'
+    ];
+
+    return skills
+      .filter(skill => skill.toLowerCase().includes(input))
+      .slice(0, 8);
+  }
+
+  private isLocationQuery(input: string): boolean {
+    const locationKeywords = ['city', 'country', 'remote', 'office', 'location'];
+    return locationKeywords.some(keyword => input.includes(keyword)) || input.length <= 4;
+  }
+
+  async getJobSuggestions(input: string): Promise<string[]> {
+    if (!input || input.length < 1) return [];
+
+    const cacheKey = `job_${input.toLowerCase()}`;
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const prompt = `Generate 8 relevant job titles for "${input}". Return only job titles, one per line.`;
+    
+    const suggestions = await this.callAI(prompt);
+    this.cache.set(cacheKey, { data: suggestions, timestamp: Date.now() });
+    return suggestions;
+  }
+
+  async getLocationSuggestions(input: string): Promise<string[]> {
+    if (!input || input.length < 1) return [];
+
+    const cacheKey = `location_${input.toLowerCase()}`;
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const prompt = `Generate 8 relevant locations for "${input}". Include cities, countries. Return only location names, one per line.`;
+    
+    const suggestions = await this.callAI(prompt);
+    this.cache.set(cacheKey, { data: suggestions, timestamp: Date.now() });
+    return suggestions;
+  }
+
+  async getSkillSuggestions(input: string): Promise<string[]> {
+    if (!input || input.length < 1) return [];
+
+    const cacheKey = `skill_${input.toLowerCase()}`;
+    const cached = this.cache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const prompt = `Generate 8 relevant professional skills for "${input}". Return only skill names, one per line.`;
+    
+    const suggestions = await this.callAI(prompt);
+    this.cache.set(cacheKey, { data: suggestions, timestamp: Date.now() });
+    return suggestions;
+  }
+
+  async generateExperience(jobTitle: string, skills: string[]): Promise<string> {
+    try {
+      const skillsText = skills.length > 0 ? skills.join(', ') : 'various technologies';
+      const prompt = `Generate a professional work experience description for a ${jobTitle} with skills in ${skillsText}. Include 2-3 bullet points with specific achievements and metrics. Keep it concise and professional.`;
+      
+      const response = await this.callAI(prompt);
+      return response.join('\n');
+    } catch (error) {
+      return this.getFallbackExperience(jobTitle);
+    }
+  }
+
+  async improveExperience(currentExperience: string): Promise<string> {
+    try {
+      const prompt = `Improve this work experience description to be more professional and impactful. Add specific metrics and achievements where possible:\n\n${currentExperience}`;
+      
+      const response = await this.callAI(prompt);
+      return response.join('\n');
+    } catch (error) {
+      return currentExperience;
+    }
+  }
+
+  async suggestSkillsForRole(jobTitle: string): Promise<string[]> {
+    try {
+      const prompt = `List 8 essential technical and professional skills for a ${jobTitle} role. Return only skill names, one per line.`;
+      
+      const suggestions = await this.callAI(prompt);
+      return suggestions;
+    } catch (error) {
+      return this.getFallbackSkillsForRole(jobTitle);
+    }
+  }
+
+  async optimizeSkills(currentSkills: string[], jobTitle?: string): Promise<string[]> {
+    try {
+      const roleContext = jobTitle ? ` for a ${jobTitle} role` : '';
+      const prompt = `Optimize and prioritize these skills${roleContext}. Remove duplicates, add missing important skills, and return the top 10 most relevant skills:\n${currentSkills.join(', ')}`;
+      
+      const optimized = await this.callAI(prompt);
+      return optimized.slice(0, 10);
+    } catch (error) {
+      return currentSkills;
+    }
+  }
+
+  private getFallbackExperience(jobTitle: string): string {
+    const experiences = {
+      'Software Engineer': '• Developed and maintained web applications using modern frameworks\n• Collaborated with cross-functional teams to deliver high-quality software solutions\n• Improved application performance by 30% through code optimization',
+      'Data Scientist': '• Analyzed large datasets to extract actionable business insights\n• Built machine learning models with 85%+ accuracy for predictive analytics\n• Presented findings to stakeholders and influenced strategic decisions',
+      'Product Manager': '• Led product development lifecycle from conception to launch\n• Managed cross-functional teams of 8+ members across engineering and design\n• Increased user engagement by 40% through data-driven feature improvements'
+    };
+    
+    return experiences[jobTitle as keyof typeof experiences] || experiences['Software Engineer'];
+  }
+
+  private getFallbackSkillsForRole(jobTitle: string): string[] {
+    const roleSkills = {
+      'Software Engineer': ['JavaScript', 'Python', 'React', 'Node.js', 'Git', 'AWS', 'SQL', 'Agile'],
+      'Data Scientist': ['Python', 'R', 'Machine Learning', 'SQL', 'Pandas', 'TensorFlow', 'Statistics', 'Tableau'],
+      'Product Manager': ['Product Strategy', 'Agile', 'Analytics', 'User Research', 'Roadmapping', 'Stakeholder Management', 'A/B Testing', 'Jira']
+    };
+    
+    return roleSkills[jobTitle as keyof typeof roleSkills] || roleSkills['Software Engineer'];
+  }
+
+  async generateJobTitlesForCompany(companyName: string): Promise<string[]> {
+    try {
+      const prompt = `Generate 8 relevant job titles that ${companyName} might be hiring for. Consider the company's industry and common roles. Return only job titles, one per line.`;
+      
+      const suggestions = await this.callAI(prompt);
+      return suggestions;
+    } catch (error) {
+      return this.getFallbackJobTitlesForCompany(companyName);
+    }
+  }
+
+  async getPopularJobLocations(): Promise<string[]> {
+    try {
+      const prompt = 'List 10 popular job locations including major tech hubs, business centers, and remote options. Return only location names, one per line.';
+      
+      const suggestions = await this.callAI(prompt);
+      return suggestions;
+    } catch (error) {
+      return this.getFallbackPopularLocations();
+    }
+  }
+
+  private getFallbackJobTitlesForCompany(companyName: string): string[] {
+    const companyLower = companyName.toLowerCase();
+    
+    if (companyLower.includes('tech') || companyLower.includes('software')) {
+      return ['Software Engineer', 'Senior Developer', 'Product Manager', 'DevOps Engineer', 'Data Scientist', 'UI/UX Designer', 'QA Engineer', 'Technical Lead'];
+    }
+    
+    if (companyLower.includes('finance') || companyLower.includes('bank')) {
+      return ['Financial Analyst', 'Risk Manager', 'Investment Advisor', 'Compliance Officer', 'Business Analyst', 'Portfolio Manager', 'Credit Analyst', 'Operations Manager'];
+    }
+    
+    if (companyLower.includes('health') || companyLower.includes('medical')) {
+      return ['Healthcare Analyst', 'Medical Researcher', 'Clinical Coordinator', 'Health Informatics Specialist', 'Biomedical Engineer', 'Healthcare Administrator', 'Medical Writer', 'Quality Assurance Specialist'];
+    }
+    
+    // Default tech roles
+    return ['Software Engineer', 'Product Manager', 'Marketing Manager', 'Sales Representative', 'Business Analyst', 'Operations Manager', 'Customer Success Manager', 'Data Analyst'];
+  }
+
+  private getFallbackPopularLocations(): string[] {
+    return [
+      'Remote',
+      'San Francisco, CA',
+      'New York, NY',
+      'Seattle, WA',
+      'Austin, TX',
+      'Boston, MA',
+      'Chicago, IL',
+      'Los Angeles, CA',
+      'Denver, CO',
+      'Atlanta, GA'
+    ];
+  }
+
+  async getSalarySuggestions(input: string, jobTitle?: string, location?: string): Promise<string[]> {
+    try {
+      const context = jobTitle ? ` for ${jobTitle}` : '';
+      const locationContext = location ? ` in ${location}` : '';
+      const prompt = `Generate 6 realistic salary ranges${context}${locationContext}. Consider market rates. Format as "$X,000 - $Y,000". Return only salary ranges, one per line.`;
+      
+      const suggestions = await this.callAI(prompt);
+      return suggestions;
+    } catch (error) {
+      return this.getFallbackSalaryRanges(jobTitle, location);
+    }
+  }
+
+  async getSalaryRangeForRole(jobTitle: string, location?: string): Promise<string[]> {
+    try {
+      const locationContext = location ? ` in ${location}` : '';
+      const prompt = `Generate 6 realistic salary ranges for ${jobTitle}${locationContext}. Consider market rates and different experience levels. Format as "$X,000 - $Y,000". Return only salary ranges, one per line.`;
+      
+      const suggestions = await this.callAI(prompt);
+      return suggestions;
+    } catch (error) {
+      return this.getFallbackSalaryRanges(jobTitle, location);
+    }
+  }
+
+  private getFallbackSalaryRanges(jobTitle?: string, location?: string): string[] {
+    const jobLower = jobTitle?.toLowerCase() || '';
+    const locationLower = location?.toLowerCase() || '';
+    
+    // Location multipliers
+    const isHighCostArea = locationLower.includes('san francisco') || locationLower.includes('new york') || locationLower.includes('seattle');
+    const multiplier = isHighCostArea ? 1.3 : 1.0;
+    
+    // Base salary ranges by role
+    let salaryRanges = [
+      [60000, 80000],
+      [80000, 100000],
+      [100000, 130000],
+      [130000, 160000],
+      [160000, 200000],
+      [200000, 250000]
+    ];
+    
+    if (jobLower.includes('engineer') || jobLower.includes('developer')) {
+      salaryRanges = [
+        [70000, 90000],
+        [90000, 120000],
+        [120000, 150000],
+        [150000, 180000],
+        [180000, 220000],
+        [220000, 280000]
+      ];
+    } else if (jobLower.includes('manager') || jobLower.includes('lead')) {
+      salaryRanges = [
+        [80000, 110000],
+        [110000, 140000],
+        [140000, 170000],
+        [170000, 200000],
+        [200000, 250000],
+        [250000, 300000]
+      ];
+    } else if (jobLower.includes('data scientist') || jobLower.includes('ai')) {
+      salaryRanges = [
+        [85000, 115000],
+        [115000, 145000],
+        [145000, 180000],
+        [180000, 220000],
+        [220000, 280000],
+        [280000, 350000]
+      ];
+    } else if (jobLower.includes('designer')) {
+      salaryRanges = [
+        [55000, 75000],
+        [75000, 95000],
+        [95000, 120000],
+        [120000, 150000],
+        [150000, 180000],
+        [180000, 220000]
+      ];
+    }
+    
+    // Apply location multiplier and format
+    const formatSalary = (min: number, max: number) => {
+      const adjustedMin = Math.round((min * multiplier) / 1000) * 1000;
+      const adjustedMax = Math.round((max * multiplier) / 1000) * 1000;
+      return `$${adjustedMin.toLocaleString()} - $${adjustedMax.toLocaleString()}`;
+    };
+    
+    return salaryRanges.map(([min, max]) => formatSalary(min, max));
+  }
+}
+
+export const aiSuggestions = AISuggestionService.getInstance();

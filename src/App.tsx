@@ -1,0 +1,658 @@
+import React, { useState, useEffect } from 'react';
+import Header from './components/Header';
+import NewHero from './components/NewHero';
+import JobCategories from './components/JobCategories';
+import LatestJobs from './components/LatestJobs';
+import TalentedPeople from './components/TalentedPeople';
+import CallToAction from './components/CallToAction';
+import Footer from './components/Footer';
+import LoginPage from './pages/LoginPage';
+import LoginModal from './components/LoginModal';
+import RegisterModal from './components/RegisterModal';
+import EmployerLoginPage from './pages/EmployerLoginPage';
+import EmployerLoginModal from './components/EmployerLoginModal';
+import RoleSelectionModal from './components/RoleSelectionModal';
+import CandidateRegisterModal from './components/CandidateRegisterModal';
+import EmployerRegisterModal from './components/EmployerRegisterModal';
+import EmployersPage from './pages/EmployersPage';
+import JobListingsPage from './pages/JobListingsPage';
+import CompaniesPage from './pages/CompaniesPage';
+import JobHuntingPage from './pages/JobHuntingPage';
+
+import ResumeTemplatesPage from './pages/ResumeTemplatesPage';
+import ResumeEditorPage from './pages/ResumeEditorPage';
+import ResumeReadyPage from './pages/ResumeReadyPage';
+import AIResumeBuilderPage from './pages/AIResumeBuilderPage';
+import ResumeViewerPage from './pages/ResumeViewerPage';
+import InterviewTipsPage from './pages/InterviewTipsPage';
+import CareerAdvicePage from './pages/CareerAdvicePage';
+import CareerInsightsHubPage from './pages/CareerInsightsHubPage';
+import SalaryReportPage from './pages/SalaryReportPage';
+import CandidateSearchPage from './pages/CandidateSearchPage';
+import JobPostingPage from './pages/JobPostingPage';
+import JobDetailPage from './pages/JobDetailPage';
+import SkillDetailPage from './pages/SkillDetailPage';
+import CareerResources from './components/CareerResources';
+import CandidateDashboardPage from './pages/CandidateDashboardPage';
+import EmployerDashboardPage from './pages/EmployerDashboardPage';
+import SearchEngine from './components/SearchEngine';
+import BackButton from './components/BackButton';
+import CompanyProfilePage from './pages/CompanyProfilePage';
+import CompanyViewPage from './pages/CompanyViewPage';
+import CandidateProfilePage from './pages/CandidateProfilePage';
+import JobApplicationPage from './pages/JobApplicationPage';
+import DailyJobsPage from './pages/DailyJobsPage';
+import JobRolePage from './pages/JobRolePage';
+import HireTalentPage from './pages/HireTalentPage';
+import JobManagementPage from './pages/JobManagementPage';
+
+import SettingsPage from './pages/SettingsPage';
+import MyJobsPage from './pages/MyJobsPage';
+import ResumeParserPage from './pages/ResumeParserPage';
+import CompanyTestPage from './pages/CompanyTestPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import ResumeModerationDashboard from './pages/ResumeModerationDashboard';
+import JobModerationDashboard from './pages/JobModerationDashboard';
+import ResumeUploadWithModeration from './components/ResumeUploadWithModeration';
+
+import ChatWidget from './components/ChatWidget';
+import Notification from './components/Notification';
+
+
+
+function App() {
+  const [currentPage, setCurrentPage] = useState('home');
+  const [currentTopic, setCurrentTopic] = useState('');
+  const [currentData, setCurrentData] = useState<any>(null);
+  const [navigationHistory, setNavigationHistory] = useState<string[]>(['home']);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showEmployerLoginModal, setShowEmployerLoginModal] = useState(false);
+  const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
+  const [showCandidateRegisterModal, setShowCandidateRegisterModal] = useState(false);
+  const [showEmployerRegisterModal, setShowEmployerRegisterModal] = useState(false);
+  const [user, setUser] = useState<{name: string, type: 'candidate' | 'employer'} | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({ type: 'info', message: '', isVisible: false });
+
+  // Initialize user from localStorage on app start
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('Loading user from localStorage:', userData);
+        console.log('Raw userType from localStorage:', userData.userType);
+        const userType = userData.userType === 'employer' ? 'employer' : 'candidate';
+        console.log('Mapped user type:', userType);
+        setUser({
+          name: userType === 'employer' 
+            ? (userData.companyName || userData.fullName || userData.email?.split('@')[0] || 'User')
+            : (userData.fullName || userData.email?.split('@')[0] || 'User'),
+          type: userType
+        });
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('user');
+      }
+    }
+    
+    // Handle URL-based navigation (for reset password links and resume viewer)
+    const path = window.location.pathname;
+    if (path.startsWith('/reset-password/')) {
+      const token = path.split('/')[2];
+      if (token) {
+        setCurrentPage(`reset-password/${token}`);
+      }
+    } else if (path.startsWith('/resume-view/')) {
+      const template = path.split('/')[2];
+      if (template) {
+        setCurrentPage(`resume-view/${template}`);
+      }
+    }
+  }, []);
+
+  // Force update document title
+  useEffect(() => {
+    document.title = 'ZyncJobs - AI Skills. Bigger Chances. Better Jobs';
+  }, []);
+
+  const handleNavigation = (page: string, topic?: string) => {
+    console.log('Navigation called:', page, topic);
+    console.log('Current page before navigation:', currentPage);
+    
+    // Handle reset password with token
+    if (page.startsWith('reset-password/')) {
+      setCurrentPage(page);
+      return;
+    }
+    
+
+    
+    // Check authentication for employer-only pages
+    const employerPages = ['employers', 'job-posting', 'candidate-search', 'hire-talent'];
+    if (employerPages.includes(page)) {
+      if (!user) {
+        // Not logged in, show role selection
+        setShowRoleSelectionModal(true);
+        return;
+      }
+      if (user.type !== 'employer') {
+        // Logged in as candidate, show toast notification
+        setNotification({
+          type: 'info',
+          message: 'You are currently logged in as a candidate. Please logout and login as an employer to access employer features.',
+          isVisible: true
+        });
+        return;
+      }
+      // User is logged in as employer, proceed to page
+    }
+
+    // Check authentication for candidate-only pages
+    const candidatePages = ['job-application', 'candidate-profile', 'job-listings', 'companies'];
+    if (candidatePages.includes(page)) {
+      if (!user) {
+        // Not logged in, show role selection
+        setShowRoleSelectionModal(true);
+        return;
+      }
+      if (user.type !== 'candidate') {
+        // Logged in as employer, show toast notification
+        setNotification({
+          type: 'info',
+          message: 'You are currently logged in as an employer. Please logout and login as a candidate to access candidate features.',
+          isVisible: true
+        });
+        return;
+      }
+      // User is logged in as candidate, proceed to page
+    }
+
+    // Special handling for dashboard - route to correct dashboard based on user type
+    if (page === 'dashboard' && user) {
+      // User is logged in, proceed to dashboard (will show correct dashboard based on user type)
+      // No additional checks needed as dashboard handles routing internally
+    }
+    
+    // Handle modal pages
+    if (page === 'login') {
+      setCurrentPage(page);
+      return;
+    }
+
+    if (page === 'forgot-password') {
+      setCurrentPage(page);
+      return;
+    }
+    if (page === 'register') {
+      // Check if user is already logged in
+      if (user) {
+        // User is logged in, show notification instead of redirecting
+        setNotification({
+          type: 'info',
+          message: 'You are logged in as a candidate. Please logout and login as an employer to access hiring features.',
+          isVisible: true
+        });
+        return;
+      }
+      // User not logged in, show role selection
+      setShowRoleSelectionModal(true);
+      return;
+    }
+    if (page === 'employer-login') {
+      setCurrentPage(page);
+      return;
+    }
+    
+    // Close any open modals when navigating
+    setShowLoginModal(false);
+    setShowRegisterModal(false);
+    setShowEmployerLoginModal(false);
+    setShowRoleSelectionModal(false);
+    setShowCandidateRegisterModal(false);
+    setShowEmployerRegisterModal(false);
+    
+    // Add to navigation history if it's a new page (exclude modal states)
+    const modalPages = ['login', 'register', 'employer-login'];
+    if (page !== currentPage && !modalPages.includes(page)) {
+      setNavigationHistory(prev => [...prev, page]);
+    }
+    
+    setCurrentPage(page);
+    if (topic) {
+      setCurrentTopic(topic);
+    }
+    if (typeof topic === 'object') {
+      setCurrentData(topic);
+    }
+    
+    // Scroll to top when navigating
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
+  const closeModals = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(false);
+    setShowEmployerLoginModal(false);
+    setShowRoleSelectionModal(false);
+    setShowCandidateRegisterModal(false);
+    setShowEmployerRegisterModal(false);
+  };
+
+  const handleLogin = (userData: {name: string, type: 'candidate' | 'employer'}) => {
+    setUser(userData);
+    closeModals();
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    setCurrentPage('home');
+    setNavigationHistory(['home']); // Reset navigation history
+  };
+
+  const handleRoleSelection = (role: 'candidate' | 'employer') => {
+    setShowRoleSelectionModal(false);
+    if (role === 'candidate') {
+      setShowCandidateRegisterModal(true);
+    } else {
+      setShowEmployerRegisterModal(true);
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (navigationHistory.length > 1) {
+      const newHistory = [...navigationHistory];
+      newHistory.pop(); // Remove current page
+      const previousPage = newHistory[newHistory.length - 1];
+      setNavigationHistory(newHistory);
+      setCurrentPage(previousPage);
+    } else {
+      setCurrentPage('home');
+    }
+  };
+
+
+
+  if (currentPage === 'employers') {
+    return <EmployersPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'job-listings') {
+    return <JobListingsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} searchParams={currentData} />;
+  }
+
+  if (currentPage === 'companies') {
+    return <CompaniesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'job-hunting') {
+    return <JobHuntingPage onNavigate={handleNavigation} />;
+  }
+
+
+
+  if (currentPage === 'interview-tips') {
+    return <InterviewTipsPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'career-advice') {
+    return <CareerAdvicePage onNavigate={handleNavigation} topic={currentTopic} />;
+  }
+
+  if (currentPage === 'career-insights-hub') {
+    return <CareerInsightsHubPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'salary-report') {
+    return <SalaryReportPage onNavigate={handleNavigation} />;
+  }
+
+
+
+  if (currentPage === 'job-detail') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <JobDetailPage 
+          onNavigate={handleNavigation} 
+          jobTitle={currentData?.jobTitle || currentTopic}
+          jobId={currentData?.jobId}
+          companyName={currentData?.companyName}
+        />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'skill-detail') {
+    return <SkillDetailPage onNavigate={handleNavigation} skillName={currentTopic} />;
+  }
+
+  if (currentPage === 'career-resources') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <CareerResources />
+        <Footer onNavigate={handleNavigation} />
+        <BackButton onBack={handleBackNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'dashboard') {
+    console.log('Dashboard - User type:', user?.type, 'Full user:', user);
+    return (
+      <>
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          isVisible={notification.isVisible}
+          onClose={() => setNotification({ ...notification, isVisible: false })}
+        />
+        <div className="min-h-screen bg-white">
+          <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+          {user?.type === 'employer' ? (
+            <EmployerDashboardPage onNavigate={handleNavigation} />
+          ) : (
+            <CandidateDashboardPage onNavigate={handleNavigation} />
+          )}
+          <Footer onNavigate={handleNavigation} />
+        </div>
+      </>
+    );
+  }
+
+  if (currentPage === 'search') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <SearchEngine />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'company-profile') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <CompanyProfilePage onNavigate={handleNavigation} companyName={currentData?.companyName} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'company-view') {
+    return (
+      <CompanyViewPage 
+        onNavigate={handleNavigation} 
+        companyName={currentData?.companyName}
+        user={user}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (currentPage === 'candidate-profile') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <CandidateProfilePage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'job-application') {
+    return (
+      <JobApplicationPage 
+        onNavigate={handleNavigation} 
+        jobId={currentData?.jobId}
+        jobData={currentData?.jobData}
+      />
+    );
+  }
+
+  if (currentPage === 'daily-jobs') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <DailyJobsPage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+
+
+  if (currentPage === 'job-role') {
+    return <JobRolePage onNavigate={handleNavigation} jobTitle={currentTopic} />;
+  }
+
+  if (currentPage === 'job-posting') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <JobPostingPage onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'candidate-search') {
+    return <CandidateSearchPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'hire-talent') {
+    return <HireTalentPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'job-management') {
+    return <JobManagementPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+
+
+  if (currentPage === 'resume-editor') {
+    return <ResumeEditorPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} template={currentTopic} />;
+  }
+
+  if (currentPage.startsWith('resume-view/')) {
+    const template = currentPage.split('/')[1];
+    return <ResumeViewerPage template={template} />;
+  }
+
+
+
+  if (currentPage === 'ai-resume-builder') {
+    console.log('Rendering AI Resume Builder page');
+    return <AIResumeBuilderPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'resume-templates') {
+    return <ResumeTemplatesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'resume-ready') {
+    return <ResumeReadyPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  if (currentPage === 'settings') {
+    if (!user) {
+      // Not logged in, redirect to login
+      setShowRoleSelectionModal(true);
+      return null;
+    }
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <SettingsPage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'my-jobs') {
+    if (!user) {
+      // Not logged in, redirect to login
+      setShowRoleSelectionModal(true);
+      return null;
+    }
+    return (
+      <>
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <MyJobsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+      </>
+    );
+  }
+
+  if (currentPage === 'resume-parser') {
+    return <ResumeParserPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'company-test') {
+    return <CompanyTestPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'forgot-password') {
+    return <ForgotPasswordPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage.startsWith('reset-password/')) {
+    const token = currentPage.split('/')[1];
+    return <ResetPasswordPage onNavigate={handleNavigation} token={token} />;
+  }
+
+  if (currentPage === 'resume-moderation') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <ResumeModerationDashboard />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'job-moderation') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <JobModerationDashboard />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'resume-upload') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <div className="max-w-4xl mx-auto p-6">
+          <h1 className="text-3xl font-bold mb-6">Upload Resume</h1>
+          <ResumeUploadWithModeration 
+            userId={user?.name || '1'} 
+            onUploadComplete={(result) => {
+              setNotification({
+                type: result.resume.status === 'approved' ? 'success' : 'info',
+                message: result.message,
+                isVisible: true
+              });
+            }}
+          />
+        </div>
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'login') {
+    return <LoginPage onNavigate={handleNavigation} onLogin={handleLogin} />;
+  }
+
+  if (currentPage === 'employer-login') {
+    return <EmployerLoginPage onNavigate={handleNavigation} onLogin={handleLogin} onShowNotification={(notif) => setNotification({...notif, isVisible: true})} />;
+  }
+
+  return (
+    <>
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification({ ...notification, isVisible: false })}
+      />
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <NewHero onNavigate={handleNavigation} user={user} />
+        <JobCategories onNavigate={handleNavigation} />
+        <LatestJobs onNavigate={handleNavigation} />
+        <TalentedPeople onNavigate={handleNavigation} />
+        <CallToAction onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      <ChatWidget />
+      
+      {/* Modals */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={closeModals} 
+        onNavigate={handleNavigation}
+        onLogin={handleLogin}
+      />
+      <RegisterModal 
+        isOpen={showRegisterModal} 
+        onClose={closeModals} 
+        onNavigate={handleNavigation} 
+      />
+      <EmployerLoginModal 
+        isOpen={showEmployerLoginModal} 
+        onClose={closeModals} 
+        onNavigate={handleNavigation}
+        onLogin={handleLogin}
+        onShowNotification={(notif) => setNotification({...notif, isVisible: true})}
+      />
+      <RoleSelectionModal 
+        isOpen={showRoleSelectionModal} 
+        onClose={closeModals} 
+        onSelectRole={handleRoleSelection} 
+      />
+      <CandidateRegisterModal 
+        isOpen={showCandidateRegisterModal} 
+        onClose={closeModals} 
+        onNavigate={handleNavigation}
+        onLogin={handleLogin}
+      />
+      <EmployerRegisterModal 
+        isOpen={showEmployerRegisterModal} 
+        onClose={closeModals} 
+        onNavigate={handleNavigation}
+        onLogin={handleLogin}
+      />
+      </div>
+    </>
+  );
+}
+
+export default App;

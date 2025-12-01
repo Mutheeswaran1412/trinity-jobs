@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Job - Trinitejob</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-2xl font-bold text-blue-600">Trinitejob</div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="http://localhost:5175" class="text-gray-600 hover:text-blue-600">Home</a>
+                    <a href="http://localhost:5175" class="text-gray-600 hover:text-blue-600">Jobs</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Apply for Job</h1>
+        
+        <div id="jobDetails" class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">Job Details</h2>
+            <div id="jobInfo">Loading job details...</div>
+        </div>
+        
+        <form id="applicationForm" class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Application Form</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="fullName" class="block text-sm font-medium mb-2">Full Name *</label>
+                    <input type="text" id="fullName" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium mb-2">Email *</label>
+                    <input type="email" id="email" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="phone" class="block text-sm font-medium mb-2">Phone *</label>
+                    <input type="tel" id="phone" required class="w-full p-3 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label for="experience" class="block text-sm font-medium mb-2">Experience (years)</label>
+                    <input type="number" id="experience" class="w-full p-3 border rounded-lg">
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label class="block text-sm font-medium mb-2">Cover Letter *</label>
+                <textarea id="coverLetter" required rows="6" class="w-full p-3 border rounded-lg" placeholder="Tell us why you're perfect for this role..."></textarea>
+            </div>
+            
+            <div class="mt-6">
+                <label class="block text-sm font-medium mb-2">Resume URL</label>
+                <input type="url" id="resumeUrl" placeholder="https://drive.google.com/..." class="w-full p-3 border rounded-lg">
+            </div>
+            
+            <button type="submit" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700">
+                Submit Application
+            </button>
+        </form>
+        
+        <div id="result" class="mt-6"></div>
+    </main>
+
+    <script src="js/toast.js"></script>
+    <script>
+        // Check login status on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (user && user.userType === 'jobseeker') {
+                showToast(`Welcome ${user.fullName}! Good luck with your application!`, 'success');
+                // Pre-fill form with user data
+                document.getElementById('fullName').value = user.fullName || '';
+                document.getElementById('email').value = user.email || '';
+                document.getElementById('phone').value = user.phone || '';
+            } else if (user && user.userType !== 'jobseeker') {
+                showToast('Only job seekers can apply for jobs', 'error');
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:5175';
+                }, 2000);
+            } else {
+                showToast('Please login to apply for jobs', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:5175';
+                }, 2000);
+            }
+        });
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('jobId') || 'sample_job_id';
+        
+        // Load job details
+        async function loadJobDetails() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/jobs/${jobId}`);
+                if (response.ok) {
+                    const job = await response.json();
+                    document.getElementById('jobInfo').innerHTML = `
+                        <h3 class="text-lg font-semibold">${job.title}</h3>
+                        <p class="text-blue-600">${job.company}</p>
+                        <p class="text-gray-600">${job.location} • ${job.jobType}</p>
+                        <p class="text-green-600 font-semibold">${job.salary || 'Salary not specified'}</p>
+                    `;
+                } else {
+                    document.getElementById('jobInfo').innerHTML = '<p class="text-red-600">Job not found</p>';
+                }
+            } catch (error) {
+                document.getElementById('jobInfo').innerHTML = '<p class="text-red-600">Error loading job details</p>';
+            }
+        }
+        
+        document.getElementById('applicationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const applicationData = {
+                job_id: jobId,
+                user_id: 'temp_user_id', // In real app, get from logged in user
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                experience: document.getElementById('experience').value,
+                cover_letter: document.getElementById('coverLetter').value,
+                resume_url: document.getElementById('resumeUrl').value
+            };
+            
+            try {
+                showToast('Submitting application...', 'info');
+                
+                const response = await fetch('http://127.0.0.1:5000/api/applications', {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(applicationData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to submit application');
+                }
+                
+                const data = await response.json();
+                showToast('Application submitted successfully!', 'success');
+                
+                document.getElementById('result').innerHTML = `
+                    <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                        <h3 class="font-bold">✅ Application Submitted!</h3>
+                        <p>Application ID: ${data.id}</p>
+                        <p>✅ Saved to MongoDB Atlas!</p>
+                        <p class="mt-2">You will be contacted if selected for an interview.</p>
+                    </div>
+                `;
+                
+                document.getElementById('applicationForm').reset();
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+                document.getElementById('result').innerHTML = `
+                    <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                        <h3 class="font-bold">❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+        
+        // Load job details on page load
+        loadJobDetails();
+    </script>
+</body>
+</html>

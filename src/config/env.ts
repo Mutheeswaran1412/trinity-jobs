@@ -1,0 +1,50 @@
+// Environment Configuration
+// Only non-sensitive frontend configuration
+
+export const config = {
+  // API Configuration
+  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  
+  // App Configuration
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'ZyncJobs',
+  APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
+  
+  // Feature Flags
+  ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
+  ENABLE_CHAT: import.meta.env.VITE_ENABLE_CHAT !== 'false', // Default true
+  ENABLE_AI_FEATURES: import.meta.env.VITE_ENABLE_AI_FEATURES !== 'false', // Default true
+  
+  // Environment
+  IS_DEVELOPMENT: import.meta.env.DEV,
+  IS_PRODUCTION: import.meta.env.PROD,
+};
+
+// API Endpoints
+export const API_ENDPOINTS = {
+  // Auth
+  LOGIN: `${config.API_URL}/api/login`,
+  REGISTER: `${config.API_URL}/api/register`,
+  LOGOUT: `${config.API_URL}/api/logout`,
+  REFRESH_TOKEN: `${config.API_URL}/api/refresh-token`,
+  
+  // Jobs
+  JOBS: `${config.API_URL}/api/jobs`,
+  SEARCH: `${config.API_URL}/api/search`,
+  
+  // Chat
+  CHAT: `${config.API_URL}/api/chat`,
+  
+  // AI Features
+  GENERATE_JOB_DESCRIPTION: `${config.API_URL}/api/generate-job-description`,
+  SUGGEST_JOB_TITLES: `${config.API_URL}/api/suggest-job-titles`,
+  SUGGEST_LOCATIONS: `${config.API_URL}/api/suggest-locations`,
+  
+  // User
+  PROFILE: `${config.API_URL}/api/profile`,
+  USERS: `${config.API_URL}/api/users`,
+};
+
+// Legacy exports for backward compatibility
+export const API_BASE_URL = config.API_URL;
+
+export default config;
