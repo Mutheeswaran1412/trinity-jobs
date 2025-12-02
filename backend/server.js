@@ -18,6 +18,16 @@ import pdfRoutes from './routes/pdf.js';
 import resumeVersionRoutes from './routes/resumeVersions.js';
 import aiSuggestionsRoutes from './routes/aiSuggestions.js';
 import suggestRoutes from './routes/suggestRoutes.js';
+import adminUserRoutes from './routes/adminUsers.js';
+import adminAnalyticsRoutes from './routes/adminAnalytics.js';
+import adminSettingsRoutes from './routes/adminSettings.js';
+import adminBulkRoutes from './routes/adminBulk.js';
+import adminAuditRoutes from './routes/adminAudit.js';
+import aiScoringRoutes from './routes/aiScoring.js';
+import aiScoringFlowRoutes from './routes/aiScoringFlow.js';
+import employerCandidatesRoutes from './routes/employerCandidates.js';
+import adminSystemRoutes from './routes/adminSystem.js';
+import adminNotificationRoutes from './routes/adminNotifications.js';
 import { generateAccessToken, generateRefreshToken } from './utils/jwt.js';
 import { errorHandler, notFound } from './utils/errorHandler.js';
 import { validateEnv } from './utils/envValidator.js';
@@ -51,6 +61,16 @@ app.use('/api/pdf', pdfRoutes);
 app.use('/api/resume-versions', resumeVersionRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
 app.use('/api', suggestRoutes);
+app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/analytics', adminAnalyticsRoutes);
+app.use('/api/admin/settings', adminSettingsRoutes);
+app.use('/api/admin/bulk', adminBulkRoutes);
+app.use('/api/admin/audit', adminAuditRoutes);
+app.use('/api/ai', aiScoringRoutes);
+app.use('/api/ai-flow', aiScoringFlowRoutes);
+app.use('/api/employer', employerCandidatesRoutes);
+app.use('/api/admin/system', adminSystemRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
 
 // Password reset functionality
 const resetTokens = new Map();
@@ -207,7 +227,7 @@ app.post('/api/login', async (req, res) => {
     } else if (email === 'hr@company.com' && password === '123456') {
       user = { id: '5', email: email, fullName: 'HR Manager', userType: 'employer' };
     } else if (email === 'admin@trinity.com' && password === '123456') {
-      user = { id: '6', email: email, fullName: 'Trinity Admin', userType: 'employer' };
+      user = { id: '6', email: email, fullName: 'Trinity Admin', userType: 'admin' };
     } else if (email === 'muthees@trinitetech.com' && password === '123456') {
       user = { id: '7', email: email, fullName: 'Muthees Trinity', companyName: 'Trinity Technology Solutions', userType: 'employer' };
     }

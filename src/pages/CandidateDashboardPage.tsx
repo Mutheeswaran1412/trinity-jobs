@@ -145,6 +145,16 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
               Profile
             </button>
             <button 
+              onClick={() => setActiveTab('Applications')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'Applications' 
+                  ? 'border-red-500 text-gray-900' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              My Applications
+            </button>
+            <button 
               onClick={() => setActiveTab('Alerts')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'Alerts' 
@@ -160,6 +170,116 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Applications Tab Content */}
+        {activeTab === 'Applications' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">📊 Application Tracking</h2>
+              <button
+                onClick={() => onNavigate('my-applications')}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                View All Applications
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="bg-blue-100 p-2 rounded">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-gray-600">Total Applied</p>
+                    <p className="text-xl font-bold">{JSON.parse(localStorage.getItem('userApplications') || '[]').length}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="bg-green-100 p-2 rounded">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-gray-600">In Progress</p>
+                    <p className="text-xl font-bold">{JSON.parse(localStorage.getItem('userApplications') || '[]').filter((app: any) => app.status === 'Applied').length}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="bg-yellow-100 p-2 rounded">
+                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-gray-600">Interviews</p>
+                    <p className="text-xl font-bold">0</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="bg-purple-100 p-2 rounded">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-gray-600">Offers</p>
+                    <p className="text-xl font-bold">0</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => onNavigate('job-listings')}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
+                >
+                  <div className="flex items-center">
+                    <svg className="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="font-medium">Apply to More Jobs</h4>
+                      <p className="text-sm text-gray-600">Browse and apply to new opportunities</p>
+                    </div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => onNavigate('candidate-profile')}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
+                >
+                  <div className="flex items-center">
+                    <svg className="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <div>
+                      <h4 className="font-medium">Improve Profile</h4>
+                      <p className="text-sm text-gray-600">Complete your profile to get better matches</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {activeTab === 'Profile' && (
+        <>
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
           {/* Banner Section */}
@@ -676,6 +796,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
       
       <ResumeUploadModal

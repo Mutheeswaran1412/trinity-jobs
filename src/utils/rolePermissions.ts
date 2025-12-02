@@ -68,7 +68,13 @@ export const canAccess = (userRole: UserRole, feature: string): boolean => {
     'job-posting': [PERMISSIONS.POST_JOBS],
     'applicant-management': [PERMISSIONS.VIEW_APPLICANTS],
     'job-application': [PERMISSIONS.APPLY_JOBS],
-    'content-moderation': [PERMISSIONS.MODERATE_CONTENT]
+    'content-moderation': [PERMISSIONS.MODERATE_CONTENT],
+    'user-management': [PERMISSIONS.MANAGE_USERS],
+    'job-management': [PERMISSIONS.MANAGE_JOBS],
+    'company-management': [PERMISSIONS.MANAGE_COMPANIES],
+    'analytics': [PERMISSIONS.VIEW_ANALYTICS],
+    'ai-scoring-demo': [PERMISSIONS.VIEW_ANALYTICS],
+    'settings': [PERMISSIONS.MANAGE_USERS]
   };
   
   const requiredPermissions = accessMap[feature] || [];

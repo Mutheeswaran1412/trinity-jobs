@@ -87,17 +87,6 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
                 </form>
               </div>
 
-              {/* Resume Builder CTA */}
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => onNavigate && onNavigate('resume-templates')}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
-                >
-                  📄 Build Your Resume
-                </button>
-                <span className="text-gray-600">Create a professional resume in minutes</span>
-              </div>
-
               {/* Popular Searches */}
               <div className="flex flex-wrap items-center gap-2">
                 <h4 className="font-semibold text-gray-900">Popular Searches:</h4>

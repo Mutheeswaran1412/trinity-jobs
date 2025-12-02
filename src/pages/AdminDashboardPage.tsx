@@ -24,6 +24,7 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate, use
     { title: 'Company Management', description: 'Manage company profiles', icon: Building, action: 'company-management' },
     { title: 'Content Moderation', description: 'Review and moderate content', icon: Shield, action: 'content-moderation' },
     { title: 'Analytics', description: 'View platform analytics', icon: BarChart3, action: 'analytics' },
+    { title: 'AI Scoring Demo', description: 'Test AI-powered candidate scoring system', icon: BarChart3, action: 'ai-scoring-demo' },
     { title: 'System Settings', description: 'Configure platform settings', icon: Settings, action: 'settings' }
   ];
 
@@ -62,31 +63,17 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate, use
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
               {adminActions.map((action, index) => (
-                <RoleGuard 
-                  key={index} 
-                  userRole="admin" 
-                  requiredFeature={action.action}
-                  fallback={
-                    <div className="p-4 border border-gray-200 rounded-lg opacity-50">
-                      <div className="flex items-center mb-3">
-                        <action.icon className="w-8 h-8 text-gray-400" />
-                        <h3 className="text-lg font-medium text-gray-400 ml-3">{action.title}</h3>
-                      </div>
-                      <p className="text-gray-400 text-sm">Access restricted</p>
-                    </div>
-                  }
+                <button
+                  key={index}
+                  onClick={() => onNavigate(action.action)}
+                  className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
                 >
-                  <button
-                    onClick={() => onNavigate(action.action)}
-                    className="w-full p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
-                  >
-                    <div className="flex items-center mb-3">
-                      <action.icon className="w-8 h-8 text-blue-600" />
-                      <h3 className="text-lg font-medium text-gray-900 ml-3">{action.title}</h3>
-                    </div>
-                    <p className="text-gray-600 text-sm">{action.description}</p>
-                  </button>
-                </RoleGuard>
+                  <div className="flex items-center mb-3">
+                    <action.icon className="w-8 h-8 text-blue-600" />
+                    <h3 className="text-lg font-medium text-gray-900 ml-3">{action.title}</h3>
+                  </div>
+                  <p className="text-gray-600 text-sm">{action.description}</p>
+                </button>
               ))}
             </div>
           </div>

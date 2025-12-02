@@ -202,78 +202,160 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   );
 
   // Step 2: CV Upload
-  const renderCVStep = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={prevStep} className="text-gray-600 hover:text-gray-700">← Back</button>
-        <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
-          Save and close
-        </button>
-      </div>
-      
-      <div className="mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
+  const renderCVStep = () => {
+    // Get user data from localStorage to fetch their resume
+    const userData = localStorage.getItem('user');
+    let userProfile = null;
+    try {
+      userProfile = userData ? JSON.parse(userData) : null;
+      console.log('User profile data:', userProfile); // Debug log
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
+
+    // Clear any sample data and use actual user data
+    if (userProfile && (userProfile.name === 'Riley Taylor' || userProfile.email === 'e.g.mail@example.com')) {
+      // This is sample data, clear it
+      localStorage.removeItem('user');
+      userProfile = null;
+    }
+
+    return (
+      <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={prevStep} className="text-gray-600 hover:text-gray-700">← Back</button>
+          <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
+            Save and close
+          </button>
         </div>
-        <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Add a CV for the employer</h1>
-
-        <div className="border-2 border-blue-300 rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="bg-gray-100 p-2 rounded mr-3">📄</div>
-              <div>
-                <div className="font-medium">Mutheeswaran.Resume.pdf</div>
-                <div className="text-sm text-gray-500">Uploaded Mar 13, 2025</div>
-              </div>
-            </div>
-            <div className="bg-green-500 text-white rounded-full p-1">✓</div>
+        
+        <div className="mb-6">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
           </div>
-          
-          <div className="bg-orange-100 p-4 rounded-lg">
-            <div className="flex items-start">
-              <img src="/api/placeholder/60/60" alt="Profile" className="w-15 h-15 rounded-full mr-4" />
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">MUTHEESWARAN G</h3>
-                <p className="text-sm text-gray-600 mb-2">STUDENT</p>
-                
-                <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">Your Resume from Profile</h1>
+
+          {userProfile?.resume ? (
+            <div className="border-2 border-green-300 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="bg-gray-100 p-2 rounded mr-3">📄</div>
                   <div>
-                    <h4 className="font-semibold mb-1">EDUCATION</h4>
-                    <p>B.Tech Information Technology</p>
-                    <p>Loyola-ICAM College of Engineering and Technology</p>
-                    <p>CGPA: 7.2</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">ABOUT ME</h4>
-                    <p className="text-xs">Currently pursuing a Bachelor's degree of Information Technology at Loyola-ICAM college of Engineering and Technology My academic journey has been complemented by hands-on experience gained through internships and personal projects...</p>
+                    <div className="font-medium">{userProfile.resume.name || 'Resume.pdf'}</div>
+                    <div className="text-sm text-gray-500">From your profile - {userProfile.resume.uploadDate || 'Recently uploaded'}</div>
                   </div>
                 </div>
+                <div className="bg-green-500 text-white rounded-full p-1">✓</div>
+              </div>
+              
+              {/* Show resume preview if available */}
+              {userProfile.resume?.preview ? (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div dangerouslySetInnerHTML={{ __html: userProfile.resume.preview }} />
+                </div>
+              ) : (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-start">
+                    {userProfile.profilePhoto ? (
+                      <img src={userProfile.profilePhoto} alt="Profile" className="w-15 h-15 rounded-full mr-4" />
+                    ) : (
+                      <div className="w-15 h-15 bg-gray-300 rounded-full flex items-center justify-center text-lg font-semibold text-gray-600 mr-4">
+                        {userProfile.name ? userProfile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'MG'}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg">{userProfile.name || 'Your Name'}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{userProfile.title || userProfile.jobTitle || 'Professional'}</p>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <h4 className="font-semibold mb-1">CONTACT</h4>
+                          <p>{userProfile.email || 'Email not provided'}</p>
+                          <p>{userProfile.phone || 'Phone not provided'}</p>
+                          <p>{userProfile.location || 'Location not provided'}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-1">SKILLS</h4>
+                          <p className="text-xs">
+                            {userProfile.skills && userProfile.skills.length > 0 
+                              ? userProfile.skills.slice(0, 5).join(', ') + (userProfile.skills.length > 5 ? '...' : '')
+                              : 'Skills not provided'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-4 text-center space-y-2">
+                <button
+                  onClick={() => onNavigate('candidate-dashboard')}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium block mx-auto"
+                >
+                  Update Resume in Profile
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('user');
+                    window.location.reload();
+                  }}
+                  className="text-red-600 hover:text-red-800 text-xs font-medium block mx-auto"
+                >
+                  Clear Sample Data & Reset
+                </button>
               </div>
             </div>
+          ) : (
+            <div className="border-2 border-red-300 rounded-lg p-6 mb-6 bg-red-50">
+              <div className="text-center">
+                <div className="text-red-600 mb-4">
+                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-lg text-red-800 mb-2">No Resume Found</h3>
+                <p className="text-red-700 mb-4">
+                  You need to upload a resume to your profile before applying for jobs.
+                </p>
+                <button
+                  onClick={() => onNavigate('candidate-dashboard')}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium"
+                >
+                  Upload Resume in Profile
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center mt-6">
+            <button
+              onClick={prevStep}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              onClick={userProfile?.resume ? nextStep : () => onNavigate('candidate-dashboard')}
+              className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                userProfile?.resume 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-400 text-white cursor-not-allowed'
+              }`}
+              disabled={!userProfile?.resume}
+            >
+              {userProfile?.resume ? 'Continue' : 'Upload Resume First'}
+            </button>
           </div>
         </div>
-
-        <div className="flex justify-between items-center mt-6">
-          <button
-            onClick={prevStep}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            Back
-          </button>
-          <button
-            onClick={nextStep}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Continue
-          </button>
-        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Step 3: Questions
   const renderQuestionsStep = () => (
@@ -445,15 +527,24 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
             </div>
             <div className="flex items-center">
               <div className="bg-blue-100 p-2 rounded mr-3">📄</div>
-              <span className="text-blue-600">Mutheeswaran.Resume.pdf</span>
+              <span className="text-blue-600">{JSON.parse(localStorage.getItem('user') || '{}').resume?.name || 'Resume.pdf'}</span>
             </div>
             
             <div className="bg-orange-100 p-4 rounded-lg mt-4">
               <div className="flex items-start">
-                <img src="/api/placeholder/50/50" alt="Profile" className="w-12 h-12 rounded-full mr-3" />
+                {(() => {
+                  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                  return userData.profilePhoto ? (
+                    <img src={userData.profilePhoto} alt="Profile" className="w-12 h-12 rounded-full mr-3" />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">
+                      {userData.name ? userData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'MG'}
+                    </div>
+                  );
+                })()}
                 <div>
-                  <h4 className="font-bold">MUTHEESWARAN G</h4>
-                  <p className="text-sm text-gray-600">STUDENT</p>
+                  <h4 className="font-bold">{JSON.parse(localStorage.getItem('user') || '{}').name || 'Your Name'}</h4>
+                  <p className="text-sm text-gray-600">{JSON.parse(localStorage.getItem('user') || '{}').title || JSON.parse(localStorage.getItem('user') || '{}').jobTitle || 'Professional'}</p>
                 </div>
               </div>
             </div>

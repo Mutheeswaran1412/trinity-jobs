@@ -35,6 +35,7 @@ import SkillDetailPage from './pages/SkillDetailPage';
 import CareerResources from './components/CareerResources';
 import CandidateDashboardPage from './pages/CandidateDashboardPage';
 import EmployerDashboardPage from './pages/EmployerDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import SearchEngine from './components/SearchEngine';
 import BackButton from './components/BackButton';
 import CompanyProfilePage from './pages/CompanyProfilePage';
@@ -55,6 +56,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ResumeModerationDashboard from './pages/ResumeModerationDashboard';
 import JobModerationDashboard from './pages/JobModerationDashboard';
 import ResumeUploadWithModeration from './components/ResumeUploadWithModeration';
+import AIScoringDemoPage from './pages/AIScoringDemoPage';
 
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
@@ -72,7 +74,7 @@ function App() {
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
   const [showCandidateRegisterModal, setShowCandidateRegisterModal] = useState(false);
   const [showEmployerRegisterModal, setShowEmployerRegisterModal] = useState(false);
-  const [user, setUser] = useState<{name: string, type: 'candidate' | 'employer'} | null>(null);
+  const [user, setUser] = useState<{name: string, type: 'candidate' | 'employer' | 'admin'} | null>(null);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -87,13 +89,22 @@ function App() {
         const userData = JSON.parse(savedUser);
         console.log('Loading user from localStorage:', userData);
         console.log('Raw userType from localStorage:', userData.userType);
-        const userType = userData.userType === 'employer' ? 'employer' : 'candidate';
+        // Check for admin user first
+        let userType: 'candidate' | 'employer' | 'admin' = 'candidate';
+        if (userData.userType === 'admin' || userData.email === 'admin@trinity.com' || userData.fullName === 'Trinity Admin') {
+          userType = 'admin';
+        } else if (userData.userType === 'employer') {
+          userType = 'employer';
+        } else {
+          userType = 'candidate';
+        }
+        
         console.log('Mapped user type:', userType);
         setUser({
           name: userType === 'employer' 
             ? (userData.companyName || userData.fullName || userData.email?.split('@')[0] || 'User')
             : (userData.fullName || userData.email?.split('@')[0] || 'User'),
-          type: userType
+          type: userType as 'candidate' | 'employer'
         });
       } catch (error) {
         console.error('Error parsing saved user data:', error);
@@ -246,7 +257,7 @@ function App() {
     setShowEmployerRegisterModal(false);
   };
 
-  const handleLogin = (userData: {name: string, type: 'candidate' | 'employer'}) => {
+  const handleLogin = (userData: {name: string, type: 'candidate' | 'employer' | 'admin'}) => {
     setUser(userData);
     closeModals();
   };
@@ -357,15 +368,19 @@ function App() {
           isVisible={notification.isVisible}
           onClose={() => setNotification({ ...notification, isVisible: false })}
         />
-        <div className="min-h-screen bg-white">
-          <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
-          {user?.type === 'employer' ? (
-            <EmployerDashboardPage onNavigate={handleNavigation} />
-          ) : (
-            <CandidateDashboardPage onNavigate={handleNavigation} />
-          )}
-          <Footer onNavigate={handleNavigation} />
-        </div>
+        {user?.type === 'admin' ? (
+          <AdminDashboardPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        ) : (
+          <div className="min-h-screen bg-white">
+            <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+            {user?.type === 'employer' ? (
+              <EmployerDashboardPage onNavigate={handleNavigation} />
+            ) : (
+              <CandidateDashboardPage onNavigate={handleNavigation} />
+            )}
+            <Footer onNavigate={handleNavigation} />
+          </div>
+        )}
       </>
     );
   }
@@ -583,6 +598,16 @@ function App() {
             }}
           />
         </div>
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'ai-scoring-demo') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <AIScoringDemoPage onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       </div>
     );
