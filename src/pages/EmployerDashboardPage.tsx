@@ -7,6 +7,7 @@ interface EmployerDashboardPageProps {
 
 const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigate }) => {
   const [user, setUser] = useState<any>(null);
+  const [companyName, setCompanyName] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
     if (userData) {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
+      setCompanyName(parsedUser.company || parsedUser.companyName || 'ZyncJobs Technology Solutions LLC');
       fetchEmployerData(parsedUser);
     }
   }, []);
@@ -36,7 +38,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           const matchesEmail = job.employerEmail === userData.email;
           const matchesCompany = job.company?.toLowerCase() === userData.companyName?.toLowerCase();
           const matchesSpecial = userData.email === 'muthees@trinitetech.com' && 
-            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('trinity'));
+            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('zyncjobs'));
           
           const matches = matchesId || matchesEmail || matchesCompany || matchesSpecial;
           
@@ -62,7 +64,18 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   };
 
   const getCompanyLogo = (name: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=6366f1&color=ffffff&bold=true`;
+    const COMPANY_DOMAIN_MAP: { [key: string]: string } = {
+      'google': 'google.com', 'amazon': 'amazon.com', 'microsoft': 'microsoft.com',
+      'apple': 'apple.com', 'meta': 'meta.com', 'facebook': 'facebook.com',
+      'netflix': 'netflix.com', 'tesla': 'tesla.com', 'ibm': 'ibm.com',
+      'oracle': 'oracle.com', 'salesforce': 'salesforce.com', 'adobe': 'adobe.com',
+      'intel': 'intel.com', 'nvidia': 'nvidia.com', 'cisco': 'cisco.com',
+      'zoho': 'zoho.com', 'infosys': 'infosys.com', 'tcs': 'tcs.com',
+      'wipro': 'wipro.com', 'cognizant': 'cognizant.com', 'accenture': 'accenture.com'
+    };
+    const lowerName = name.toLowerCase().trim();
+    const domain = COMPANY_DOMAIN_MAP[lowerName] || `${lowerName}.com`;
+    return `https://img.logo.dev/${domain}?token=pk_X-1ZO13CRYuFHfXgt5hQ`;
   };
   return (
     <div className="min-h-screen bg-gray-50">
@@ -87,9 +100,17 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           <div className="flex items-start space-x-8">
             <div className="bg-white p-4 rounded-lg">
               <img
-                src={getCompanyLogo(user?.companyName || 'Trinity')}
+                src={getCompanyLogo(companyName)}
                 alt="Company Logo"
-                className="w-24 h-24 rounded"
+                className="w-24 h-24 rounded object-contain bg-white"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  const domain = companyName.toLowerCase().trim() + '.com';
+                  img.onerror = () => {
+                    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&size=128&background=6366f1&color=ffffff&bold=true`;
+                  };
+                  img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+                }}
               />
             </div>
           </div>
@@ -100,7 +121,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">
-            {user?.companyName || 'Trinity Technology Solutions LLC'}
+            {companyName}
           </h1>
 
           {/* Tabs */}
@@ -135,10 +156,10 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
               {activeTab === 'overview' && (
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                    {user?.companyName || 'Trinity Technology Solutions LLC'}
+                    {companyName}
                   </h3>
                   <p className="text-gray-700 leading-relaxed">
-                    {user?.companyName || 'Trinity Technology Solutions LLC'} is currently accepting resumes for a variety of positions. Please review the database of positions that we are seeking to fill and contact us for additional information about any specific opportunity.
+                    {companyName} is currently accepting resumes for a variety of positions. Please review the database of positions that we are seeking to fill and contact us for additional information about any specific opportunity.
                   </p>
                 </div>
               )}
@@ -168,8 +189,16 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                         <div key={job._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-start space-x-4">
-                              <div className="w-12 h-12 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                                <div className="text-blue-600 font-bold text-sm">T</div>
+                              <div className="w-12 h-12 bg-white border border-gray-200 rounded flex items-center justify-center flex-shrink-0 p-1">
+                                <img
+                                  src={getCompanyLogo(companyName)}
+                                  alt={companyName}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&size=48&background=6366f1&color=ffffff&bold=true`;
+                                  }}
+                                />
                               </div>
                               <div className="flex-1">
                                 <h4 
@@ -179,7 +208,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                   {job.title}
                                 </h4>
                                 <div className="text-gray-600 mb-2">
-                                  <span className="font-medium">{user?.companyName || 'Trinity Technology Solutions LLC'}</span>
+                                  <span className="font-medium">{companyName}</span>
                                   <span className="mx-2">•</span>
                                   <span>{job.location}</span>
                                 </div>
@@ -223,14 +252,36 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Stats</h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600">Headquarters</p>
-                    <p className="font-medium text-gray-900">Plano, TX, USA</p>
+                    <p className="text-sm text-gray-600">Company Logo</p>
+                    <img
+                      src={getCompanyLogo(companyName)}
+                      alt={companyName}
+                      className="w-16 h-16 rounded object-contain bg-white border border-gray-200 p-2 mt-2"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        const domain = companyName.toLowerCase().trim() + '.com';
+                        img.onerror = () => {
+                          img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&size=64&background=random&bold=true`;
+                        };
+                        img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+                      }}
+                    />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Website</p>
-                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                      View Website
+                    <a 
+                      href={`https://${companyName.toLowerCase().trim()}.com`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
+                    >
+                      <Globe className="w-4 h-4" />
+                      <span>{companyName.toLowerCase().trim()}.com</span>
                     </a>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Headquarters</p>
+                    <p className="font-medium text-gray-900">Plano, TX, USA</p>
                   </div>
                 </div>
               </div>
@@ -249,6 +300,12 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                     className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
                   >
                     <p className="font-medium text-green-900">Manage Jobs</p>
+                  </button>
+                  <button 
+                    onClick={() => onNavigate('application-management')}
+                    className="w-full text-left p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+                  >
+                    <p className="font-medium text-orange-900">Manage Applications</p>
                   </button>
                   <button 
                     onClick={() => onNavigate('hire-talent')}

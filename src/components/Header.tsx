@@ -267,7 +267,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                       <User className="w-5 h-5 mr-3 text-gray-400" />
                       Profile
                     </button>
-                    {user?.name === 'Trinity Admin' && (
+                    {user?.name === 'ZyncJobs Admin' && (
                       <>
                         <button 
                           onClick={() => {

@@ -45,7 +45,10 @@ const RegisterPage = ({ onNavigate }: { onNavigate?: (page: string) => void }) =
             <p className="text-gray-600 mb-8 leading-relaxed">
               Post jobs, find qualified candidates, and build your dream team with our powerful recruiting tools and insights.
             </p>
-            <button className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2">
+            <button 
+              onClick={() => onNavigate && onNavigate('employer-register')}
+              className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+            >
               <span>Post a job</span>
               <ArrowRight className="w-5 h-5" />
             </button>

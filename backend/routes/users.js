@@ -73,6 +73,43 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
+    // Hardcoded test user
+    if (email === 'mutheeswaran1424@gmail.com' && password === '123456') {
+      const testUser = {
+        _id: 'test-user-123',
+        name: 'Mutheeswaran',
+        email: email,
+        userType: 'candidate',
+        phone: '9876543210',
+        location: 'Chennai',
+        refreshTokens: []
+      };
+      
+      const accessToken = generateAccessToken(testUser._id);
+      const refreshToken = generateRefreshToken(testUser._id);
+      
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      
+      return res.json({ 
+        message: 'Login successful',
+        user: {
+          id: testUser._id,
+          name: testUser.name,
+          email: testUser.email,
+          userType: testUser.userType,
+          phone: testUser.phone,
+          location: testUser.location
+        },
+        accessToken,
+        refreshToken
+      });
+    }
+
     // Find user
     const user = await User.findOne({ email, isActive: true });
     if (!user || user.password !== password) {

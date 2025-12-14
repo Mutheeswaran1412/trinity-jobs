@@ -22,8 +22,8 @@ export const config = {
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth
-  LOGIN: `${config.API_URL}/api/login`,
-  REGISTER: `${config.API_URL}/api/register`,
+  LOGIN: `${config.API_URL}/api/users/login`,
+  REGISTER: `${config.API_URL}/api/users/register`,
   LOGOUT: `${config.API_URL}/api/logout`,
   REFRESH_TOKEN: `${config.API_URL}/api/refresh-token`,
   

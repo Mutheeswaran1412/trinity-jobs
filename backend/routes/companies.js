@@ -1,23 +1,77 @@
 import express from 'express';
 import Company from '../models/Company.js';
 import Job from '../models/Job.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// Load companies from JSON file
+let popularCompanies = [];
+try {
+  const companiesPath = path.join(__dirname, '../data/companies.json');
+  const data = fs.readFileSync(companiesPath, 'utf8');
+  popularCompanies = JSON.parse(data);
+  console.log(`✅ Loaded ${popularCompanies.length} companies from JSON`);
+} catch (error) {
+  console.error('❌ Error loading companies.json:', error.message);
+}
 
 // GET /api/companies - Get all companies
 router.get('/', async (req, res) => {
   try {
     console.log('Fetching companies from Company collection');
     const { search, industry, employees, workSetting, isHiring } = req.query;
-    const query = {};
-
+    
+    // If search query, return popular companies + DB results
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-        { industry: { $regex: search, $options: 'i' } }
-      ];
+      const query = search.toLowerCase();
+      
+      // Search in popular companies from JSON
+      const popularMatches = popularCompanies
+        .filter(c => c.name.toLowerCase().includes(query))
+        .slice(0, 10)
+        .map(c => ({
+          id: c.id,
+          name: c.name,
+          domain: c.domain,
+          logo: c.logo,
+          source: 'json'
+        }));
+      
+      // Search in database
+      const dbQuery = {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { location: { $regex: search, $options: 'i' } },
+          { industry: { $regex: search, $options: 'i' } }
+        ]
+      };
+      
+      const dbCompanies = await Company.find(dbQuery).limit(5).sort({ name: 1 });
+      const dbMatches = dbCompanies.map(c => ({
+        id: c._id.toString(),
+        name: c.name,
+        logo: c.logo || (c.website ? `https://logo.clearbit.com/${c.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}` : ''),
+        followers: c.followers || 1000,
+        source: 'database'
+      }));
+      
+      // Combine and deduplicate
+      const allMatches = [...popularMatches, ...dbMatches];
+      const uniqueMatches = Array.from(
+        new Map(allMatches.map(item => [item.name.toLowerCase(), item])).values()
+      ).slice(0, 10);
+      
+      return res.json(uniqueMatches);
     }
+    
+    // Regular query without search
+    const query = {};
     if (industry) query.industry = industry;
     if (employees) query.employees = employees;
     if (workSetting) query.workSetting = workSetting;

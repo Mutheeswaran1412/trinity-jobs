@@ -10,14 +10,10 @@ export interface LoginData {
 export interface RegisterData {
   email: string;
   password: string;
-  fullName: string;
-  userType: 'jobseeker' | 'employer';
+  name: string;
+  userType: 'candidate' | 'employer';
   phone?: string;
-  companyName?: string;
-  companySize?: string;
-  industry?: string;
-  skills?: string[];
-  experience?: string;
+  company?: string;
   location?: string;
 }
 

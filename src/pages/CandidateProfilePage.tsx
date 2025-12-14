@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles } from 'lucide-react';
+import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles, Linkedin } from 'lucide-react';
 import Notification from '../components/Notification';
 import ResumeUploadWithModeration from '../components/ResumeUploadWithModeration';
+import LinkedInImportModal from '../components/LinkedInImportModal';
 import { aiSuggestions } from '../utils/aiSuggestions';
 
 interface CandidateProfilePageProps {
@@ -66,6 +67,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -301,13 +303,24 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Get existing user data to preserve resume
+      const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
+      
       const profileData = {
         ...formData,
         name: formData.fullName,
         skills: formData.skills,
         title: formData.jobTitle,
         userType: 'jobseeker',
-        profile_completed: !!(formData.fullName && formData.skills && formData.location && formData.jobTitle)
+        profile_completed: !!(formData.fullName && formData.skills && formData.location && formData.jobTitle),
+        profile: {
+          ...existingUser.profile,
+          resume: existingUser.profile?.resume || existingUser.resume,
+          skills: formData.skills,
+          experience: formData.yearsExperience,
+          bio: formData.experience
+        },
+        resume: existingUser.resume || existingUser.profile?.resume
       };
       
       // Save to localStorage for dashboard display
@@ -361,10 +374,20 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
             <p className="text-gray-600">Complete your profile to appear in employer searches and get matched with the best job opportunities</p>
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Required for visibility:</strong> Full Name, Skills, Location, and Job Title are required to appear in candidate searches.
-              </p>
+            <div className="mt-4 space-y-3">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Required for visibility:</strong> Full Name, Skills, Location, and Job Title are required to appear in candidate searches.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLinkedInModal(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-colors"
+              >
+                <Linkedin className="w-5 h-5" />
+                <span>Import from LinkedIn</span>
+              </button>
             </div>
           </div>
 
@@ -701,6 +724,14 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         onClose={() => setShowResumeModal(false)}
         onSuccess={(resumeData) => {
           setFormData({ ...formData, resume: resumeData });
+          
+          // Save resume to user profile in localStorage
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          userData.profile = userData.profile || {};
+          userData.profile.resume = resumeData.url || resumeData;
+          userData.resume = resumeData; // Also save at root level for compatibility
+          localStorage.setItem('user', JSON.stringify(userData));
+          
           setNotification({
             type: 'success',
             message: 'Resume uploaded successfully!',
@@ -729,6 +760,34 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
           });
         }}
         userProfile={formData}
+      />
+      
+      <LinkedInImportModal
+        isOpen={showLinkedInModal}
+        onClose={() => setShowLinkedInModal(false)}
+        onImport={(data) => {
+          setFormData({
+            ...formData,
+            fullName: data.name || formData.fullName,
+            email: data.email || formData.email,
+            phone: data.phone || formData.phone,
+            location: data.location || formData.location,
+            jobTitle: data.headline || formData.jobTitle,
+            experience: data.experience?.map((exp: any) => 
+              `${exp.title} at ${exp.company}\n${exp.duration}\n${exp.description}`
+            ).join('\n\n') || formData.experience,
+            education: data.education?.map((edu: any) => 
+              `${edu.degree} in ${edu.field} from ${edu.school} (${edu.year})`
+            ).join('\n') || formData.education,
+            skills: data.skills?.length > 0 ? data.skills : formData.skills,
+            certifications: data.certifications?.join(', ') || formData.certifications
+          });
+          setNotification({
+            type: 'success',
+            message: 'LinkedIn profile imported successfully!',
+            isVisible: true
+          });
+        }}
       />
     </div>
     </>

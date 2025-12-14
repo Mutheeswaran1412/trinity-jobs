@@ -135,7 +135,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                 </div>
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-4 h-4" />
-                  <span>{job.salary}</span>
+                  <span>{typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4" />

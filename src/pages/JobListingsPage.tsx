@@ -122,9 +122,32 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   
   const handleApplyNow = (job: any) => {
     if (onNavigate) {
-      // Store job data for application
-      localStorage.setItem('selectedJob', JSON.stringify(job));
-      onNavigate('job-application');
+      // Store only essential job data to avoid quota issues
+      const essentialJobData = {
+        _id: job._id,
+        title: job.title || job.jobTitle,
+        company: job.company,
+        location: job.location,
+        description: job.description?.substring(0, 300) || '',
+        salary: job.salary,
+        type: job.type
+      };
+      
+      try {
+        localStorage.setItem('selectedJob', JSON.stringify(essentialJobData));
+        onNavigate('job-application');
+      } catch (error) {
+        console.error('Storage quota exceeded:', error);
+        // Clear old data and try again
+        localStorage.removeItem('savedJobDetails_user');
+        localStorage.removeItem('userApplications');
+        try {
+          localStorage.setItem('selectedJob', JSON.stringify(essentialJobData));
+          onNavigate('job-application');
+        } catch (retryError) {
+          alert('Storage full. Please clear browser data.');
+        }
+      }
     }
   };
   

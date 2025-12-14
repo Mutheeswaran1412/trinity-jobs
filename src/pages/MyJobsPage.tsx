@@ -12,6 +12,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
   const [showExpiredJobs, setShowExpiredJobs] = useState(false);
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
   const [postedJobs, setPostedJobs] = useState<any[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,12 +23,35 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       if (savedJobDetails) {
         setSavedJobs(JSON.parse(savedJobDetails));
       }
+      // Load applied jobs
+      fetchAppliedJobs();
     } else if (user?.type === 'employer') {
       // Load employer's posted jobs
       fetchEmployerJobs();
     }
     setLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === 'Applied' && user?.type === 'candidate') {
+      console.log('MyJobs: Applied tab activated, fetching jobs...');
+      fetchAppliedJobs();
+    }
+  }, [activeTab]);
+
+  // Auto-refresh every 30 seconds when on Applied tab
+  useEffect(() => {
+    let interval;
+    if (activeTab === 'Applied' && user?.type === 'candidate') {
+      interval = setInterval(() => {
+        console.log('MyJobs: Auto-refreshing applied jobs...');
+        fetchAppliedJobs();
+      }, 30000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeTab, user]);
 
   const fetchEmployerJobs = async () => {
     try {
@@ -45,7 +69,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
           const matchesEmail = job.employerEmail === userData.email || job.employer_email === userData.email;
           const matchesCompany = job.company?.toLowerCase() === userData.companyName?.toLowerCase();
           const matchesSpecial = userData.email === 'muthees@trinitetech.com' && 
-            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('trinity'));
+            (job.company?.toLowerCase().includes('muthees') || job.company?.toLowerCase().includes('zyncjobs'));
           
           const matches = matchesId || matchesEmail || matchesCompany || matchesSpecial;
           
@@ -65,6 +89,29 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       }
     } catch (error) {
       console.error('Error fetching employer jobs:', error);
+    }
+  };
+
+  const fetchAppliedJobs = async () => {
+    if (!user?.email) {
+      console.log('MyJobs: No user email found:', user);
+      return;
+    }
+    try {
+      console.log('MyJobs: Fetching applications for email:', user.email);
+      const response = await fetch(`http://localhost:5000/api/applications/candidate/${user.email}`);
+      console.log('MyJobs: Response status:', response.status);
+      if (response.ok) {
+        const applications = await response.json();
+        console.log('MyJobs: Fetched applications:', applications);
+        console.log('MyJobs: Applications length:', applications.length);
+        setAppliedJobs(applications);
+        console.log('MyJobs: Applied jobs state updated');
+      } else {
+        console.log('MyJobs: Response not ok:', await response.text());
+      }
+    } catch (error) {
+      console.error('MyJobs: Error fetching applied jobs:', error);
     }
   };
 
@@ -171,6 +218,18 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
               <h2 className="text-2xl font-semibold text-gray-900">
                 {activeTab} jobs
               </h2>
+              
+              {activeTab === 'Applied' && (
+                <button
+                  onClick={() => {
+                    console.log('MyJobs: Manual refresh clicked');
+                    fetchAppliedJobs();
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  Refresh
+                </button>
+              )}
               
               {activeTab === 'Saved' && (
                 <div className="flex items-center space-x-3">
@@ -286,10 +345,62 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                   </div>
                 ) : null}
                 
+                {/* Candidate Applied Jobs */}
+                {user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {appliedJobs.map((application) => (
+                      <div key={application._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-xl font-semibold text-gray-900">{application.jobId.jobTitle}</h3>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                application.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
+                                application.status === 'shortlisted' ? 'bg-green-100 text-green-800' :
+                                application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                application.status === 'hired' ? 'bg-purple-100 text-purple-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                              </span>
+                            </div>
+                            <p className="text-lg text-blue-600 font-medium mb-2">{application.jobId.company}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                              <span>Applied: {new Date(application.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            {application.coverLetter && (
+                              <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg mb-3">
+                                <strong>Cover Letter:</strong> {application.coverLetter.length > 100 ? 
+                                  `${application.coverLetter.substring(0, 100)}...` : 
+                                  application.coverLetter
+                                }
+                              </p>
+                            )}
+                          </div>
+                          <div className="ml-6 flex flex-col space-y-2">
+                            <button 
+                              onClick={() => onNavigate('job-detail', { 
+                                jobTitle: application.jobId.jobTitle, 
+                                jobId: application.jobId._id,
+                                companyName: application.jobId.company
+                              })}
+                              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700"
+                            >
+                              View Job
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                
                 {/* Empty State */}
                 {((user?.type === 'candidate' && activeTab === 'Saved' && savedJobs.length === 0) ||
+                  (user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length === 0) ||
                   (user?.type === 'employer' && activeTab === 'Posted' && postedJobs.length === 0) ||
-                  (activeTab === 'Applied' || activeTab === 'Applications')) ? (
+                  (activeTab === 'Applications')) ? (
             <div className="text-center py-16">
               <div className="mb-8">
                 <div className="relative inline-block">

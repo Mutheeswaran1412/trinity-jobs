@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { X, User, Mail, Lock, Eye, EyeOff, CheckCircle, Linkedin } from 'lucide-react';
 import { authAPI } from '../api/auth';
+import LinkedInImportModal from './LinkedInImportModal';
 
 interface CandidateRegisterModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] });
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
 
   if (!isOpen) return null;
 
@@ -117,6 +119,15 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
             <p className="text-gray-600 text-sm">Join to find your dream job</p>
+            
+            <button
+              type="button"
+              onClick={() => setShowLinkedInModal(true)}
+              className="mt-3 flex items-center justify-center space-x-2 w-full py-2 px-4 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+            >
+              <Linkedin className="w-4 h-4" />
+              <span>Import from LinkedIn</span>
+            </button>
           </div>
 
           {error && (
@@ -267,6 +278,16 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
+
+          <LinkedInImportModal
+            isOpen={showLinkedInModal}
+            onClose={() => setShowLinkedInModal(false)}
+            onImport={(data) => {
+              setFullName(data.name || '');
+              setEmail(data.email || '');
+              setShowLinkedInModal(false);
+            }}
+          />
 
           <div className="mt-4 text-center">
             <p className="text-gray-600 text-sm">

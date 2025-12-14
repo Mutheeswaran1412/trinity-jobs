@@ -21,11 +21,11 @@ router.get('/', async (req, res) => {
     const jobs = await Job.find(query)
       .sort({ createdAt: -1 })
       .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .skip((page - 1) * limit)
+      .lean();
 
     const total = await Job.countDocuments(query);
 
-    // For compatibility with frontend, return just the jobs array
     res.json(jobs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
 // GET /api/jobs/:id - Get single job
 router.get('/:id', async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id);
+    const job = await Job.findById(req.params.id).lean();
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
     }
@@ -72,30 +72,14 @@ router.post('/', [
     
     const job = new Job(jobData);
     
-    // Auto-moderate with Mistral AI on creation
-    console.log('🤖 Starting Mistral AI job analysis for:', jobData.jobTitle);
-    try {
-      const mistralAnalysis = await mistralDetector.detectJobIssues(jobData);
-      console.log('✅ Mistral AI Analysis Result:', mistralAnalysis);
-      
-      job.moderationFlags = {
-        isSpam: mistralAnalysis.isSpam,
-        isFake: mistralAnalysis.isFake,
-        hasComplianceIssues: mistralAnalysis.hasComplianceIssues,
-        isDuplicate: false
-      };
-      
-      // Only auto-approve very clean jobs, otherwise keep pending for admin review
-      if (mistralAnalysis.recommendation === 'approve' && mistralAnalysis.riskScore < 20) {
-        job.status = 'approved';
-        console.log('✅ Job auto-approved by Mistral AI');
-      } else {
-        console.log('⏳ Job kept pending for admin review. Risk score:', mistralAnalysis.riskScore);
-      }
-    } catch (error) {
-      console.error('❌ Mistral moderation failed:', error.message);
-      // Keep as pending if AI fails
-    }
+    // Auto-approve jobs (Mistral AI disabled)
+    job.status = 'approved';
+    job.moderationFlags = {
+      isSpam: false,
+      isFake: false,
+      hasComplianceIssues: false,
+      isDuplicate: false
+    };
     
     await job.save();
     res.status(201).json(job);
@@ -131,7 +115,7 @@ router.get('/search/query', async (req, res) => {
       }
     }
 
-    const jobs = await Job.find(query).sort({ createdAt: -1 }).limit(20);
+    const jobs = await Job.find(query).sort({ createdAt: -1 }).limit(20).lean();
     res.json(jobs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -145,7 +129,7 @@ router.get('/employer/:employerId', async (req, res) => {
       employerId: req.params.employerId,
       isActive: true,
       status: { $in: ['approved', 'pending'] }
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
     res.json(jobs);
   } catch (error) {

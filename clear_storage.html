@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage</title>
+</head>
+<body>
+    <h1>Clear Browser Storage</h1>
+    <button onclick="clearStorage()">Clear All Storage</button>
+    <div id="result"></div>
+
+    <script>
+        function clearStorage() {
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Show result
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Storage cleared successfully!</p>';
+            
+            console.log('All storage cleared');
+        }
+        
+        // Show current storage usage
+        function showStorageUsage() {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length;
+                }
+            }
+            console.log('Current localStorage usage:', total, 'characters');
+        }
+        
+        showStorageUsage();
+    </script>
+</body>
+</html>

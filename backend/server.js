@@ -1,4 +1,6 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -8,6 +10,7 @@ import nodemailer from 'nodemailer';
 import connectDB from './config/database.js';
 import jobRoutes from './routes/jobs.js';
 import userRoutes from './routes/users.js';
+import applicationRoutes from './routes/applications.js';
 import moderationRoutes from './routes/moderation.js';
 import resumeBasicRoutes from './routes/resumeBasic.js';
 import adminJobsRoutes from './routes/adminJobs.js';
@@ -28,17 +31,95 @@ import aiScoringFlowRoutes from './routes/aiScoringFlow.js';
 import employerCandidatesRoutes from './routes/employerCandidates.js';
 import adminSystemRoutes from './routes/adminSystem.js';
 import adminNotificationRoutes from './routes/adminNotifications.js';
+import notificationRoutes from './routes/notifications.js';
+import messageRoutes from './routes/messages.js';
+import profileRoutes from './routes/profile.js';
+import autocompleteRoutes from './routes/autocomplete.js';
+import companyAutocompleteRoutes from './routes/companyAutocomplete.js';
+import linkedinParserRoutes from './routes/linkedinParser.js';
+import Notification from './models/Notification.js';
+import Message from './models/Message.js';
+
 import { generateAccessToken, generateRefreshToken } from './utils/jwt.js';
 import { errorHandler, notFound } from './utils/errorHandler.js';
 import { validateEnv } from './utils/envValidator.js';
+
 
 dotenv.config();
 validateEnv();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 connectDB();
+
+// Socket.io connection
+const userSockets = new Map();
+
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+  
+  socket.on('register', (userId) => {
+    userSockets.set(userId, socket.id);
+    console.log(`User ${userId} registered with socket ${socket.id}`);
+  });
+  
+  socket.on('send_message', async (data) => {
+    try {
+      const { senderId, receiverId, message } = data;
+      const conversationId = [senderId, receiverId].sort().join('_');
+      
+      const newMessage = new Message({
+        conversationId,
+        senderId,
+        receiverId,
+        message
+      });
+      await newMessage.save();
+      
+      const receiverSocketId = userSockets.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('new_message', newMessage);
+      }
+      socket.emit('message_sent', newMessage);
+    } catch (error) {
+      socket.emit('error', error.message);
+    }
+  });
+  
+  socket.on('disconnect', () => {
+    for (const [userId, socketId] of userSockets.entries()) {
+      if (socketId === socket.id) {
+        userSockets.delete(userId);
+        break;
+      }
+    }
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+// Helper to send notification
+export async function sendNotification(userId, type, title, message, link = null) {
+  try {
+    const notification = new Notification({ userId, type, title, message, link });
+    await notification.save();
+    
+    const socketId = userSockets.get(userId);
+    if (socketId) {
+      io.to(socketId).emit('new_notification', notification);
+    }
+    return notification;
+  } catch (error) {
+    console.error('Notification error:', error);
+  }
+}
 
 app.use(helmet());
 app.use(cors({
@@ -51,8 +132,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/applications', applicationRoutes);
 app.use('/api/moderation', moderationRoutes);
-app.use('/api/resume', resumeBasicRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
 app.use('/api/test', testMistralRoutes);
 app.use('/api/companies', companyRoutes);
@@ -71,6 +152,75 @@ app.use('/api/ai-flow', aiScoringFlowRoutes);
 app.use('/api/employer', employerCandidatesRoutes);
 app.use('/api/admin/system', adminSystemRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
+app.use('/api/resume', resumeBasicRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/autocomplete', autocompleteRoutes);
+app.use('/api/companies', companyAutocompleteRoutes);
+app.use('/api', linkedinParserRoutes);
+
+// Resume parser with AI
+app.post('/api/resume-parser/parse', async (req, res) => {
+  try {
+    const { base64Data } = req.body;
+    
+    if (!base64Data) {
+      return res.status(400).json({ success: false, error: 'No PDF data provided' });
+    }
+
+    console.log('🔍 Processing resume...');
+    
+    // Convert base64 to buffer and extract text
+    const pdfBuffer = Buffer.from(base64Data, 'base64');
+    const pdfTextExtractor = (await import('./services/pdfTextExtractor.js')).default;
+    const resumeText = await pdfTextExtractor.extractTextFromBuffer(pdfBuffer);
+    
+    console.log('📄 Extracted text length:', resumeText.length);
+    
+    if (!resumeText.trim()) {
+      return res.status(400).json({ success: false, error: 'Could not extract text from PDF' });
+    }
+    
+    // Use the AI parser to extract structured data
+    const { resumeParser } = await import('./utils/resumeParserAI.js');
+    const profileData = await resumeParser.parseResumeToProfile(resumeText);
+    
+    // Convert to the expected format
+    const parsedData = {
+      personalInfo: {
+        name: profileData.name || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
+        location: profileData.location || ''
+      },
+      summary: profileData.summary || '',
+      skills: profileData.skills || [],
+      experience: profileData.workExperience ? [{
+        title: profileData.title || '',
+        company: 'Previous Company',
+        duration: profileData.experience ? `${profileData.experience} years` : '',
+        description: profileData.workExperience,
+        current: false
+      }] : [],
+      education: profileData.education ? [{
+        degree: profileData.education,
+        institution: 'University/College',
+        duration: ''
+      }] : [],
+      projects: [],
+      certifications: profileData.certifications || [],
+      languages: ['English']
+    };
+    
+    console.log('✅ Resume parsing completed!');
+    res.json({ success: true, data: parsedData });
+  } catch (error) {
+    console.error('❌ Parse error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 // Password reset functionality
 const resetTokens = new Map();
@@ -217,7 +367,7 @@ app.post('/api/login', async (req, res) => {
     let user = null;
     
     if (email === 'mutheeswaran1424@gmail.com' && password === '123456') {
-      user = { id: '1', email: email, fullName: 'Mutheeswaran', userType: 'candidate' };
+      user = { id: '1', email: email, name: 'Mutheeswaran', fullName: 'Mutheeswaran', userType: 'candidate' };
     } else if (email === 'test@candidate.com' && password === '123456') {
       user = { id: '2', email: email, fullName: 'Test Candidate', userType: 'candidate' };
     } else if (email === 'test@employer.com' && password === '123456') {
@@ -303,6 +453,25 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+app.post('/api/generate-content', async (req, res) => {
+  try {
+    const { type, jobTitle, company, degree, school } = req.body;
+    let content = '';
+    
+    if (type === 'experience') {
+      content = `• Managed daily operations and improved efficiency by implementing new processes\n• Collaborated with cross-functional teams to deliver high-quality results\n• Analyzed data and provided insights to support strategic decision-making`;
+    } else if (type === 'education') {
+      content = `Graduated with ${degree || 'Bachelor\'s degree'} from ${school || 'University'}. Completed coursework in relevant subjects and developed strong analytical skills.`;
+    } else if (type === 'summary') {
+      content = `Dedicated ${jobTitle || 'professional'} with strong background and proven track record of delivering results.`;
+    }
+    
+    res.json({ content });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 function getSmartResponse(message) {
   if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
     return "Hello! 👋 I'm ZyncJobs AI Assistant. I can help you with job searching, resume building, interview preparation, and career advice. What would you like to know?";
@@ -335,8 +504,15 @@ function getSmartResponse(message) {
   return "I'm your ZyncJobs AI Assistant! 🤖 I can help with:\n\n🔍 Job searching & applications\n📄 Resume writing & optimization\n🎯 Interview preparation\n💰 Salary negotiation\n🚀 Skills development\n🏢 Company research\n\nWhat would you like to explore today?";
 }
 
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
+});
+
+// Test resume parser route
+app.get('/api/resume-parser/test', (req, res) => {
+  res.json({ message: 'Resume parser route is working!', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/test', async (req, res) => {
@@ -355,8 +531,9 @@ app.get('/api/test', async (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
+  console.log(`💬 Socket.io enabled for real-time features`);
 });

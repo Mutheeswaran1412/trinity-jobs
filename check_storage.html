@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Storage Usage</title>
+</head>
+<body>
+    <h1>Storage Usage Analysis</h1>
+    <div id="results"></div>
+
+    <script>
+        function analyzeStorage() {
+            let results = '<h2>LocalStorage Contents:</h2>';
+            let totalSize = 0;
+            let items = [];
+
+            // Analyze each item in localStorage
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    const value = localStorage[key];
+                    const size = value.length;
+                    totalSize += size;
+                    
+                    items.push({
+                        key: key,
+                        size: size,
+                        preview: value.substring(0, 100) + (value.length > 100 ? '...' : '')
+                    });
+                }
+            }
+
+            // Sort by size (largest first)
+            items.sort((a, b) => b.size - a.size);
+
+            results += `<p><strong>Total Size: ${totalSize} characters (${(totalSize/1024).toFixed(2)} KB)</strong></p>`;
+            results += '<table border="1" style="width:100%; border-collapse: collapse;">';
+            results += '<tr><th>Key</th><th>Size (chars)</th><th>Preview</th><th>Action</th></tr>';
+
+            items.forEach(item => {
+                results += `<tr>
+                    <td>${item.key}</td>
+                    <td>${item.size}</td>
+                    <td style="max-width: 300px; word-break: break-all;">${item.preview}</td>
+                    <td><button onclick="removeItem('${item.key}')">Remove</button></td>
+                </tr>`;
+            });
+
+            results += '</table>';
+            results += '<br><button onclick="clearAll()" style="background: red; color: white; padding: 10px;">Clear All Storage</button>';
+            
+            document.getElementById('results').innerHTML = results;
+        }
+
+        function removeItem(key) {
+            localStorage.removeItem(key);
+            console.log('Removed:', key);
+            analyzeStorage(); // Refresh the display
+        }
+
+        function clearAll() {
+            localStorage.clear();
+            console.log('All storage cleared');
+            analyzeStorage(); // Refresh the display
+        }
+
+        // Run analysis on page load
+        analyzeStorage();
+    </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Building, User, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { authAPI } from '../api/auth';
+import CompanyAutocomplete from './CompanyAutocomplete';
 
 interface EmployerRegisterModalProps {
   isOpen: boolean;
@@ -65,9 +66,9 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
       const response = await authAPI.register({
         email,
         password,
-        fullName: contactPersonName,
+        name: contactPersonName,
         userType: 'employer',
-        companyName
+        company: companyName
       });
       
       setSuccess('Employer account created successfully! You can now sign in.');
@@ -126,17 +127,12 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-              <div className="relative">
-                <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                  placeholder="Enter company name"
-                  required
-                />
-              </div>
+              <CompanyAutocomplete
+                value={companyName}
+                onChange={setCompanyName}
+                placeholder="Search company (e.g., Google, Microsoft)..."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              />
             </div>
 
             <div>

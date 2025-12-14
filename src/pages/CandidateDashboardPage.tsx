@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, ChevronDown, Info } from 'lucide-react';
+import { Camera, ChevronDown, Info, Linkedin } from 'lucide-react';
 import Notification from '../components/Notification';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import ResumeParserModal from '../components/ResumeParserModal';
+import LinkedInImportModal from '../components/LinkedInImportModal';
 
 interface CandidateDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -14,6 +15,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [profileVisibility, setProfileVisibility] = useState(false);
   const [completionPercentage, setCompletionPercentage] = useState(20);
   const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<any[]>([]);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -22,6 +24,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [showParserModal, setShowParserModal] = useState(false);
   const [showWelcomeParser, setShowWelcomeParser] = useState(false);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
 
   useEffect(() => {
     // Get user from localStorage
@@ -32,6 +35,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         console.log('Loading user data:', parsedUser);
         setUser(parsedUser);
         calculateProfileCompletion(parsedUser);
+        fetchApplications(parsedUser.email);
         
         // Show parser popup for new users without complete profile
         const profileComplete = parsedUser.name && parsedUser.location && parsedUser.skills?.length > 0;
@@ -61,6 +65,27 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
     }
     setLoading(false);
   }, []);
+
+  const fetchApplications = async (email: string) => {
+    if (!email) {
+      console.log('No email provided for fetching applications');
+      return;
+    }
+    try {
+      console.log('Dashboard: Fetching applications for email:', email);
+      const response = await fetch(`http://localhost:5000/api/applications/candidate/${email}`);
+      console.log('Dashboard: Response status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Dashboard: Fetched applications:', data);
+        setApplications(data);
+      } else {
+        console.log('Dashboard: Response not ok:', await response.text());
+      }
+    } catch (error) {
+      console.error('Dashboard: Error fetching applications:', error);
+    }
+  };
 
   const calculateProfileCompletion = (userData: any) => {
     let completed = 0;
@@ -174,72 +199,89 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         {activeTab === 'Applications' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">📊 Application Tracking</h2>
+              <h2 className="text-2xl font-bold text-gray-900">📊 My Applications</h2>
               <button
-                onClick={() => onNavigate('my-applications')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                onClick={() => fetchApplications(user?.email)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
               >
-                View All Applications
+                Refresh
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <div className="bg-blue-100 p-2 rounded">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Total Applied</p>
-                    <p className="text-xl font-bold">{JSON.parse(localStorage.getItem('userApplications') || '[]').length}</p>
-                  </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">{applications.length}</p>
+                  <p className="text-sm text-gray-600">Total Applied</p>
                 </div>
               </div>
-              
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <div className="bg-green-100 p-2 rounded">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">In Progress</p>
-                    <p className="text-xl font-bold">{JSON.parse(localStorage.getItem('userApplications') || '[]').filter((app: any) => app.status === 'Applied').length}</p>
-                  </div>
-                </div>
-              </div>
-              
               <div className="bg-yellow-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <div className="bg-yellow-100 p-2 rounded">
-                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Interviews</p>
-                    <p className="text-xl font-bold">0</p>
-                  </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-yellow-600">{applications.filter(app => app.status === 'pending').length}</p>
+                  <p className="text-sm text-gray-600">Pending</p>
                 </div>
               </div>
-              
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{applications.filter(app => app.status === 'shortlisted').length}</p>
+                  <p className="text-sm text-gray-600">Shortlisted</p>
+                </div>
+              </div>
               <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <div className="bg-purple-100 p-2 rounded">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Offers</p>
-                    <p className="text-xl font-bold">0</p>
-                  </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">{applications.filter(app => app.status === 'hired').length}</p>
+                  <p className="text-sm text-gray-600">Hired</p>
                 </div>
               </div>
             </div>
+            
+            {applications.length === 0 ? (
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No applications yet</h3>
+                <p className="text-gray-600 mb-4">Start applying to jobs to track your applications here</p>
+                <button
+                  onClick={() => onNavigate('job-listings')}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Browse Jobs
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold mb-4">Recent Applications</h3>
+                {applications.slice(0, 5).map((app: any) => (
+                  <div key={app._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{app.jobId?.jobTitle || 'Job Position'}</h4>
+                        <p className="text-sm text-gray-600">{app.jobId?.company || 'Company'}</p>
+                        <p className="text-xs text-gray-500 mt-1">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        app.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
+                        app.status === 'shortlisted' ? 'bg-green-100 text-green-800' :
+                        app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-purple-100 text-purple-800'
+                      }`}>
+                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {applications.length > 5 && (
+                  <button
+                    onClick={() => onNavigate('my-applications')}
+                    className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2"
+                  >
+                    View All {applications.length} Applications →
+                  </button>
+                )}
+              </div>
+            )}
             
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Quick Actions</h3>
@@ -459,13 +501,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <span className="text-sm font-medium text-gray-700">Complete</span>
                   </div>
                   
-                  <button 
-                    onClick={() => onNavigate('candidate-profile')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-1"
-                  >
-                    <span>Improve Your Profile</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => setShowLinkedInModal(true)}
+                      className="bg-white hover:bg-gray-50 text-blue-600 border border-blue-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                      <span>Import from LinkedIn</span>
+                    </button>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-1"
+                    >
+                      <span>Improve Your Profile</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 </div>
               </div>
@@ -838,6 +889,46 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           });
         }}
         userProfile={user}
+      />
+      
+      <LinkedInImportModal
+        isOpen={showLinkedInModal}
+        onClose={() => setShowLinkedInModal(false)}
+        onImport={(data) => {
+          const updatedUser = {
+            ...user,
+            ...(data.name && { name: data.name }),
+            ...(data.email && { email: data.email }),
+            ...(data.phone && { phone: data.phone }),
+            ...(data.location && { location: data.location }),
+            ...(data.headline && { title: data.headline }),
+            ...(data.summary && { summary: data.summary }),
+            ...(data.skills?.length > 0 && { skills: data.skills }),
+            ...(data.experience?.length > 0 && { 
+              experience: data.experience.map((exp: any) => 
+                `${exp.title} at ${exp.company}\n${exp.duration}\n${exp.description}`
+              ).join('\n\n')
+            }),
+            ...(data.education?.length > 0 && { 
+              education: data.education.map((edu: any) => 
+                `${edu.degree} - ${edu.school}\n${edu.field} (${edu.year})`
+              ).join('\n\n')
+            }),
+            ...(data.certifications?.length > 0 && { certifications: data.certifications.join(', ') }),
+            ...(data.languages?.length > 0 && { languages: data.languages })
+          };
+          
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          calculateProfileCompletion(updatedUser);
+          setShowLinkedInModal(false);
+          
+          setNotification({
+            type: 'success',
+            message: 'Profile imported from LinkedIn successfully!',
+            isVisible: true
+          });
+        }}
       />
       
       <ResumeParserModal

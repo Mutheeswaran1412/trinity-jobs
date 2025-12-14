@@ -53,7 +53,7 @@ export class ConnectionChecker {
   }
   
   static async runDiagnostics(): Promise<void> {
-    console.log('🔍 Running Trinity Jobs Connection Diagnostics...\n');
+    console.log('🔍 Running ZyncJobs Connection Diagnostics...\n');
     
     const backendOk = await this.checkBackendConnection();
     const loginOk = await this.testLogin();

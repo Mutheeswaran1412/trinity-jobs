@@ -39,45 +39,35 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
     setError('');
 
     try {
-      // Read file content (simplified for demo)
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const fileContent = e.target?.result as string;
-        
-        // Extract actual text from file (simplified simulation)
-        let resumeText = '';
-        if (file.type === 'application/pdf') {
-          // Simulate PDF text extraction - in real implementation, use pdf-parse
-          resumeText = `Resume content from ${file.name}\nCandidate information will be extracted from actual resume content.`;
-        } else {
-          // For DOC files, use actual file content
-          resumeText = fileContent.substring(0, 2000);
-        }
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('resume', file);
 
-        setUploading(false);
-        setParsing(true);
+      console.log('Uploading file:', file.name, file.type);
 
-        // Parse resume with AI
-        const parseResponse = await fetch('http://localhost:5000/api/resume/parse-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resumeText })
-        });
+      setUploading(false);
+      setParsing(true);
 
-        const parseResult = await parseResponse.json();
-        setParsing(false);
+      // Upload and parse resume with backend
+      const parseResponse = await fetch('http://localhost:5000/api/resume/upload-and-parse', {
+        method: 'POST',
+        body: formData // Don't set Content-Type header, let browser set it with boundary
+      });
 
-        if (parseResponse.ok) {
-          setParsedData(parseResult.profileData);
-        } else {
-          setError(parseResult.error || 'Parsing failed');
-        }
-      };
+      const parseResult = await parseResponse.json();
+      setParsing(false);
 
-      reader.readAsText(file);
+      console.log('Parse result:', parseResult);
+
+      if (parseResponse.ok && parseResult.success) {
+        setParsedData(parseResult.profileData);
+      } else {
+        setError(parseResult.error || 'Parsing failed');
+      }
     } catch (error) {
       setUploading(false);
       setParsing(false);
+      console.error('Upload error:', error);
       setError('Upload failed. Please try again.');
     }
   };
@@ -158,11 +148,14 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
             <div className="text-center py-12">
               <Loader className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
               <h3 className="text-lg font-medium mb-2">
-                {uploading ? 'Uploading resume...' : 'Parsing with Mistral AI...'}
+                {uploading ? 'Uploading resume...' : 'Parsing with AI...'}
               </h3>
               <p className="text-gray-500">
-                {uploading ? 'Please wait while we upload your file' : 'Extracting your profile information automatically'}
+                {uploading ? 'Please wait while we process your file' : 'Extracting your profile information automatically using advanced AI'}
               </p>
+              <div className="mt-4 text-sm text-blue-600">
+                {uploading ? '⬆️ Uploading...' : '🤖 AI Processing...'}
+              </div>
             </div>
           )}
 
@@ -170,43 +163,46 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
             <div className="space-y-6">
               <div className="text-center">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-green-600 mb-2">Profile Data Extracted!</h3>
+                <h3 className="text-xl font-bold text-green-600 mb-2">🎉 Profile Data Extracted!</h3>
                 <p className="text-gray-600">Review the information below and apply to your profile</p>
+                <div className="mt-2 text-xs text-gray-500">
+                  🤖 Powered by AI Resume Parser
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   {parsedData.name && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">👤 Name</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.name}</div>
                     </div>
                   )}
                   
                   {parsedData.email && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">📧 Email</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.email}</div>
                     </div>
                   )}
                   
                   {parsedData.phone && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">📞 Phone</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.phone}</div>
                     </div>
                   )}
                   
                   {parsedData.location && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">📍 Location</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.location}</div>
                     </div>
                   )}
                   
                   {parsedData.title && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">💼 Job Title</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.title}</div>
                     </div>
                   )}
@@ -215,21 +211,21 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
                 <div className="space-y-4">
                   {parsedData.experience > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">🕰️ Experience (Years)</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.experience}</div>
                     </div>
                   )}
                   
                   {parsedData.education && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Education</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">🎓 Education</label>
                       <div className="p-3 bg-gray-50 rounded border">{parsedData.education}</div>
                     </div>
                   )}
                   
                   {parsedData.skills.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">🛠️ Skills ({parsedData.skills.length})</label>
                       <div className="p-3 bg-gray-50 rounded border">
                         <div className="flex flex-wrap gap-1">
                           {parsedData.skills.map((skill: string, index: number) => (
@@ -244,7 +240,7 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
                   
                   {parsedData.summary && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Professional Summary</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">📝 Professional Summary</label>
                       <div className="p-3 bg-gray-50 rounded border text-sm">{parsedData.summary}</div>
                     </div>
                   )}
@@ -254,26 +250,35 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
               <div className="flex gap-3 pt-4 border-t">
                 <button
                   onClick={handleApplyToProfile}
-                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium"
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium transition-colors"
                 >
-                  Apply to My Profile
+                  ✅ Apply to My Profile
                 </button>
                 <button
                   onClick={() => {
                     setParsedData(null);
                     setError('');
                   }}
-                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Try Another Resume
+                  🔄 Try Another Resume
                 </button>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-              {error}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="text-red-500 mr-2">⚠️</div>
+                <div>
+                  <h4 className="text-red-800 font-medium">Upload Error</h4>
+                  <p className="text-red-700 text-sm mt-1">{error}</p>
+                  <p className="text-red-600 text-xs mt-2">
+                    💡 Tip: Make sure your file is a valid PDF or DOC file under 5MB
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>

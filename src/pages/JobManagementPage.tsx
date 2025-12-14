@@ -97,7 +97,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
-                    <p className="text-gray-600 mb-2">{job.location} • {job.salary || 'Competitive salary'}</p>
+                    <p className="text-gray-600 mb-2">{job.location} • {typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary')}</p>
                     <p className="text-sm text-gray-500">
                       Posted {new Date(job.created_at).toLocaleDateString()} • 
                       Status: <span className={`font-medium ${job.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>

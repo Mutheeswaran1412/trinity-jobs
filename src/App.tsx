@@ -46,9 +46,11 @@ import DailyJobsPage from './pages/DailyJobsPage';
 import JobRolePage from './pages/JobRolePage';
 import HireTalentPage from './pages/HireTalentPage';
 import JobManagementPage from './pages/JobManagementPage';
+import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
 import SettingsPage from './pages/SettingsPage';
 import MyJobsPage from './pages/MyJobsPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
 import ResumeParserPage from './pages/ResumeParserPage';
 import CompanyTestPage from './pages/CompanyTestPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -91,7 +93,7 @@ function App() {
         console.log('Raw userType from localStorage:', userData.userType);
         // Check for admin user first
         let userType: 'candidate' | 'employer' | 'admin' = 'candidate';
-        if (userData.userType === 'admin' || userData.email === 'admin@trinity.com' || userData.fullName === 'Trinity Admin') {
+        if (userData.userType === 'admin' || userData.email === 'admin@zyncjobs.com' || userData.fullName === 'ZyncJobs Admin') {
           userType = 'admin';
         } else if (userData.userType === 'employer') {
           userType = 'employer';
@@ -473,6 +475,10 @@ function App() {
     return <JobManagementPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
   }
 
+  if (currentPage === 'application-management') {
+    return <ApplicationManagementPage onNavigate={handleNavigation} />;
+  }
+
 
 
   if (currentPage === 'resume-editor') {
@@ -542,6 +548,14 @@ function App() {
         <MyJobsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
       </>
     );
+  }
+
+  if (currentPage === 'my-applications') {
+    if (!user) {
+      setShowRoleSelectionModal(true);
+      return null;
+    }
+    return <MyApplicationsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'resume-parser') {

@@ -249,7 +249,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     try {
       const description = await mistralAIService.generateJobDescription(
         jobTitle,
-        jobData.companyName || 'Trinity Technologies',
+        jobData.companyName || 'ZyncJobs',
         jobData.jobLocation || 'Remote',
         {
           jobType: jobData.jobType.join(', '),
@@ -1014,7 +1014,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Company for this job</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">Trinity Technologies</span>
+                <span className="text-gray-800">ZyncJobs</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1109,9 +1109,20 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     const userData = localStorage.getItem('user');
     const user = userData ? JSON.parse(userData) : null;
     
+    const companyName = user?.company || user?.companyName || jobData.companyName || 'ZyncJobs';
+    const COMPANY_DOMAIN_MAP: { [key: string]: string } = {
+      'google': 'google.com', 'amazon': 'amazon.com', 'microsoft': 'microsoft.com',
+      'apple': 'apple.com', 'meta': 'meta.com', 'zoho': 'zoho.com',
+      'infosys': 'infosys.com', 'tcs': 'tcs.com', 'wipro': 'wipro.com'
+    };
+    const lowerName = companyName.toLowerCase().trim();
+    const domain = COMPANY_DOMAIN_MAP[lowerName] || `${lowerName}.com`;
+    const companyLogo = `https://img.logo.dev/${domain}?token=pk_X-1ZO13CRYuFHfXgt5hQ`;
+    
     const jobPostData = {
       jobTitle: jobData.jobTitle,
-      company: user?.companyName || 'Trinity Technology Solutions',
+      company: companyName,
+      companyLogo: companyLogo,
       location: jobData.jobLocation,
       jobType: jobData.jobType[0] || 'Full-time',
       description: jobData.jobDescription,

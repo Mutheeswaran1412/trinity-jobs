@@ -61,19 +61,22 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   
   const currentJobData = getJobData();
   const [currentStep, setCurrentStep] = useState(1);
-  const [applicationData, setApplicationData] = useState<ApplicationData>({
-    country: 'India',
-    postalCode: '',
-    city: 'Chennai, Tamil Nadu',
-    streetAddress: '',
-    cvFile: null,
-    cvFileName: '',
-    workExperience: '',
-    jobTitle: '',
-    company: '',
-    fullName: 'Mutheeswaran G',
-    email: 'mutheeswaran124@gmail.com',
-    phone: '+91 95003 66784'
+  const [applicationData, setApplicationData] = useState<ApplicationData>(() => {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    return {
+      country: 'India',
+      postalCode: '',
+      city: userData.location || 'Chennai, Tamil Nadu',
+      streetAddress: '',
+      cvFile: null,
+      cvFileName: '',
+      workExperience: '',
+      jobTitle: '',
+      company: '',
+      fullName: userData.name || userData.fullName || '',
+      email: userData.email || '',
+      phone: userData.phone || ''
+    };
   });
 
   const updateData = (field: keyof ApplicationData, value: any) => {
@@ -206,18 +209,15 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
     // Get user data from localStorage to fetch their resume
     const userData = localStorage.getItem('user');
     let userProfile = null;
+    let resumeUrl = null;
     try {
       userProfile = userData ? JSON.parse(userData) : null;
-      console.log('User profile data:', userProfile); // Debug log
+      // Check for resume in profile.resume or resume field
+      resumeUrl = userProfile?.profile?.resume || userProfile?.resume;
+      console.log('User profile data:', userProfile);
+      console.log('Resume URL:', resumeUrl);
     } catch (error) {
       console.error('Error parsing user data:', error);
-    }
-
-    // Clear any sample data and use actual user data
-    if (userProfile && (userProfile.name === 'Riley Taylor' || userProfile.email === 'e.g.mail@example.com')) {
-      // This is sample data, clear it
-      localStorage.removeItem('user');
-      userProfile = null;
     }
 
     return (
@@ -239,21 +239,21 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
         <div className="bg-white p-6 rounded-lg max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold mb-6">Your Resume from Profile</h1>
 
-          {userProfile?.resume ? (
+          {resumeUrl ? (
             <div className="border-2 border-green-300 rounded-lg p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   <div className="bg-gray-100 p-2 rounded mr-3">📄</div>
                   <div>
-                    <div className="font-medium">{userProfile.resume.name || 'Resume.pdf'}</div>
-                    <div className="text-sm text-gray-500">From your profile - {userProfile.resume.uploadDate || 'Recently uploaded'}</div>
+                    <div className="font-medium">{userProfile?.resume?.name || 'Resume.pdf'}</div>
+                    <div className="text-sm text-gray-500">From your profile - {userProfile?.resume?.uploadDate || 'Recently uploaded'}</div>
                   </div>
                 </div>
                 <div className="bg-green-500 text-white rounded-full p-1">✓</div>
               </div>
               
               {/* Show resume preview if available */}
-              {userProfile.resume?.preview ? (
+              {userProfile?.resume?.preview ? (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <div dangerouslySetInnerHTML={{ __html: userProfile.resume.preview }} />
                 </div>
@@ -295,19 +295,10 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
               
               <div className="mt-4 text-center space-y-2">
                 <button
-                  onClick={() => onNavigate('candidate-dashboard')}
+                  onClick={() => onNavigate('candidate-profile')}
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium block mx-auto"
                 >
                   Update Resume in Profile
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('user');
-                    window.location.reload();
-                  }}
-                  className="text-red-600 hover:text-red-800 text-xs font-medium block mx-auto"
-                >
-                  Clear Sample Data & Reset
                 </button>
               </div>
             </div>
@@ -341,15 +332,15 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
               Back
             </button>
             <button
-              onClick={userProfile?.resume ? nextStep : () => onNavigate('candidate-dashboard')}
+              onClick={resumeUrl ? nextStep : () => onNavigate('candidate-dashboard')}
               className={`px-8 py-3 rounded-lg font-medium transition-colors ${
-                userProfile?.resume 
+                resumeUrl 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
                   : 'bg-gray-400 text-white cursor-not-allowed'
               }`}
-              disabled={!userProfile?.resume}
+              disabled={!resumeUrl}
             >
-              {userProfile?.resume ? 'Continue' : 'Upload Resume First'}
+              {resumeUrl ? 'Continue' : 'Upload Resume First'}
             </button>
           </div>
         </div>
@@ -527,7 +518,10 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
             </div>
             <div className="flex items-center">
               <div className="bg-blue-100 p-2 rounded mr-3">📄</div>
-              <span className="text-blue-600">{JSON.parse(localStorage.getItem('user') || '{}').resume?.name || 'Resume.pdf'}</span>
+              <span className="text-blue-600">{(() => {
+                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                return userData?.resume?.name || userData?.profile?.resume?.split('/').pop() || 'Resume.pdf';
+              })()}</span>
             </div>
             
             <div className="bg-orange-100 p-4 rounded-lg mt-4">
@@ -577,28 +571,54 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
             Back
           </button>
           <button
-            onClick={() => {
-              // Handle application submission
-              const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
-              const applicationDetails = {
-                id: Date.now(),
-                jobTitle: jobData.title,
-                company: jobData.company,
-                location: jobData.location,
-                appliedAt: new Date().toISOString(),
-                status: 'Applied',
-                ...applicationData
-              };
-              
-              // Save application to localStorage
-              const existingApplications = JSON.parse(localStorage.getItem('userApplications') || '[]');
-              existingApplications.push(applicationDetails);
-              localStorage.setItem('userApplications', JSON.stringify(existingApplications));
-              
-              alert('🎉 Application submitted successfully! You will be redirected to your dashboard.');
-              setTimeout(() => {
-                onNavigate('candidate-dashboard');
-              }, 1500);
+            onClick={async () => {
+              try {
+                const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
+                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                const resumeUrl = userData?.profile?.resume || userData?.resume;
+                
+                // Submit to backend API
+                const response = await fetch('http://localhost:5000/api/applications', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jobId: jobData._id || jobData.id,
+                    candidateName: userData.name || userData.fullName || applicationData.fullName,
+                    candidateEmail: userData.email,
+                    candidatePhone: userData.phone || applicationData.phone,
+                    resumeUrl: resumeUrl,
+                    coverLetter: `Work Experience: ${applicationData.workExperience}\nJob Title: ${applicationData.jobTitle}\nCompany: ${applicationData.company}`,
+                    candidateId: userData._id || userData.id
+                  })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                  // Save to localStorage for local tracking
+                  const applicationDetails = {
+                    id: Date.now(),
+                    jobTitle: jobData.title || jobData.jobTitle,
+                    company: jobData.company,
+                    location: jobData.location,
+                    appliedAt: new Date().toISOString(),
+                    status: 'Applied',
+                    ...applicationData
+                  };
+                  
+                  const existingApplications = JSON.parse(localStorage.getItem('userApplications') || '[]');
+                  existingApplications.push(applicationDetails);
+                  localStorage.setItem('userApplications', JSON.stringify(existingApplications));
+                  
+                  alert('🎉 Application submitted successfully! Check your email for confirmation.');
+                  setTimeout(() => onNavigate('candidate-dashboard'), 1500);
+                } else {
+                  alert(result.error || 'Failed to submit application');
+                }
+              } catch (error) {
+                console.error('Application error:', error);
+                alert('Failed to submit application. Please try again.');
+              }
             }}
             className="px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
           >
