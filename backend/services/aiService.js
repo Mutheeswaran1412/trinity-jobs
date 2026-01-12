@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import OpenAI from 'openai';
 import vectorService from './vectorService.js';
 
 class AIService {
@@ -7,10 +6,6 @@ class AIService {
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.model = process.env.OPENROUTER_MODEL || 'mistralai/mistral-7b-instruct';
     this.baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
-    
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
   }
 
   async generateCompletion(prompt, systemMessage = '') {
@@ -66,24 +61,6 @@ class AIService {
     return await this.generateCompletion(prompt, systemMessage);
   }
 
-  async generateWithOpenAI(prompt, systemMessage = '') {
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          ...(systemMessage ? [{ role: 'system', content: systemMessage }] : []),
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      });
-      return response.choices[0].message.content;
-    } catch (error) {
-      console.error('OpenAI Error:', error);
-      return await this.generateCompletion(prompt, systemMessage); // Fallback to OpenRouter
-    }
-  }
-
   async semanticJobMatch(resumeData) {
     try {
       const resumeText = `${resumeData.skills?.join(' ')} ${resumeData.experience} ${resumeData.education}`;
@@ -92,7 +69,7 @@ class AIService {
       const systemMessage = 'You are an expert job matching AI. Analyze the semantic similarity scores and provide detailed matching insights.';
       const prompt = `Resume: ${resumeText}\nSimilar Jobs: ${JSON.stringify(similarJobs)}`;
       
-      const analysis = await this.generateWithOpenAI(prompt, systemMessage);
+      const analysis = await this.generateCompletion(prompt, systemMessage);
       
       return {
         matches: similarJobs,
@@ -112,7 +89,7 @@ class AIService {
       const systemMessage = 'You are an expert candidate matching AI. Analyze the semantic similarity scores and provide detailed matching insights.';
       const prompt = `Job: ${jobText}\nSimilar Candidates: ${JSON.stringify(similarCandidates)}`;
       
-      const analysis = await this.generateWithOpenAI(prompt, systemMessage);
+      const analysis = await this.generateCompletion(prompt, systemMessage);
       
       return {
         matches: similarCandidates,

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { body, validationResult } from 'express-validator';
 import Application from '../models/Application.js';
 import Job from '../models/Job.js';
+import User from '../models/User.js';
 import { sendJobApplicationEmail, sendApplicationRejectionEmail, sendApplicationStatusEmail } from '../services/emailService.js';
 
 const router = express.Router();
@@ -19,57 +20,69 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter } = req.body;
+    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl } = req.body;
 
-    console.log('📝 Creating application with data:', {
-      jobId,
-      candidateName,
-      candidateEmail,
-      candidatePhone,
-      coverLetter
-    });
-
-    // Validate required fields
-    if (!jobId || !candidateName || !candidateEmail) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: jobId, candidateName, candidateEmail' 
-      });
+    // Check for duplicate application
+    const existingApplication = await Application.findOne({ jobId, candidateEmail });
+    if (existingApplication) {
+      return res.status(400).json({ error: 'You have already applied for this job' });
     }
 
-    // Create application with minimal validation
+    // Get job details
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    // Create application
     const application = new Application({
-      jobId: jobId.toString(),
-      candidateName: candidateName,
-      candidateEmail: candidateEmail,
+      jobId: new mongoose.Types.ObjectId(jobId),
+      candidateId: candidateId ? new mongoose.Types.ObjectId(candidateId) : null,
+      candidateName,
+      candidateEmail,
       candidatePhone: candidatePhone || '',
+      employerId: job.employerId || null,
+      employerEmail: job.employerEmail || '',
       coverLetter: coverLetter || '',
+      resumeUrl: resumeUrl || '',
       status: 'pending'
     });
 
     await application.save();
-    console.log('✅ Application saved successfully with ID:', application._id);
 
-    // Get job details for email
-    let jobTitle = 'Job Position';
-    let company = 'Company';
-    try {
-      const job = await Job.findById(jobId);
-      if (job) {
-        jobTitle = job.jobTitle || job.title || 'Job Position';
-        company = job.company || 'Company';
-      }
-    } catch (error) {
-      console.log('Could not fetch job details for email');
+    // Update user's appliedJobs array
+    if (candidateId) {
+      await User.findByIdAndUpdate(candidateId, {
+        $push: {
+          appliedJobs: {
+            jobId: new mongoose.Types.ObjectId(jobId),
+            appliedAt: new Date(),
+            status: 'pending'
+          }
+        }
+      });
     }
 
-    // Send confirmation email
-    await sendJobApplicationEmail(candidateEmail, candidateName, jobTitle, company);
+    // Send confirmation email (don't fail if email fails)
+    try {
+      await sendJobApplicationEmail(
+        candidateEmail, 
+        candidateName, 
+        job.jobTitle || job.title, 
+        job.company
+      );
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError.message);
+    }
 
     res.status(201).json({ 
       message: 'Application submitted successfully! Check your email for confirmation.',
       application 
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'You have already applied for this job' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -77,40 +90,19 @@ router.post('/', [
 // GET /api/applications/candidate/:email - Get applications by candidate email
 router.get('/candidate/:email', async (req, res) => {
   try {
-    const applications = await Application.find({ candidateEmail: req.params.email })
+    const email = decodeURIComponent(req.params.email);
+    console.log('Fetching applications for email:', email);
+    
+    const applications = await Application.find({ 
+      candidateEmail: { $regex: new RegExp(`^${email}$`, 'i') }
+    })
+      .populate('jobId', 'jobTitle title company location')
       .sort({ createdAt: -1 });
     
-    // Manually populate job details since jobId is stored as string
-    const populatedApplications = [];
-    for (const app of applications) {
-      try {
-        const job = await Job.findById(app.jobId);
-        const populatedApp = {
-          ...app.toObject(),
-          jobId: {
-            _id: app.jobId,
-            jobTitle: job?.jobTitle || job?.title || 'Job Position',
-            company: job?.company || 'Company',
-            location: job?.location || ''
-          }
-        };
-        populatedApplications.push(populatedApp);
-      } catch (jobError) {
-        // If job not found, still include application with basic info
-        populatedApplications.push({
-          ...app.toObject(),
-          jobId: {
-            _id: app.jobId,
-            jobTitle: 'Job Position',
-            company: 'Company',
-            location: ''
-          }
-        });
-      }
-    }
-    
-    res.json(populatedApplications);
+    console.log('Found applications:', applications.length);
+    res.json(applications);
   } catch (error) {
+    console.error('Error fetching applications:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -139,7 +131,6 @@ router.put('/:id/status', [
     const { status } = req.body;
     const applicationId = req.params.id;
 
-    // Find and update application
     const application = await Application.findById(applicationId).populate('jobId');
     if (!application) {
       return res.status(404).json({ error: 'Application not found' });
@@ -149,22 +140,39 @@ router.put('/:id/status', [
     application.status = status;
     await application.save();
 
-    // Send email notification based on status
-    if (status === 'rejected') {
-      await sendApplicationRejectionEmail(
-        application.candidateEmail,
-        application.candidateName,
-        application.jobId.jobTitle,
-        application.jobId.company
+    // Update user's appliedJobs status
+    if (application.candidateId) {
+      await User.findOneAndUpdate(
+        { _id: application.candidateId, 'appliedJobs.jobId': application.jobId },
+        { 
+          $set: { 
+            'appliedJobs.$.status': status,
+            'appliedJobs.$.updatedAt': new Date()
+          } 
+        }
       );
-    } else if (['reviewed', 'shortlisted', 'hired'].includes(status)) {
-      await sendApplicationStatusEmail(
-        application.candidateEmail,
-        application.candidateName,
-        application.jobId.jobTitle,
-        application.jobId.company,
-        status
-      );
+    }
+
+    // Send email notification (don't fail if email fails)
+    try {
+      if (status === 'rejected') {
+        await sendApplicationRejectionEmail(
+          application.candidateEmail,
+          application.candidateName,
+          application.jobId.jobTitle || application.jobId.title,
+          application.jobId.company
+        );
+      } else if (['reviewed', 'shortlisted', 'hired'].includes(status)) {
+        await sendApplicationStatusEmail(
+          application.candidateEmail,
+          application.candidateName,
+          application.jobId.jobTitle || application.jobId.title,
+          application.jobId.company,
+          status
+        );
+      }
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError.message);
     }
 
     res.json({ 
@@ -216,14 +224,16 @@ router.put('/:id', [
 // GET /api/applications - Get all applications (for admin/employer)
 router.get('/', async (req, res) => {
   try {
-    const { status, jobId, page = 1, limit = 10 } = req.query;
+    const { status, jobId, employerId, page = 1, limit = 10 } = req.query;
     const query = {};
     
     if (status) query.status = status;
     if (jobId) query.jobId = jobId;
+    if (employerId) query.employerId = employerId;
 
     const applications = await Application.find(query)
-      .populate('jobId', 'jobTitle company')
+      .populate('jobId', 'jobTitle title company location')
+      .populate('candidateId', 'name email phone location skills')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, Eye, Edit, Trash2, Plus } from 'lucide-react';
+import { Briefcase, Users, Eye, Edit, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -60,6 +60,14 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </button>
+        
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Job Management</h1>

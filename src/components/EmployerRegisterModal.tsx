@@ -7,11 +7,13 @@ interface EmployerRegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (page: string) => void;
-  onLogin: (userData: {name: string, type: 'candidate' | 'employer'}) => void;
+  onLogin: (userData: {name: string, type: 'candidate' | 'employer', email?: string}) => void;
 }
 
 const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, onClose, onNavigate, onLogin }) => {
   const [companyName, setCompanyName] = useState('');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
   const [contactPersonName, setContactPersonName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +38,18 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
     if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++; else feedback.push('One special character');
 
     return { score, feedback };
+  };
+
+  const handleCompanySelect = (name: string, companyData?: any) => {
+    if (companyData) {
+      setCompanyName(companyData.name);
+      if (companyData.domain) {
+        setCompanyLogo(`https://logo.clearbit.com/${companyData.domain}`);
+        setCompanyWebsite(companyData.website || `https://${companyData.domain}`);
+      }
+    } else {
+      setCompanyName(name);
+    }
   };
 
   const handlePasswordChange = (pwd: string) => {
@@ -63,30 +77,58 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
     }
 
     try {
+      console.log('Registration data:', {
+        email,
+        name: contactPersonName,
+        userType: 'employer',
+        company: companyName,
+        companyLogo,
+        companyWebsite
+      });
+      
       const response = await authAPI.register({
         email,
         password,
         name: contactPersonName,
         userType: 'employer',
-        company: companyName
+        company: companyName,
+        companyLogo,
+        companyWebsite
       });
       
-      setSuccess('Employer account created successfully! You can now sign in.');
+      console.log('Registration response:', response);
       
-      // Clear form
-      setCompanyName('');
-      setContactPersonName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
+      setSuccess('Employer account created successfully! Logging you in...');
       
-      // Redirect to employer login after 2 seconds
-      setTimeout(() => {
-        onClose();
-        onNavigate('employer-login');
-      }, 2000);
+      // Auto-login after successful registration
+      setTimeout(async () => {
+        try {
+          const loginResponse = await authAPI.login({ email, password });
+          console.log('Auto-login response:', loginResponse);
+          
+          // Store user data in localStorage
+          localStorage.setItem('user', JSON.stringify(loginResponse.user));
+          
+          // Call onLogin
+          onLogin({ 
+            name: loginResponse.user.name, 
+            type: 'employer',
+            email: loginResponse.user.email
+          });
+          
+          // Close modal and navigate to dashboard
+          onClose();
+          onNavigate('dashboard');
+        } catch (loginErr) {
+          console.error('Auto-login failed:', loginErr);
+          // Fallback to manual login
+          onClose();
+          onNavigate('employer-login');
+        }
+      }, 1500);
       
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
@@ -129,10 +171,22 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
               <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
               <CompanyAutocomplete
                 value={companyName}
-                onChange={setCompanyName}
+                onChange={(name, data) => {
+                  if (data) {
+                    handleCompanySelect(name, data);
+                  } else {
+                    setCompanyName(name);
+                  }
+                }}
                 placeholder="Search company (e.g., Google, Microsoft)..."
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
               />
+              {companyLogo && (
+                <div className="mt-2 flex items-center space-x-2 text-xs text-green-600">
+                  <img src={companyLogo} alt="Company logo" className="w-6 h-6 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <span>✓ Company verified</span>
+                </div>
+              )}
             </div>
 
             <div>

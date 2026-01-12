@@ -1,179 +1,133 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
+// Create transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_SERVER,
-  port: parseInt(process.env.SMTP_PORT) || 587,
+  host: process.env.SMTP_SERVER || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
   secure: false,
   auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD
-  },
-  tls: {
-    rejectUnauthorized: false
+    user: process.env.SMTP_EMAIL || 'muthees@trinitetech.com',
+    pass: process.env.SMTP_PASSWORD || 'bqqf cqxp incl fzrc'
   }
 });
 
-export const sendJobApplicationEmail = async (candidateEmail, candidateName, jobTitle, company) => {
+// Send job application confirmation email to candidate
+export const sendJobApplicationEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
+  if (!transporter) {
+    console.log('Email transporter not available, skipping email');
+    return { success: false, error: 'Email service unavailable' };
+  }
+
   const mailOptions = {
-    from: `"ZyncJobs" <${process.env.SMTP_EMAIL}>`,
+    from: process.env.SMTP_EMAIL || 'noreply@trinityjobs.com',
     to: candidateEmail,
-    subject: `Job Application Submitted Successfully - ${jobTitle}`,
+    subject: `Application Submitted Successfully - ${jobTitle}`,
     html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background-color: #6366f1; padding: 30px 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">ZyncJobs</h1>
-  </div>
-  
-  <div style="background-color: white; padding: 40px 30px;">
-    <h2 style="color: #333; margin: 0 0 20px 0;">✅ Application Submitted Successfully!</h2>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">Dear ${candidateName},</p>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">Your job application has been successfully submitted!</p>
-    
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0;"><strong>Job Title:</strong> ${jobTitle}</p>
-      <p style="margin: 0;"><strong>Company:</strong> ${company}</p>
-    </div>
-    
-    <p style="color: #333; margin: 20px 0 15px 0;">What happens next?</p>
-    <ul style="color: #333;">
-      <li>The employer will review your application</li>
-      <li>You'll be notified if they're interested</li>
-      <li>Keep your profile updated for better chances</li>
-    </ul>
-    
-    <p style="color: #666; margin: 30px 0 0 0;">Good luck with your application!</p>
-  </div>
-  
-  <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
-    <p style="color: #666; margin: 0; font-size: 12px;">ZyncJobs Team</p>
-  </div>
-</div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Application Submitted Successfully! 🎉</h2>
+        
+        <p>Dear ${candidateName},</p>
+        
+        <p>Thank you for applying to <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Application Details:</h3>
+          <p><strong>Position:</strong> ${jobTitle}</p>
+          <p><strong>Company:</strong> ${companyName}</p>
+          <p><strong>Submitted:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <p>We have received your application and will review it shortly. You will be notified of any updates regarding your application status.</p>
+        
+        <p>Best regards,<br>Trinity Jobs Team</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        <p style="font-size: 12px; color: #6b7280;">This is an automated email. Please do not reply to this message.</p>
+      </div>
     `
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('✅ Application confirmation email sent to:', candidateEmail);
+    console.log('Application confirmation email sent successfully');
     return { success: true };
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('Error sending email:', error);
     return { success: false, error: error.message };
   }
 };
 
-export const sendApplicationRejectionEmail = async (candidateEmail, candidateName, jobTitle, company) => {
+// Send application rejection email
+export const sendApplicationRejectionEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
   const mailOptions = {
-    from: `"ZyncJobs" <${process.env.SMTP_EMAIL}>`,
+    from: process.env.SMTP_EMAIL || 'noreply@trinityjobs.com',
     to: candidateEmail,
     subject: `Application Update - ${jobTitle}`,
     html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background-color: #6366f1; padding: 30px 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">ZyncJobs</h1>
-  </div>
-  
-  <div style="background-color: white; padding: 40px 30px;">
-    <h2 style="color: #333; margin: 0 0 20px 0;">Application Update</h2>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">Dear ${candidateName},</p>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">Thank you for your interest in the position at ${company}.</p>
-    
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0;"><strong>Job Title:</strong> ${jobTitle}</p>
-      <p style="margin: 0;"><strong>Company:</strong> ${company}</p>
-    </div>
-    
-    <p style="color: #333; margin: 20px 0 15px 0;">After careful consideration, we have decided to move forward with other candidates whose qualifications more closely match our current requirements.</p>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">We encourage you to continue exploring opportunities on ZyncJobs and wish you the best in your job search.</p>
-    
-    <p style="color: #666; margin: 30px 0 0 0;">Best regards,<br>ZyncJobs Team</p>
-  </div>
-  
-  <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
-    <p style="color: #666; margin: 0; font-size: 12px;">ZyncJobs Team</p>
-  </div>
-</div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #dc2626;">Application Update</h2>
+        
+        <p>Dear ${candidateName},</p>
+        
+        <p>Thank you for your interest in the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.</p>
+        
+        <p>After careful consideration, we have decided to move forward with other candidates at this time.</p>
+        
+        <p>We encourage you to continue exploring other opportunities on our platform.</p>
+        
+        <p>Best regards,<br>Trinity Jobs Team</p>
+      </div>
     `
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('✅ Rejection email sent to:', candidateEmail);
+    console.log('Application rejection email sent successfully');
     return { success: true };
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('Error sending rejection email:', error);
     return { success: false, error: error.message };
   }
 };
 
-export const sendApplicationStatusEmail = async (candidateEmail, candidateName, jobTitle, company, status) => {
+// Send application status update email
+export const sendApplicationStatusEmail = async (candidateEmail, candidateName, jobTitle, companyName, status) => {
   const statusMessages = {
-    reviewed: {
-      subject: 'Application Under Review',
-      title: '👀 Application Under Review',
-      message: 'Your application is currently being reviewed by our team. We will update you on the next steps soon.'
-    },
-    shortlisted: {
-      subject: 'Congratulations! You\'ve been Shortlisted',
-      title: '🎉 Congratulations! You\'ve been Shortlisted',
-      message: 'Great news! Your application has been shortlisted. The employer will contact you soon for the next steps.'
-    },
-    hired: {
-      subject: 'Congratulations! Job Offer',
-      title: '🎊 Congratulations! You Got the Job',
-      message: 'Excellent news! You have been selected for this position. The employer will contact you with offer details.'
-    }
+    reviewed: 'Your application is currently under review.',
+    shortlisted: 'Congratulations! You have been shortlisted for the next round.',
+    hired: 'Congratulations! You have been selected for this position.'
   };
 
-  const statusInfo = statusMessages[status];
-  if (!statusInfo) return { success: false, error: 'Invalid status' };
-
   const mailOptions = {
-    from: `"ZyncJobs" <${process.env.SMTP_EMAIL}>`,
+    from: process.env.SMTP_EMAIL || 'noreply@trinityjobs.com',
     to: candidateEmail,
-    subject: `${statusInfo.subject} - ${jobTitle}`,
+    subject: `Application Update - ${jobTitle}`,
     html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background-color: #6366f1; padding: 30px 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">ZyncJobs</h1>
-  </div>
-  
-  <div style="background-color: white; padding: 40px 30px;">
-    <h2 style="color: #333; margin: 0 0 20px 0;">${statusInfo.title}</h2>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">Dear ${candidateName},</p>
-    
-    <p style="color: #333; margin: 0 0 15px 0;">${statusInfo.message}</p>
-    
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0;"><strong>Job Title:</strong> ${jobTitle}</p>
-      <p style="margin: 0;"><strong>Company:</strong> ${company}</p>
-      <p style="margin: 10px 0 0 0;"><strong>Status:</strong> ${status.charAt(0).toUpperCase() + status.slice(1)}</p>
-    </div>
-    
-    <p style="color: #666; margin: 30px 0 0 0;">Best regards,<br>ZyncJobs Team</p>
-  </div>
-  
-  <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
-    <p style="color: #666; margin: 0; font-size: 12px;">ZyncJobs Team</p>
-  </div>
-</div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Application Status Update</h2>
+        
+        <p>Dear ${candidateName},</p>
+        
+        <p>We have an update regarding your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Status:</strong> ${status.charAt(0).toUpperCase() + status.slice(1)}</p>
+          <p>${statusMessages[status] || 'Your application status has been updated.'}</p>
+        </div>
+        
+        <p>We will keep you informed of any further updates.</p>
+        
+        <p>Best regards,<br>Trinity Jobs Team</p>
+      </div>
     `
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ ${status} email sent to:`, candidateEmail);
+    console.log('Application status email sent successfully');
     return { success: true };
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('Error sending status email:', error);
     return { success: false, error: error.message };
   }
 };

@@ -20,6 +20,8 @@ const ProfileSchema = new mongoose.Schema({
   employmentType: String,
   resume: Object,
   profilePhoto: String,
+  profileFrame: String,
+  coverPhoto: String,
   bannerPhoto: String,
   updatedAt: { type: Date, default: Date.now }
 }, { strict: false });
@@ -30,6 +32,11 @@ const Profile = mongoose.model('Profile', ProfileSchema);
 router.post('/save', async (req, res) => {
   try {
     const { userId, email, ...profileData } = req.body;
+    console.log('Profile save request:', { userId, email, hasProfilePhoto: !!profileData.profilePhoto });
+    
+    if (!userId && !email) {
+      return res.status(400).json({ error: 'userId or email required' });
+    }
     
     const profile = await Profile.findOneAndUpdate(
       { $or: [{ userId }, { email }] },
@@ -37,8 +44,10 @@ router.post('/save', async (req, res) => {
       { upsert: true, new: true }
     );
     
+    console.log('Profile saved successfully:', profile._id);
     res.json({ success: true, profile });
   } catch (error) {
+    console.error('Profile save error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -46,19 +55,25 @@ router.post('/save', async (req, res) => {
 // Get profile
 router.get('/:identifier', async (req, res) => {
   try {
+    const identifier = req.params.identifier;
+    console.log('Profile get request for identifier:', identifier);
+    
     const profile = await Profile.findOne({
       $or: [
-        { userId: req.params.identifier },
-        { email: req.params.identifier }
+        { userId: identifier },
+        { email: identifier }
       ]
     });
     
     if (profile) {
+      console.log('Profile found:', profile._id);
       res.json(profile);
     } else {
+      console.log('Profile not found for identifier:', identifier);
       res.status(404).json({ error: 'Profile not found' });
     }
   } catch (error) {
+    console.error('Profile get error:', error);
     res.status(500).json({ error: error.message });
   }
 });

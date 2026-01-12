@@ -21,11 +21,11 @@ const userSchema = new mongoose.Schema({
   userType: {
     type: String,
     required: true,
-    enum: ['candidate', 'employer', 'admin', 'moderator']
+    enum: ['candidate', 'employer', 'admin', 'moderator', 'jobseeker']
   },
   role: {
     type: String,
-    enum: ['candidate', 'employer', 'admin', 'moderator'],
+    enum: ['candidate', 'employer', 'admin', 'moderator', 'jobseeker'],
     default: function() { return this.userType; }
   },
   phone: {
@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   company: {
+    type: String,
+    trim: true
+  },
+  companyLogo: {
+    type: String,
+    trim: true
+  },
+  companyWebsite: {
     type: String,
     trim: true
   },

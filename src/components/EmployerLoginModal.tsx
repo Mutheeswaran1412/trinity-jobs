@@ -6,7 +6,7 @@ interface EmployerLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (page: string) => void;
-  onLogin: (userData: {name: string, type: 'candidate' | 'employer'}) => void;
+  onLogin: (userData: {name: string, type: 'candidate' | 'employer', email?: string}) => void;
   onShowNotification?: (notification: {type: 'success' | 'error' | 'info', message: string}) => void;
 }
 
@@ -42,16 +42,11 @@ const EmployerLoginModal: React.FC<EmployerLoginModalProps> = ({ isOpen, onClose
       
       // Call onLogin with user data
       onLogin({ 
-        name: response.user.companyName || response.user.fullName || response.user.email.split('@')[0], 
-        type: 'employer' 
+        name: response.user.name || response.user.fullName || response.user.email.split('@')[0], 
+        type: 'employer',
+        email: response.user.email
       });
       console.log('Set employer user type in app');
-      
-      // Call onLogin with user data
-      onLogin({ 
-        name: response.user.companyName || response.user.fullName || response.user.email.split('@')[0], 
-        type: 'employer' 
-      });
       
       // Close modal and navigate immediately
       onClose();

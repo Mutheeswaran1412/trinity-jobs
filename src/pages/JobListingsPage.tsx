@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { aiSuggestions } from '../utils/aiSuggestions';
 import { JobCardSkeleton, SearchLoading } from '../components/LoadingStates';
+import { sanitizeLogo, getCompanyLogo } from '../utils/logoUtils';
+import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 
 const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: { 
   onNavigate?: (page: string) => void;
@@ -401,19 +403,51 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
             <div key={job._id || job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 
-                      className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer"
-                      onClick={() => onNavigate && onNavigate('job-detail', { jobTitle: job.title, jobId: job._id || job.id, companyName: job.company })}
-                    >
-                      {job.title}
-                    </h3>
-                    <span className="text-sm text-gray-500 ml-4">
-                      {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Recently posted'}
-                    </span>
+                  <div className="flex items-start mb-4">
+                    {/* Company Logo */}
+                    <div className="flex-shrink-0 w-12 h-12 mr-4">
+                      {(() => {
+                        const logoUrl = sanitizeLogo(job.companyLogo || '') || getCompanyLogo(job.company);
+                        return logoUrl ? (
+                          <img 
+                            src={logoUrl} 
+                            alt={`${job.company} logo`}
+                            className="w-12 h-12 object-contain rounded border border-gray-200"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              // Try fallback logo
+                              const fallbackLogo = getCompanyLogo(job.company);
+                              if (fallbackLogo && fallbackLogo !== logoUrl) {
+                                const newImg = document.createElement('img');
+                                newImg.src = fallbackLogo;
+                                newImg.alt = `${job.company} logo`;
+                                newImg.className = 'w-12 h-12 object-contain rounded border border-gray-200';
+                                target.parentElement?.appendChild(newImg);
+                              }
+                            }}
+                          />
+                        ) : null;
+                      })()} 
+                    </div>
+                    
+                    {/* Job Info */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 
+                          className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer"
+                          onClick={() => onNavigate && onNavigate('job-detail', { jobTitle: job.title || job.jobTitle, jobId: job._id || job.id, companyName: job.company })}
+                        >
+                          {decodeHtmlEntities(job.title || job.jobTitle)}
+                        </h3>
+                        <span className="text-sm text-gray-500 ml-4">
+                          {formatDate(job.createdAt)}
+                        </span>
+                      </div>
+                      
+                      <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
+                    </div>
                   </div>
-                  
-                  <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
                   
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
                     <div className="flex items-center space-x-1">
@@ -422,7 +456,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     </div>
                     <div className="flex items-center space-x-1">
                       <DollarSign className="w-4 h-4" />
-                      <span>{typeof job.salary === 'object' && job.salary ? `$${job.salary.min} - $${job.salary.max} ${job.salary.period}` : job.salary || 'Competitive'}</span>
+                      <span>{formatSalary(job.salary)}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Briefcase className="w-4 h-4" />
@@ -430,11 +464,17 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     </div>
                   </div>
 
-                  <p className="text-gray-600 mb-4">{job.description}</p>
+                  <p className="text-gray-600 mb-4">
+                    {job.description && job.description.length > 150 
+                      ? `${decodeHtmlEntities(job.description).substring(0, 150)}...` 
+                      : decodeHtmlEntities(job.description || '')}
+                  </p>
 
                   {job.requirements && (
                     <div className="text-sm text-gray-600 mb-4">
-                      <strong>Requirements:</strong> {job.requirements}
+                      <strong>Requirements:</strong> {job.requirements.length > 100 
+                        ? `${decodeHtmlEntities(job.requirements).substring(0, 100)}...` 
+                        : decodeHtmlEntities(job.requirements)}
                     </div>
                   )}
                 </div>

@@ -14,6 +14,8 @@ export interface RegisterData {
   userType: 'candidate' | 'employer';
   phone?: string;
   company?: string;
+  companyLogo?: string;
+  companyWebsite?: string;
   location?: string;
 }
 
@@ -23,7 +25,10 @@ export interface User {
   userType: 'jobseeker' | 'employer';
   fullName: string;
   phone?: string;
+  company?: string;
   companyName?: string;
+  companyLogo?: string;
+  companyWebsite?: string;
   companySize?: string;
   industry?: string;
   skills?: string[];

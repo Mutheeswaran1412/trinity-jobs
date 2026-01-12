@@ -36,7 +36,7 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (page: string) => void;
-  onLogin: (userData: {name: string, type: 'candidate' | 'employer'}) => void;
+  onLogin: (userData: {name: string, type: 'candidate' | 'employer', email?: string}) => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onNavigate, onLogin }) => {
@@ -78,7 +78,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onNavigate, on
       console.log('Mapped user type for app:', userType);
       onLogin({ 
         name: response.user.name || response.user.email.split('@')[0], 
-        type: userType
+        type: userType,
+        email: response.user.email
       });
       
       // Always go to dashboard after login

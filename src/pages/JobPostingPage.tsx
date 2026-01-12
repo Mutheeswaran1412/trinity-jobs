@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Notification from '../components/Notification';
 import mistralAIService from '../services/mistralAIService';
 import CompanyAutoSuggest from '../components/CompanyAutoSuggest';
+import { getSafeCompanyLogo } from '../utils/logoUtils';
 
 interface JobPostingPageProps {
   onNavigate: (page: string) => void;
@@ -53,8 +54,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     numberOfPeople: 0,
     jobType: [],
     payType: 'Range',
-    minSalary: '108,967.94',
-    maxSalary: '131,230.20',
+    minSalary: '50,000',
+    maxSalary: '80,000',
     payRate: 'per year',
     benefits: [],
     jobDescription: '',
@@ -372,15 +373,9 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
 
   const renderStep1 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
         <button onClick={() => onNavigate('employer-dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-8">Add job basics</h1>
-      
-      <div className="mb-8">
-        <p className="text-gray-600 mb-2">Job post will be in <strong>English</strong> in <strong>United States</strong></p>
-        <button className="text-blue-600 text-sm hover:text-blue-700">✏️</button>
       </div>
       
       <div className="space-y-8">
@@ -436,8 +431,17 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
             placeholder="Search for your company..."
             value={jobData.companyName}
             onSelect={(company) => {
+              console.log('Selected company:', company);
               updateJobData('companyName', company.name);
-              updateJobData('companyLogo', company.logo);
+              
+              // Ensure we have a logo URL
+              let logoUrl = company.logo;
+              if (!logoUrl) {
+                // Use the logoUtils to get a safe logo
+                logoUrl = getSafeCompanyLogo(company.name);
+              }
+              
+              updateJobData('companyLogo', logoUrl || '');
               updateJobData('companyId', company.id);
             }}
           />
@@ -510,11 +514,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
 
   const renderStep2 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
-        <button className="text-gray-400 text-xl">→</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Hiring goals</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Hiring goals</h1>
       
       <div className="space-y-8">
         <div>
@@ -560,7 +560,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
         </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -576,20 +576,12 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
           <span>→</span>
         </button>
       </div>
-      
-      <div className="text-center mt-8">
-        <p className="text-gray-500">Have feedback? <button className="text-blue-600 underline hover:text-blue-700">Tell us more.</button></p>
-      </div>
     </div>
   );
 
   const renderStep3 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
-        <button className="text-gray-400 text-xl">→</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Add job details</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Add job details</h1>
       
       <div className="space-y-8">
         <div>
@@ -618,7 +610,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
         </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -634,25 +626,17 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
           <span>→</span>
         </button>
       </div>
-      
-      <div className="text-center mt-8">
-        <p className="text-gray-500">Have feedback? <button className="text-blue-600 underline hover:text-blue-700">Tell us more.</button></p>
-      </div>
     </div>
   );
 
   const renderStep4 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
-        <button className="text-gray-400 text-xl">→</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Add pay and benefits</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Add pay and benefits</h1>
       
       <div className="space-y-8">
         <div>
           <h3 className="text-gray-700 font-medium mb-2">Pay</h3>
-          <p className="text-gray-500 text-sm mb-6">Review the pay we estimated for your job and adjust as needed. Check your local minimum wage. <span className="inline-block w-4 h-4 bg-gray-400 rounded-full text-white text-xs text-center leading-4">i</span></p>
+          <p className="text-gray-500 text-sm mb-6">Review the pay we estimated for your job and adjust as needed.</p>
           
           <div className="grid grid-cols-5 gap-4 items-end">
             <div>
@@ -740,11 +724,10 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
               </button>
             ))}
           </div>
-          <button className="text-blue-600 text-sm mt-4 hover:text-blue-700">Show 60 more ⌄</button>
         </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -765,11 +748,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
 
   const renderStep5 = () => (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
-        <button className="text-gray-400 text-xl">→</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Describe the job</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Describe the job</h1>
       
       <div className="space-y-6">
         <div>
@@ -782,7 +761,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
               </span>
             )}
           </div>
-          <p className="text-gray-500 text-sm mb-4">This is an AI-powered job description. You can edit or replace it. <span className="inline-block w-4 h-4 bg-gray-400 rounded-full text-white text-xs text-center leading-4">i</span></p>
+          <p className="text-gray-500 text-sm mb-4">AI-powered job description. You can edit or replace it.</p>
           
           <div className="border border-gray-300 rounded-lg">
             <div className="border-b border-gray-200 p-3 bg-gray-50 flex items-center space-x-2">
@@ -798,12 +777,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
             />
           </div>
           
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-4">
-              <p className="text-gray-600 text-sm">Did you find the AI generated job description useful?</p>
-              <button className="text-gray-400 hover:text-gray-600">👍</button>
-              <button className="text-gray-400 hover:text-gray-600">👎</button>
-            </div>
+          <div className="flex justify-end mt-4">
             <button
               onClick={() => generateJobDescription(jobData.jobTitle)}
               disabled={!jobData.jobTitle || isGeneratingDescription}
@@ -822,14 +796,10 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
               )}
             </button>
           </div>
-          
-          <p className="text-gray-500 text-xs mt-2">
-            *This is an OpenAI-powered job description. It uses the job title and your location. By using the content, you adopt it as your own and are responsible for its accuracy.
-          </p>
         </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -850,26 +820,9 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
 
   const renderStep6 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="text-right mb-8">
-        <button className="text-gray-400 text-xl">→</button>
-      </div>
-      
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Qualifications</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Qualifications</h1>
       
       <div className="space-y-8">
-        <div>
-          <div className="flex items-center space-x-2 mb-4">
-            <label className="text-gray-700 font-medium">Qualifications</label>
-            <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">10 of 10 selected</span>
-          </div>
-          <p className="text-gray-500 text-sm mb-4">Please include any key qualifications needed for your job.</p>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="🔍"
-          />
-          <p className="text-red-500 text-sm mt-2">⚠ Maximum of 10 required qualifications selected.</p>
-        </div>
         
         <div>
           <h3 className="text-gray-700 font-medium mb-4">What skills should candidates have?</h3>
@@ -969,13 +922,9 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
           </button>
         </div>
         
-        <div>
-          <h3 className="text-gray-700 font-medium mb-4">What licenses and certifications should candidates have?</h3>
-          <p className="text-gray-500 text-sm">You have not set any preferred licenses or certifications. Search a term to add.</p>
-        </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -996,7 +945,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
 
   const renderStep7 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <h1 className="text-4xl font-bold text-gray-800 mb-12">Review</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Review</h1>
       
       <div className="space-y-6">
         <div>
@@ -1014,7 +963,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Company for this job</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">ZyncJobs</span>
+                <span className="text-gray-800">{jobData.companyName || 'ZyncJobs'}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1086,7 +1035,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
         </div>
       </div>
       
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-12">
         <button
           onClick={prevStep}
           className="flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700"
@@ -1110,14 +1059,34 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     const user = userData ? JSON.parse(userData) : null;
     
     const companyName = user?.company || user?.companyName || jobData.companyName || 'ZyncJobs';
-    const COMPANY_DOMAIN_MAP: { [key: string]: string } = {
-      'google': 'google.com', 'amazon': 'amazon.com', 'microsoft': 'microsoft.com',
-      'apple': 'apple.com', 'meta': 'meta.com', 'zoho': 'zoho.com',
-      'infosys': 'infosys.com', 'tcs': 'tcs.com', 'wipro': 'wipro.com'
-    };
-    const lowerName = companyName.toLowerCase().trim();
-    const domain = COMPANY_DOMAIN_MAP[lowerName] || `${lowerName}.com`;
-    const companyLogo = `https://img.logo.dev/${domain}?token=pk_X-1ZO13CRYuFHfXgt5hQ`;
+    let companyLogo = user?.companyLogo || jobData.companyLogo || '';
+    
+    // If no logo, fetch from company database
+    if (!companyLogo && companyName) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(companyName)}`);
+        if (response.ok) {
+          const companies = await response.json();
+          if (companies.length > 0) {
+            const company = companies[0];
+            companyLogo = company.logo || `https://img.logo.dev/${company.domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`;
+          } else {
+            // Try to generate logo from company name using logoUtils
+            companyLogo = getSafeCompanyLogo(companyName);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching company logo:', error);
+        // Try to generate logo from company name using logoUtils
+        try {
+          companyLogo = getSafeCompanyLogo(companyName);
+        } catch (err) {
+          console.error('Error loading logoUtils:', err);
+        }
+      }
+    }
+    
+    console.log('JobPosting - Company logo being sent:', companyLogo);
     
     const jobPostData = {
       jobTitle: jobData.jobTitle,
@@ -1134,8 +1103,11 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
         currency: 'USD',
         period: jobData.payRate === 'per year' ? 'yearly' : jobData.payRate === 'per month' ? 'monthly' : 'hourly'
       },
-      employerEmail: user?.email || 'employer@test.com'
+      employerEmail: user?.email || 'employer@test.com',
+      employerId: user?.id || user?._id
     };
+    
+    console.log('JobPosting - Full job post data:', jobPostData);
     
     try {
       const response = await fetch('http://localhost:5000/api/jobs', {

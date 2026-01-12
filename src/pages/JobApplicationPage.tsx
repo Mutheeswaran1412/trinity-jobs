@@ -14,25 +14,12 @@ interface JobApplicationPageProps {
 }
 
 interface ApplicationData {
-  // Location details
-  country: string;
-  postalCode: string;
-  city: string;
-  streetAddress: string;
-  
-  // CV details
-  cvFile: File | null;
-  cvFileName: string;
-  
-  // Questions
-  workExperience: string;
-  jobTitle: string;
-  company: string;
-  
-  // Contact info (from user profile)
-  fullName: string;
-  email: string;
-  phone: string;
+  resumeFile: File | null;
+  resumeFileName: string;
+  resumeUrl: string;
+  coverLetterFile: File | null;
+  coverLetterFileName: string;
+  workAuthorization: string;
 }
 
 const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, jobId, jobData }) => {
@@ -61,22 +48,13 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   
   const currentJobData = getJobData();
   const [currentStep, setCurrentStep] = useState(1);
-  const [applicationData, setApplicationData] = useState<ApplicationData>(() => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    return {
-      country: 'India',
-      postalCode: '',
-      city: userData.location || 'Chennai, Tamil Nadu',
-      streetAddress: '',
-      cvFile: null,
-      cvFileName: '',
-      workExperience: '',
-      jobTitle: '',
-      company: '',
-      fullName: userData.name || userData.fullName || '',
-      email: userData.email || '',
-      phone: userData.phone || ''
-    };
+  const [applicationData, setApplicationData] = useState<ApplicationData>({
+    resumeFile: null,
+    resumeFileName: '',
+    resumeUrl: '',
+    coverLetterFile: null,
+    coverLetterFileName: '',
+    workAuthorization: 'US Citizen'
   });
 
   const updateData = (field: keyof ApplicationData, value: any) => {
@@ -84,7 +62,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   };
 
   const nextStep = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -96,553 +74,421 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   };
 
   const getProgressPercentage = () => {
-    return (currentStep / 4) * 100;
+    return (currentStep / 3) * 100;
   };
 
-  // Step 1: Location Details
-  const renderLocationStep = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={() => onNavigate('job-listings')} className="text-blue-600 hover:text-blue-700">
-          ← Back to Jobs
-        </button>
-        <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
-          Save and close
-        </button>
-      </div>
-      
-      <div className="mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
-        </div>
-        <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4">Review your location details from your profile</h1>
-          <p className="text-gray-600 mb-6">
-            Sharing location helps connect you with relevant jobs and estimate your commute time. 
-            We'll save any changes to your profile.
-          </p>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-900">{applicationData.country}</span>
-                <button className="text-blue-600 hover:text-blue-700">Change</button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Postal code</label>
-              <input
-                type="text"
-                value={applicationData.postalCode}
-                onChange={(e) => updateData('postalCode', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">City, State/Territory</label>
-              <input
-                type="text"
-                value={applicationData.city}
-                onChange={(e) => updateData('city', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Street address</label>
-              <div className="text-sm text-gray-500 mb-2">🔒 Not shown to employers</div>
-              <input
-                type="text"
-                value={applicationData.streetAddress}
-                onChange={(e) => updateData('streetAddress', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center mt-6">
-            <button
-              onClick={() => onNavigate('job-listings')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              Back to Jobs
-            </button>
-            <button
-              onClick={nextStep}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">{currentJobData.title}</h3>
-          <p className="text-gray-600 mb-4">{currentJobData.company} - {currentJobData.location}</p>
-          
-          {currentJobData.requirements && (
-            <div className="bg-yellow-50 p-4 rounded-lg mb-4">
-              <p className="font-medium">{currentJobData.requirements}</p>
-            </div>
-          )}
-          
-          <div>
-            <h4 className="font-medium mb-2">Job Description:</h4>
-            <div className="text-gray-700 text-sm max-h-48 overflow-y-auto">
-              <p className="whitespace-pre-line">{currentJobData.description}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Step 2: CV Upload
-  const renderCVStep = () => {
-    // Get user data from localStorage to fetch their resume
-    const userData = localStorage.getItem('user');
-    let userProfile = null;
-    let resumeUrl = null;
-    try {
-      userProfile = userData ? JSON.parse(userData) : null;
-      // Check for resume in profile.resume or resume field
-      resumeUrl = userProfile?.profile?.resume || userProfile?.resume;
-      console.log('User profile data:', userProfile);
-      console.log('Resume URL:', resumeUrl);
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-    }
+  // Step 1: Resume & Cover Letter
+  const renderResumeStep = () => {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const existingResume = userData?.resume || userData?.profile?.resume;
 
     return (
-      <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-        <div className="flex justify-between items-center mb-6">
-          <button onClick={prevStep} className="text-gray-600 hover:text-gray-700">← Back</button>
-          <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
-            Save and close
-          </button>
-        </div>
-        
-        <div className="mb-6">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto p-6">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m-8 0V6a2 2 0 00-2 2v6.341" />
+              </svg>
+            </div>
+            <h2 className="text-sm text-gray-600 mb-2">You're Applying for</h2>
+            <h1 className="text-2xl font-bold mb-2">{currentJobData.title}</h1>
+            <p className="text-gray-600">@ {currentJobData.company} in {currentJobData.location}</p>
           </div>
-          <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
-        </div>
 
-        <div className="bg-white p-6 rounded-lg max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Your Resume from Profile</h1>
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">Step {currentStep} of 3</p>
+          </div>
 
-          {resumeUrl ? (
-            <div className="border-2 border-green-300 rounded-lg p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="bg-gray-100 p-2 rounded mr-3">📄</div>
-                  <div>
-                    <div className="font-medium">{userProfile?.resume?.name || 'Resume.pdf'}</div>
-                    <div className="text-sm text-gray-500">From your profile - {userProfile?.resume?.uploadDate || 'Recently uploaded'}</div>
-                  </div>
-                </div>
-                <div className="bg-green-500 text-white rounded-full p-1">✓</div>
-              </div>
+          {/* Resume & Cover Letter Form */}
+          <div className="bg-white rounded-lg p-8">
+            <h2 className="text-2xl font-bold mb-6">Resume & Cover Letter</h2>
+            
+            {/* Resume Section */}
+            <div className="mb-8">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Resume <span className="text-red-500">*</span>
+              </label>
               
-              {/* Show resume preview if available */}
-              {userProfile?.resume?.preview ? (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div dangerouslySetInnerHTML={{ __html: userProfile.resume.preview }} />
-                </div>
-              ) : (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-start">
-                    {userProfile.profilePhoto ? (
-                      <img src={userProfile.profilePhoto} alt="Profile" className="w-15 h-15 rounded-full mr-4" />
-                    ) : (
-                      <div className="w-15 h-15 bg-gray-300 rounded-full flex items-center justify-center text-lg font-semibold text-gray-600 mr-4">
-                        {userProfile.name ? userProfile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'MG'}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">{userProfile.name || 'Your Name'}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{userProfile.title || userProfile.jobTitle || 'Professional'}</p>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <h4 className="font-semibold mb-1">CONTACT</h4>
-                          <p>{userProfile.email || 'Email not provided'}</p>
-                          <p>{userProfile.phone || 'Phone not provided'}</p>
-                          <p>{userProfile.location || 'Location not provided'}</p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-1">SKILLS</h4>
-                          <p className="text-xs">
-                            {userProfile.skills && userProfile.skills.length > 0 
-                              ? userProfile.skills.slice(0, 5).join(', ') + (userProfile.skills.length > 5 ? '...' : '')
-                              : 'Skills not provided'
-                            }
-                          </p>
-                        </div>
+              {existingResume || applicationData.resumeFile ? (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <svg className="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <div>
+                        <p className="font-medium text-blue-600">
+                          {applicationData.resumeFileName || 'Resume.pdf'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {applicationData.resumeFile ? 'Just uploaded' : 'Uploaded to application'}
+                        </p>
                       </div>
                     </div>
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              )}
-              
-              <div className="mt-4 text-center space-y-2">
-                <button
-                  onClick={() => onNavigate('candidate-profile')}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium block mx-auto"
-                >
-                  Update Resume in Profile
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="border-2 border-red-300 rounded-lg p-6 mb-6 bg-red-50">
-              <div className="text-center">
-                <div className="text-red-600 mb-4">
-                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              ) : (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    id="resume-upload"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          const formData = new FormData();
+                          formData.append('resume', file);
+                          
+                          const response = await fetch('http://localhost:5000/api/upload/resume', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          
+                          const result = await response.json();
+                          
+                          if (response.ok) {
+                            updateData('resumeFile', file);
+                            updateData('resumeFileName', file.name);
+                            updateData('resumeUrl', result.fileUrl);
+                          } else {
+                            alert('Upload failed: ' + result.error);
+                          }
+                        } catch (error) {
+                          alert('Upload failed: ' + error.message);
+                        }
+                      }
+                    }}
+                  />
+                  <label htmlFor="resume-upload" className="cursor-pointer">
+                    <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="text-lg font-medium text-gray-700 mb-2">Upload your resume</p>
+                    <p className="text-sm text-gray-500">PDF, DOC, DOCX up to 10MB</p>
+                  </label>
                 </div>
-                <h3 className="font-bold text-lg text-red-800 mb-2">No Resume Found</h3>
-                <p className="text-red-700 mb-4">
-                  You need to upload a resume to your profile before applying for jobs.
-                </p>
-                <button
-                  onClick={() => onNavigate('candidate-dashboard')}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium"
-                >
-                  Upload Resume in Profile
-                </button>
-              </div>
+              )}
             </div>
-          )}
 
-          <div className="flex justify-between items-center mt-6">
-            <button
-              onClick={prevStep}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={resumeUrl ? nextStep : () => onNavigate('candidate-dashboard')}
-              className={`px-8 py-3 rounded-lg font-medium transition-colors ${
-                resumeUrl 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-400 text-white cursor-not-allowed'
-              }`}
-              disabled={!resumeUrl}
-            >
-              {resumeUrl ? 'Continue' : 'Upload Resume First'}
-            </button>
+            {/* Cover Letter Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Cover letter
+                </label>
+                <span className="text-sm text-gray-500">Optional</span>
+              </div>
+              
+              {applicationData.coverLetterFile ? (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <svg className="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <div>
+                        <p className="font-medium text-blue-600">{applicationData.coverLetterFileName}</p>
+                        <p className="text-sm text-gray-500">Just uploaded</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        updateData('coverLetterFile', null);
+                        updateData('coverLetterFileName', '');
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center bg-blue-50">
+                  <input
+                    type="file"
+                    id="cover-letter-upload"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        updateData('coverLetterFile', file);
+                        updateData('coverLetterFileName', file.name);
+                      }
+                    }}
+                  />
+                  <label htmlFor="cover-letter-upload" className="cursor-pointer">
+                    <svg className="w-8 h-8 text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="text-blue-600 font-medium">Upload your cover letter</p>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => onNavigate('job-listings')}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ← Back to Jobs
+              </button>
+              <button
+                onClick={nextStep}
+                disabled={!existingResume && !applicationData.resumeFile}
+                className={`px-6 py-2 rounded-lg font-medium ${
+                  existingResume || applicationData.resumeFile
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   };
 
-  // Step 3: Questions
-  const renderQuestionsStep = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={prevStep} className="text-gray-600 hover:text-gray-700">← Back</button>
-        <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
-          Save and close
-        </button>
-      </div>
-      
-      <div className="mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
+  // Step 2: Work Authorization
+  const renderWorkAuthStep = () => (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-2xl mx-auto p-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m-8 0V6a2 2 0 00-2 2v6.341" />
+            </svg>
+          </div>
+          <h2 className="text-sm text-gray-600 mb-2">You're Applying for</h2>
+          <h1 className="text-2xl font-bold mb-2">{currentJobData.title}</h1>
+          <p className="text-gray-600">@ {currentJobData.company} in {currentJobData.location}</p>
         </div>
-        <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4">Answer these questions from the employer</h1>
-          <p className="text-gray-600 mb-6">
-            These questions are from the employer. If a question seems inappropriate, you can 
-            <button className="text-blue-600 hover:text-blue-700 underline ml-1">report the job</button>.
-          </p>
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">Step {currentStep} of 3</p>
+        </div>
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                How many years of total work experience do you have? *
-              </label>
-              <input
-                type="text"
-                value={applicationData.workExperience}
-                onChange={(e) => updateData('workExperience', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g. 2 years"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Job title</label>
-              <input
-                type="text"
-                value={applicationData.jobTitle}
-                onChange={(e) => updateData('jobTitle', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your current/previous job title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
-              <input
-                type="text"
-                value={applicationData.company}
-                onChange={(e) => updateData('company', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter company name"
-              />
-            </div>
+        {/* Work Authorization Form */}
+        <div className="bg-white rounded-lg p-8">
+          <h2 className="text-2xl font-bold mb-6">Work Authorization</h2>
+          
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Work Authorization <span className="text-red-500">*</span>
+            </label>
+            
+            <select
+              value={applicationData.workAuthorization}
+              onChange={(e) => updateData('workAuthorization', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="US Citizen">US Citizen</option>
+              <option value="Green Card Holder">Green Card Holder</option>
+              <option value="H1B Visa">H1B Visa</option>
+              <option value="F1 Visa (OPT)">F1 Visa (OPT)</option>
+              <option value="L1 Visa">L1 Visa</option>
+              <option value="TN Permit Holder">TN Permit Holder</option>
+              <option value="Other">Other</option>
+              <option value="Require Sponsorship">Require Sponsorship</option>
+            </select>
           </div>
 
-          <div className="flex justify-between items-center mt-6">
+          <div className="bg-gray-50 p-4 rounded-lg mb-8">
+            <p className="text-sm text-gray-600">
+              By providing your Work Authorization status, you consent to us collecting and keeping this info consistent with our policies.
+            </p>
+            <button className="text-blue-600 hover:text-blue-700 text-sm mt-2 flex items-center">
+              Learn more
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center">
             <button
               onClick={prevStep}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="flex items-center text-gray-600 hover:text-gray-800"
             >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
               Back
             </button>
             <button
               onClick={nextStep}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
             >
-              Continue
+              Next
             </button>
           </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              Having an issue with this application? 
-              <button className="text-blue-600 hover:text-blue-700 underline ml-1">Tell us more</button>
-            </p>
-            <p className="text-xs text-gray-400 mt-2">
-              This site is protected by reCAPTCHA and the Google 
-              <button className="text-blue-600 hover:text-blue-700 underline mx-1">Privacy Policy</button>
-              and <button className="text-blue-600 hover:text-blue-700 underline">Terms of Service</button> apply.
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">{currentJobData.title}</h3>
-          <p className="text-gray-600 mb-4">{currentJobData.company} - {currentJobData.location}</p>
-          
-          {currentJobData.requirements && (
-            <div className="bg-yellow-50 p-4 rounded-lg mb-4">
-              <p className="font-medium">{currentJobData.requirements}</p>
-            </div>
-          )}
-          
-          <div>
-            <h4 className="font-medium mb-2">Job Description:</h4>
-            <div className="text-gray-700 text-sm max-h-48 overflow-y-auto">
-              <p className="whitespace-pre-line">{currentJobData.description}</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
 
-  // Step 4: Review
-  const renderReviewStep = () => (
-    <div className="max-w-4xl mx-auto p-6 bg-blue-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={prevStep} className="text-gray-600 hover:text-gray-700">← Back</button>
-        <button onClick={() => onNavigate('candidate-dashboard')} className="text-blue-600 hover:text-blue-700">
-          Save and close
-        </button>
-      </div>
-      
-      <div className="mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
-        </div>
-        <div className="text-right text-sm text-gray-600 mt-1">{Math.round(getProgressPercentage())}%</div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Review your application</h1>
-        <p className="text-gray-600 mb-6">
-          You will not be able to make changes after you submit your application.
-        </p>
-
-        <div className="space-y-6">
-          <div className="border-b pb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-gray-600">Contact information</h3>
-              <button className="text-blue-600 hover:text-blue-700">Edit</button>
+  // Step 3: Review Application
+  const renderReviewStep = () => {
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto p-6">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m-8 0V6a2 2 0 00-2 2v6.341" />
+              </svg>
             </div>
-            <div className="space-y-2">
-              <div>
-                <div className="text-sm text-gray-500">Full name</div>
-                <div className="font-medium">{applicationData.fullName}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Email address</div>
-                <div className="font-medium">{applicationData.email}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">City, State</div>
-                <div className="font-medium">{applicationData.city}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Phone Number</div>
-                <div className="font-medium">{applicationData.phone}</div>
-              </div>
-            </div>
+            <h2 className="text-sm text-gray-600 mb-2">You're Applying for</h2>
+            <h1 className="text-2xl font-bold mb-2">{currentJobData.title}</h1>
+            <p className="text-gray-600">@ {currentJobData.company} in {currentJobData.location}</p>
           </div>
 
-          <div className="border-b pb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-gray-600">CV</h3>
-              <div className="space-x-2">
-                <button className="text-blue-600 hover:text-blue-700">Download</button>
-                <button className="text-blue-600 hover:text-blue-700">Edit</button>
-              </div>
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${getProgressPercentage()}%` }}></div>
             </div>
-            <div className="flex items-center">
-              <div className="bg-blue-100 p-2 rounded mr-3">📄</div>
-              <span className="text-blue-600">{(() => {
-                const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                return userData?.resume?.name || userData?.profile?.resume?.split('/').pop() || 'Resume.pdf';
-              })()}</span>
-            </div>
-            
-            <div className="bg-orange-100 p-4 rounded-lg mt-4">
-              <div className="flex items-start">
-                {(() => {
-                  const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                  return userData.profilePhoto ? (
-                    <img src={userData.profilePhoto} alt="Profile" className="w-12 h-12 rounded-full mr-3" />
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 mr-3">
-                      {userData.name ? userData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'MG'}
-                    </div>
-                  );
-                })()}
-                <div>
-                  <h4 className="font-bold">{JSON.parse(localStorage.getItem('user') || '{}').name || 'Your Name'}</h4>
-                  <p className="text-sm text-gray-600">{JSON.parse(localStorage.getItem('user') || '{}').title || JSON.parse(localStorage.getItem('user') || '{}').jobTitle || 'Professional'}</p>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-gray-600 mt-2">Step {currentStep} of 3</p>
           </div>
 
-          <div>
-            <h3 className="font-medium text-gray-600 mb-2">Application responses</h3>
-            <div className="space-y-2">
-              <div>
-                <div className="text-sm text-gray-500">Work experience</div>
-                <div className="font-medium">{applicationData.workExperience || 'Not specified'}</div>
+          {/* Review Application */}
+          <div className="bg-white rounded-lg p-8">
+            <h2 className="text-2xl font-bold mb-4">Review your application</h2>
+            <p className="text-gray-600 mb-8">
+              Take a moment to review the documents you're submitting for this application. Once you submit, this action cannot be undone.
+            </p>
+
+            {/* Resume Section */}
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Resume <span className="text-red-500">*</span></h3>
+                <button className="text-blue-600 hover:text-blue-700 p-2 rounded-full border border-gray-200">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
               </div>
-              <div>
-                <div className="text-sm text-gray-500">Job title</div>
-                <div className="font-medium">{applicationData.jobTitle || 'Not specified'}</div>
+              <p className="text-gray-700">
+                {applicationData.resumeFileName || userData?.resume?.name || 'Resume.pdf'}
+              </p>
+            </div>
+
+            {/* Cover Letter Section */}
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Cover Letter</h3>
+                <button className="text-blue-600 hover:text-blue-700 p-2 rounded-full border border-gray-200">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
               </div>
-              <div>
-                <div className="text-sm text-gray-500">Company</div>
-                <div className="font-medium">{applicationData.company || 'Not specified'}</div>
-              </div>
+              <p className="text-gray-700">
+                {applicationData.coverLetterFileName || 'No cover letter uploaded'}
+              </p>
+            </div>
+
+            {/* Work Authorization Section */}
+            <div className="border border-gray-200 rounded-lg p-6 mb-8">
+              <h3 className="font-semibold text-lg mb-4">Work Authorization</h3>
+              <p className="text-gray-700">{applicationData.workAuthorization}</p>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={prevStep}
+                className="flex items-center text-gray-600 hover:text-gray-800"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
+                    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                    const resumeUrl = applicationData.resumeUrl || userData?.profile?.resume || userData?.resume || '';
+                    
+                    const response = await fetch('http://localhost:5000/api/applications', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        jobId: jobData._id || jobData.id,
+                        candidateId: userData._id || userData.id,
+                        candidateName: userData.name || userData.fullName,
+                        candidateEmail: userData.email,
+                        candidatePhone: userData.phone,
+                        resumeUrl: resumeUrl,
+                        workAuthorization: applicationData.workAuthorization,
+                        coverLetter: applicationData.coverLetterFile ? 'Cover letter attached' : 'No cover letter'
+                      })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                      alert('🎉 Application submitted successfully!');
+                      setTimeout(() => onNavigate('candidate-dashboard'), 1500);
+                    } else {
+                      alert(result.error || 'Failed to submit application');
+                    }
+                  } catch (error) {
+                    console.error('Application error:', error);
+                    alert('Failed to submit application. Please try again.');
+                  }
+                }}
+                className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 flex items-center"
+              >
+                Submit Application
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-between items-center mt-6">
-          <button
-            onClick={prevStep}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            Back
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
-                const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                const resumeUrl = userData?.profile?.resume || userData?.resume;
-                
-                // Submit to backend API
-                const response = await fetch('http://localhost:5000/api/applications', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    jobId: jobData._id || jobData.id,
-                    candidateName: userData.name || userData.fullName || applicationData.fullName,
-                    candidateEmail: userData.email,
-                    candidatePhone: userData.phone || applicationData.phone,
-                    resumeUrl: resumeUrl,
-                    coverLetter: `Work Experience: ${applicationData.workExperience}\nJob Title: ${applicationData.jobTitle}\nCompany: ${applicationData.company}`,
-                    candidateId: userData._id || userData.id
-                  })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                  // Save to localStorage for local tracking
-                  const applicationDetails = {
-                    id: Date.now(),
-                    jobTitle: jobData.title || jobData.jobTitle,
-                    company: jobData.company,
-                    location: jobData.location,
-                    appliedAt: new Date().toISOString(),
-                    status: 'Applied',
-                    ...applicationData
-                  };
-                  
-                  const existingApplications = JSON.parse(localStorage.getItem('userApplications') || '[]');
-                  existingApplications.push(applicationDetails);
-                  localStorage.setItem('userApplications', JSON.stringify(existingApplications));
-                  
-                  alert('🎉 Application submitted successfully! Check your email for confirmation.');
-                  setTimeout(() => onNavigate('candidate-dashboard'), 1500);
-                } else {
-                  alert(result.error || 'Failed to submit application');
-                }
-              } catch (error) {
-                console.error('Application error:', error);
-                alert('Failed to submit application. Please try again.');
-              }
-            }}
-            className="px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
-          >
-            <span>Submit Application</span>
-            <span>✓</span>
-          </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+
 
   return (
     <div>
-      {currentStep === 1 && renderLocationStep()}
-      {currentStep === 2 && renderCVStep()}
-      {currentStep === 3 && renderQuestionsStep()}
-      {currentStep === 4 && renderReviewStep()}
-      
-      {/* Back Button - show on all steps except first */}
-      {currentStep > 1 && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <BackButton onBack={prevStep} />
-        </div>
-      )}
+      {currentStep === 1 && renderResumeStep()}
+      {currentStep === 2 && renderWorkAuthStep()}
+      {currentStep === 3 && renderReviewStep()}
     </div>
   );
 };

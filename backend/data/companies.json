@@ -98,5 +98,614 @@
   { "id": 97, "name": "Unacademy", "domain": "unacademy.com", "logo": "https://img.logo.dev/unacademy.com" },
   { "id": 98, "name": "UpGrad", "domain": "upgrad.com", "logo": "https://img.logo.dev/upgrad.com" },
   { "id": 99, "name": "Coursera", "domain": "coursera.org", "logo": "https://img.logo.dev/coursera.org" },
-  { "id": 100, "name": "Udemy", "domain": "udemy.com", "logo": "https://img.logo.dev/udemy.com" }
+  { "id": 100, "name": "Udemy", "domain": "udemy.com", "logo": "https://img.logo.dev/udemy.com" },
+   {
+    "id": 101,
+    "name": "Trinity technology solution",
+    "domain": "trinitetech.com",
+    "logo": "https://img.logo.dev/trinitetech.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200"
+  },
+  
+  {
+    "id": 102,
+    "name": "Tesla",
+    "domain": "tesla.com",
+    "logo": "https://img.logo.dev/tesla.com"
+  },
+  {
+    "id": 103,
+    "name": "SpaceX",
+    "domain": "spacex.com",
+    "logo": "https://img.logo.dev/spacex.com"
+  },
+  {
+    "id": 104,
+    "name": "Twitter (X)",
+    "domain": "x.com",
+    "logo": "https://img.logo.dev/x.com"
+  },
+  {
+    "id": 105,
+    "name": "LinkedIn",
+    "domain": "linkedin.com",
+    "logo": "https://img.logo.dev/linkedin.com"
+  },
+  {
+    "id": 106,
+    "name": "Snap Inc",
+    "domain": "snap.com",
+    "logo": "https://img.logo.dev/snap.com"
+  },
+  {
+    "id": 107,
+    "name": "Spotify",
+    "domain": "spotify.com",
+    "logo": "https://img.logo.dev/spotify.com"
+  },
+  {
+    "id": 108,
+    "name": "Shopify",
+    "domain": "shopify.com",
+    "logo": "https://img.logo.dev/shopify.com"
+  },
+  {
+    "id": 109,
+    "name": "ZoomInfo",
+    "domain": "zoominfo.com",
+    "logo": "https://img.logo.dev/zoominfo.com"
+  },
+  {
+    "id": 110,
+    "name": "ServiceNow",
+    "domain": "servicenow.com",
+    "logo": "https://img.logo.dev/servicenow.com"
+  },
+  {
+    "id": 111,
+    "name": "Workday",
+    "domain": "workday.com",
+    "logo": "https://img.logo.dev/workday.com"
+  },
+  {
+    "id": 112,
+    "name": "Okta",
+    "domain": "okta.com",
+    "logo": "https://img.logo.dev/okta.com"
+  },
+  {
+    "id": 113,
+    "name": "Twilio",
+    "domain": "twilio.com",
+    "logo": "https://img.logo.dev/twilio.com"
+  },
+  {
+    "id": 114,
+    "name": "Zendesk",
+    "domain": "zendesk.com",
+    "logo": "https://img.logo.dev/zendesk.com"
+  },
+  {
+    "id": 115,
+    "name": "Freshworks",
+    "domain": "freshworks.com",
+    "logo": "https://img.logo.dev/freshworks.com"
+  },
+  {
+    "id": 116,
+    "name": "Zoho Desk",
+    "domain": "zoho.com",
+    "logo": "https://img.logo.dev/zoho.com"
+  },
+  {
+    "id": 117,
+    "name": "Cleartrip",
+    "domain": "cleartrip.com",
+    "logo": "https://img.logo.dev/cleartrip.com"
+  },
+  {
+    "id": 118,
+    "name": "MakeMyTrip",
+    "domain": "makemytrip.com",
+    "logo": "https://img.logo.dev/makemytrip.com"
+  },
+  {
+    "id": 119,
+    "name": "OYO",
+    "domain": "oyorooms.com",
+    "logo": "https://img.logo.dev/oyorooms.com"
+  },
+  {
+    "id": 120,
+    "name": "Expedia",
+    "domain": "expedia.com",
+    "logo": "https://img.logo.dev/expedia.com"
+  },
+  {
+    "id": 121,
+    "name": "Airbnb",
+    "domain": "airbnb.com",
+    "logo": "https://img.logo.dev/airbnb.com"
+  },
+  {
+    "id": 122,
+    "name": "Booking.com",
+    "domain": "booking.com",
+    "logo": "https://img.logo.dev/booking.com"
+  },
+  {
+    "id": 123,
+    "name": "Stripe Atlas",
+    "domain": "stripe.com",
+    "logo": "https://img.logo.dev/stripe.com"
+  },
+  {
+    "id": 124,
+    "name": "Coinbase Cloud",
+    "domain": "coinbase.com",
+    "logo": "https://img.logo.dev/coinbase.com"
+  },
+  {
+    "id": 125,
+    "name": "OpenAI",
+    "domain": "openai.com",
+    "logo": "https://img.logo.dev/openai.com"
+  },
+  {
+    "id": 126,
+    "name": "Anthropic",
+    "domain": "anthropic.com",
+    "logo": "https://img.logo.dev/anthropic.com"
+  },
+  {
+    "id": 127,
+    "name": "Hugging Face",
+    "domain": "huggingface.co",
+    "logo": "https://img.logo.dev/huggingface.co"
+  },
+  {
+    "id": 128,
+    "name": "DataRobot",
+    "domain": "datarobot.com",
+    "logo": "https://img.logo.dev/datarobot.com"
+  },
+  {
+    "id": 129,
+    "name": "UiPath",
+    "domain": "uipath.com",
+    "logo": "https://img.logo.dev/uipath.com"
+  },
+  {
+    "id": 130,
+    "name": "Automation Anywhere",
+    "domain": "automationanywhere.com",
+    "logo": "https://img.logo.dev/automationanywhere.com"
+  },
+  {
+    "id": 131,
+    "name": "Blue Prism",
+    "domain": "blueprism.com",
+    "logo": "https://img.logo.dev/blueprism.com"
+  },
+  {
+    "id": 132,
+    "name": "ThoughtWorks",
+    "domain": "thoughtworks.com",
+    "logo": "https://img.logo.dev/thoughtworks.com"
+  },
+  {
+    "id": 133,
+    "name": "Mindtree",
+    "domain": "mindtree.com",
+    "logo": "https://img.logo.dev/mindtree.com"
+  },
+  {
+    "id": 134,
+    "name": "L&T Infotech",
+    "domain": "lntinfotech.com",
+    "logo": "https://img.logo.dev/lntinfotech.com"
+  },
+  {
+    "id": 135,
+    "name": "Mphasis",
+    "domain": "mphasis.com",
+    "logo": "https://img.logo.dev/mphasis.com"
+  },
+  {
+    "id": 136,
+    "name": "Hexaware",
+    "domain": "hexaware.com",
+    "logo": "https://img.logo.dev/hexaware.com"
+  },
+  {
+    "id": 137,
+    "name": "Birlasoft",
+    "domain": "birlasoft.com",
+    "logo": "https://img.logo.dev/birlasoft.com"
+  },
+  {
+    "id": 138,
+    "name": "Zensar",
+    "domain": "zensar.com",
+    "logo": "https://img.logo.dev/zensar.com"
+  },
+  {
+    "id": 139,
+    "name": "Informatica",
+    "domain": "informatica.com",
+    "logo": "https://img.logo.dev/informatica.com"
+  },
+  {
+    "id": 140,
+    "name": "Talend",
+    "domain": "talend.com",
+    "logo": "https://img.logo.dev/talend.com"
+  },
+  {
+    "id": 141,
+    "name": "Cloudera",
+    "domain": "cloudera.com",
+    "logo": "https://img.logo.dev/cloudera.com"
+  },
+  {
+    "id": 142,
+    "name": "Confluent",
+    "domain": "confluent.io",
+    "logo": "https://img.logo.dev/confluent.io"
+  },
+  {
+    "id": 143,
+    "name": "Tableau",
+    "domain": "tableau.com",
+    "logo": "https://img.logo.dev/tableau.com"
+  },
+  {
+    "id": 144,
+    "name": "Qlik",
+    "domain": "qlik.com",
+    "logo": "https://img.logo.dev/qlik.com"
+  },
+  {
+    "id": 145,
+    "name": "Looker",
+    "domain": "looker.com",
+    "logo": "https://img.logo.dev/looker.com"
+  },
+  {
+    "id": 146,
+    "name": "Power BI",
+    "domain": "powerbi.microsoft.com",
+    "logo": "https://img.logo.dev/microsoft.com"
+  },
+  {
+    "id": 147,
+    "name": "Figma",
+    "domain": "figma.com",
+    "logo": "https://img.logo.dev/figma.com"
+  },
+  {
+    "id": 148,
+    "name": "Canva",
+    "domain": "canva.com",
+    "logo": "https://img.logo.dev/canva.com"
+  },
+  {
+    "id": 149,
+    "name": "InVision",
+    "domain": "invisionapp.com",
+    "logo": "https://img.logo.dev/invisionapp.com"
+  },
+  {
+    "id": 150,
+    "name": "Dribbble",
+    "domain": "dribbble.com",
+    "logo": "https://img.logo.dev/dribbble.com"
+  },
+  {
+    "id": 151,
+    "name": "Behance",
+    "domain": "behance.net",
+    "logo": "https://img.logo.dev/behance.net"
+  },
+  {
+    "id": 152,
+    "name": "Envato",
+    "domain": "envato.com",
+    "logo": "https://img.logo.dev/envato.com"
+  },
+  {
+    "id": 153,
+    "name": "Unity",
+    "domain": "unity.com",
+    "logo": "https://img.logo.dev/unity.com"
+  },
+  {
+    "id": 154,
+    "name": "Unreal Engine",
+    "domain": "unrealengine.com",
+    "logo": "https://img.logo.dev/unrealengine.com"
+  },
+  {
+    "id": 155,
+    "name": "Epic Games",
+    "domain": "epicgames.com",
+    "logo": "https://img.logo.dev/epicgames.com"
+  },
+  {
+    "id": 156,
+    "name": "Steam",
+    "domain": "steampowered.com",
+    "logo": "https://img.logo.dev/steampowered.com"
+  },
+  {
+    "id": 157,
+    "name": "EA",
+    "domain": "ea.com",
+    "logo": "https://img.logo.dev/ea.com"
+  },
+  {
+    "id": 158,
+    "name": "Ubisoft",
+    "domain": "ubisoft.com",
+    "logo": "https://img.logo.dev/ubisoft.com"
+  },
+  {
+    "id": 159,
+    "name": "Riot Games",
+    "domain": "riotgames.com",
+    "logo": "https://img.logo.dev/riotgames.com"
+  },
+  {
+    "id": 160,
+    "name": "Rockstar Games",
+    "domain": "rockstargames.com",
+    "logo": "https://img.logo.dev/rockstargames.com"
+  },
+  {
+    "id": 161,
+    "name": "Sony Interactive",
+    "domain": "sony.com",
+    "logo": "https://img.logo.dev/sony.com"
+  },
+  {
+    "id": 162,
+    "name": "Samsung",
+    "domain": "samsung.com",
+    "logo": "https://img.logo.dev/samsung.com"
+  },
+  {
+    "id": 163,
+    "name": "LG",
+    "domain": "lg.com",
+    "logo": "https://img.logo.dev/lg.com"
+  },
+  {
+    "id": 164,
+    "name": "Panasonic",
+    "domain": "panasonic.com",
+    "logo": "https://img.logo.dev/panasonic.com"
+  },
+  {
+    "id": 165,
+    "name": "Philips",
+    "domain": "philips.com",
+    "logo": "https://img.logo.dev/philips.com"
+  },
+  {
+    "id": 166,
+    "name": "Siemens",
+    "domain": "siemens.com",
+    "logo": "https://img.logo.dev/siemens.com"
+  },
+  {
+    "id": 167,
+    "name": "Bosch",
+    "domain": "bosch.com",
+    "logo": "https://img.logo.dev/bosch.com"
+  },
+  {
+    "id": 168,
+    "name": "GE",
+    "domain": "ge.com",
+    "logo": "https://img.logo.dev/ge.com"
+  },
+  {
+    "id": 169,
+    "name": "3M",
+    "domain": "3m.com",
+    "logo": "https://img.logo.dev/3m.com"
+  },
+  {
+    "id": 170,
+    "name": "Shell",
+    "domain": "shell.com",
+    "logo": "https://img.logo.dev/shell.com"
+  },
+  {
+    "id": 171,
+    "name": "BP",
+    "domain": "bp.com",
+    "logo": "https://img.logo.dev/bp.com"
+  },
+  {
+    "id": 172,
+    "name": "ExxonMobil",
+    "domain": "exxonmobil.com",
+    "logo": "https://img.logo.dev/exxonmobil.com"
+  },
+  {
+    "id": 173,
+    "name": "Chevron",
+    "domain": "chevron.com",
+    "logo": "https://img.logo.dev/chevron.com"
+  },
+  {
+    "id": 174,
+    "name": "TotalEnergies",
+    "domain": "totalenergies.com",
+    "logo": "https://img.logo.dev/totalenergies.com"
+  },
+  {
+    "id": 175,
+    "name": "Tesla Energy",
+    "domain": "tesla.com",
+    "logo": "https://img.logo.dev/tesla.com"
+  },
+  {
+    "id": 176,
+    "name": "BYD",
+    "domain": "byd.com",
+    "logo": "https://img.logo.dev/byd.com"
+  },
+  {
+    "id": 177,
+    "name": "Toyota",
+    "domain": "toyota.com",
+    "logo": "https://img.logo.dev/toyota.com"
+  },
+  {
+    "id": 178,
+    "name": "Honda",
+    "domain": "honda.com",
+    "logo": "https://img.logo.dev/honda.com"
+  },
+  {
+    "id": 179,
+    "name": "Ford",
+    "domain": "ford.com",
+    "logo": "https://img.logo.dev/ford.com"
+  },
+  {
+    "id": 180,
+    "name": "BMW",
+    "domain": "bmw.com",
+    "logo": "https://img.logo.dev/bmw.com"
+  },
+  {
+    "id": 181,
+    "name": "Mercedes-Benz",
+    "domain": "mercedes-benz.com",
+    "logo": "https://img.logo.dev/mercedes-benz.com"
+  },
+  {
+    "id": 182,
+    "name": "Volkswagen",
+    "domain": "volkswagen.com",
+    "logo": "https://img.logo.dev/volkswagen.com"
+  },
+  {
+    "id": 183,
+    "name": "Hyundai",
+    "domain": "hyundai.com",
+    "logo": "https://img.logo.dev/hyundai.com"
+  },
+  {
+    "id": 184,
+    "name": "Kia",
+    "domain": "kia.com",
+    "logo": "https://img.logo.dev/kia.com"
+  },
+  {
+    "id": 185,
+    "name": "PepsiCo",
+    "domain": "pepsico.com",
+    "logo": "https://img.logo.dev/pepsico.com"
+  },
+  {
+    "id": 186,
+    "name": "Coca-Cola",
+    "domain": "coca-cola.com",
+    "logo": "https://img.logo.dev/coca-cola.com"
+  },
+  {
+    "id": 187,
+    "name": "Nestlé",
+    "domain": "nestle.com",
+    "logo": "https://img.logo.dev/nestle.com"
+  },
+  {
+    "id": 188,
+    "name": "Unilever",
+    "domain": "unilever.com",
+    "logo": "https://img.logo.dev/unilever.com"
+  },
+  {
+    "id": 189,
+    "name": "P&G",
+    "domain": "pg.com",
+    "logo": "https://img.logo.dev/pg.com"
+  },
+  {
+    "id": 190,
+    "name": "ITC",
+    "domain": "itcportal.com",
+    "logo": "https://img.logo.dev/itcportal.com"
+  },
+  {
+    "id": 191,
+    "name": "Reliance Industries",
+    "domain": "ril.com",
+    "logo": "https://img.logo.dev/ril.com"
+  },
+  {
+    "id": 192,
+    "name": "Adani Group",
+    "domain": "adani.com",
+    "logo": "https://img.logo.dev/adani.com"
+  },
+  {
+    "id": 193,
+    "name": "Tata Group",
+    "domain": "tata.com",
+    "logo": "https://img.logo.dev/tata.com"
+  },
+  {
+    "id": 194,
+    "name": "Mahindra Group",
+    "domain": "mahindra.com",
+    "logo": "https://img.logo.dev/mahindra.com"
+  },
+  {
+    "id": 195,
+    "name": "Bajaj Finserv",
+    "domain": "bajajfinserv.in",
+    "logo": "https://img.logo.dev/bajajfinserv.in"
+  },
+  {
+    "id": 196,
+    "name": "Havells",
+    "domain": "havells.com",
+    "logo": "https://img.logo.dev/havells.com"
+  },
+  {
+    "id": 197,
+    "name": "Godrej",
+    "domain": "godrej.com",
+    "logo": "https://img.logo.dev/godrej.com"
+  },
+  {
+    "id": 198,
+    "name": "Walmart",
+    "domain": "walmart.com",
+    "logo": "https://img.logo.dev/walmart.com"
+  },
+  {
+    "id": 199,
+    "name": "Target",
+    "domain": "target.com",
+    "logo": "https://img.logo.dev/target.com"
+  },
+  {
+    "id": 200,
+    "name": "Costco",
+    "domain": "costco.com",
+    "logo": "https://img.logo.dev/costco.com"
+  },
+  {
+    "id": 201,
+    "name": "IKEA",
+    "domain": "ikea.com",
+    "logo": "https://img.logo.dev/ikea.com"
+  }
 ]
+
+

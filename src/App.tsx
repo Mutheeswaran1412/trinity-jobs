@@ -76,7 +76,7 @@ function App() {
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
   const [showCandidateRegisterModal, setShowCandidateRegisterModal] = useState(false);
   const [showEmployerRegisterModal, setShowEmployerRegisterModal] = useState(false);
-  const [user, setUser] = useState<{name: string, type: 'candidate' | 'employer' | 'admin'} | null>(null);
+  const [user, setUser] = useState<{name: string, type: 'candidate' | 'employer' | 'admin', email?: string} | null>(null);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -103,10 +103,9 @@ function App() {
         
         console.log('Mapped user type:', userType);
         setUser({
-          name: userType === 'employer' 
-            ? (userData.companyName || userData.fullName || userData.email?.split('@')[0] || 'User')
-            : (userData.fullName || userData.email?.split('@')[0] || 'User'),
-          type: userType as 'candidate' | 'employer'
+          name: userData.name || userData.fullName || userData.email?.split('@')[0] || 'User',
+          type: userType as 'candidate' | 'employer',
+          email: userData.email
         });
       } catch (error) {
         console.error('Error parsing saved user data:', error);
@@ -259,7 +258,7 @@ function App() {
     setShowEmployerRegisterModal(false);
   };
 
-  const handleLogin = (userData: {name: string, type: 'candidate' | 'employer' | 'admin'}) => {
+  const handleLogin = (userData: {name: string, type: 'candidate' | 'employer' | 'admin', email?: string}) => {
     setUser(userData);
     closeModals();
   };
@@ -376,7 +375,7 @@ function App() {
           <div className="min-h-screen bg-white">
             <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
             {user?.type === 'employer' ? (
-              <EmployerDashboardPage onNavigate={handleNavigation} />
+              <EmployerDashboardPage onNavigate={handleNavigation} onLogout={handleLogout} />
             ) : (
               <CandidateDashboardPage onNavigate={handleNavigation} />
             )}

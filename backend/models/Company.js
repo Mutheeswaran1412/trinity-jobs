@@ -39,7 +39,7 @@ const companySchema = new mongoose.Schema({
   },
   employees: {
     type: String,
-    enum: ['1-50', '51-200', '201-1000', '1000+'],
+    enum: ['1-50', '51-200', '201-1000', '1000-5000', '5000+', '1000+'],
     default: '1-50'
   },
   workSetting: {

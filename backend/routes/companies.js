@@ -33,13 +33,17 @@ router.get('/', async (req, res) => {
       
       // Search in popular companies from JSON
       const popularMatches = popularCompanies
-        .filter(c => c.name.toLowerCase().includes(query))
+        .filter(c => 
+          c.name.toLowerCase().includes(query) ||
+          c.domain.toLowerCase().includes(query)
+        )
         .slice(0, 10)
         .map(c => ({
           id: c.id,
           name: c.name,
           domain: c.domain,
-          logo: c.logo,
+          logo: `https://img.logo.dev/${c.domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+          followers: 10000,
           source: 'json'
         }));
       
@@ -53,13 +57,17 @@ router.get('/', async (req, res) => {
       };
       
       const dbCompanies = await Company.find(dbQuery).limit(5).sort({ name: 1 });
-      const dbMatches = dbCompanies.map(c => ({
-        id: c._id.toString(),
-        name: c.name,
-        logo: c.logo || (c.website ? `https://logo.clearbit.com/${c.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}` : ''),
-        followers: c.followers || 1000,
-        source: 'database'
-      }));
+      const dbMatches = dbCompanies.map(c => {
+        const domain = c.website ? c.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : null;
+        return {
+          id: c._id.toString(),
+          name: c.name,
+          domain: domain,
+          logo: c.logo || (domain ? `https://img.logo.dev/${domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200` : ''),
+          followers: c.followers || 5000,
+          source: 'database'
+        };
+      });
       
       // Combine and deduplicate
       const allMatches = [...popularMatches, ...dbMatches];

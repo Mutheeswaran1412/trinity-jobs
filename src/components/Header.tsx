@@ -121,9 +121,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <button onClick={handleFindJobsClick} className="text-white hover:text-gray-300 font-medium transition-colors">
               Job Search
             </button>
-            <button onClick={() => onNavigate && onNavigate('company-test')} className="text-white hover:text-gray-300 font-medium transition-colors">
-              🔍 Company Search
-            </button>
             <button onClick={handleCompaniesClick} className="text-white hover:text-gray-300 font-medium transition-colors">
               Companies
             </button>
@@ -237,10 +234,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
+                  className="flex items-center space-x-2 text-white hover:text-gray-300 transition-colors"
                 >
-                  <span>{user.name}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <span className="max-w-[150px] truncate">{user.name}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform flex-shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 py-2 z-50">
@@ -445,13 +442,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                   >
                     Resume Parser Tool
                   </button>
-                  <button 
-                    onClick={() => onNavigate && onNavigate('company-test')}
-                    className="block text-left text-gray-300 hover:text-white text-sm"
-                  >
-                    🧪 Company Search Test
-                  </button>
-
                 </div>
               </div>
               <button 

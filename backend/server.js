@@ -7,14 +7,19 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
 import jobRoutes from './routes/jobs.js';
 import userRoutes from './routes/users.js';
+import usersGetRoutes from './routes/users-get.js';
 import applicationRoutes from './routes/applications.js';
+import uploadRoutes from './routes/upload.js';
 import moderationRoutes from './routes/moderation.js';
 import resumeBasicRoutes from './routes/resumeBasic.js';
+import resumeRoutes from './routes/resume.js';
+import resumeModerationRoutes from './routes/resumeModeration.js';
 import adminJobsRoutes from './routes/adminJobs.js';
-import testMistralRoutes from './routes/testMistral.js';
 import companyRoutes from './routes/companies.js';
 import companySearchRoutes from './routes/companySearch.js';
 import pdfRoutes from './routes/pdf.js';
@@ -39,6 +44,7 @@ import companyAutocompleteRoutes from './routes/companyAutocomplete.js';
 import linkedinParserRoutes from './routes/linkedinParser.js';
 import Notification from './models/Notification.js';
 import Message from './models/Message.js';
+import { loadInitialData } from './scripts/loadInitialData.js';
 
 import { generateAccessToken, generateRefreshToken } from './utils/jwt.js';
 import { errorHandler, notFound } from './utils/errorHandler.js';
@@ -47,6 +53,9 @@ import { validateEnv } from './utils/envValidator.js';
 
 dotenv.config();
 validateEnv();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
@@ -58,7 +67,9 @@ const io = new Server(httpServer, {
 });
 const PORT = process.env.PORT || 5000;
 
-connectDB();
+connectDB().then(() => {
+  loadInitialData();
+});
 
 // Socket.io connection
 const userSockets = new Map();
@@ -130,12 +141,16 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/jobs', jobRoutes);
+app.use('/api/users/:id', usersGetRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
-app.use('/api/test', testMistralRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/company', companySearchRoutes);
 app.use('/api/pdf', pdfRoutes);
@@ -153,6 +168,8 @@ app.use('/api/employer', employerCandidatesRoutes);
 app.use('/api/admin/system', adminSystemRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/resume', resumeBasicRoutes);
+app.use('/api/resume', resumeRoutes);
+app.use('/api/resume', resumeModerationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/profile', profileRoutes);
@@ -361,76 +378,11 @@ app.get('/api/test-suggest', (req, res) => {
 });
 
 app.post('/api/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    let user = null;
-    
-    if (email === 'mutheeswaran1424@gmail.com' && password === '123456') {
-      user = { id: '1', email: email, name: 'Mutheeswaran', fullName: 'Mutheeswaran', userType: 'candidate' };
-    } else if (email === 'test@candidate.com' && password === '123456') {
-      user = { id: '2', email: email, fullName: 'Test Candidate', userType: 'candidate' };
-    } else if (email === 'test@employer.com' && password === '123456') {
-      user = { id: '3', email: email, fullName: 'Test Employer', userType: 'employer' };
-    } else if (email === 'employer@test.com' && password === '123456') {
-      user = { id: '4', email: email, fullName: 'Employer User', userType: 'employer' };
-    } else if (email === 'hr@company.com' && password === '123456') {
-      user = { id: '5', email: email, fullName: 'HR Manager', userType: 'employer' };
-    } else if (email === 'admin@trinity.com' && password === '123456') {
-      user = { id: '6', email: email, fullName: 'Trinity Admin', userType: 'admin' };
-    } else if (email === 'muthees@trinitetech.com' && password === '123456') {
-      user = { id: '7', email: email, fullName: 'Muthees Trinity', companyName: 'Trinity Technology Solutions', userType: 'employer' };
-    }
-    
-    if (user) {
-      const accessToken = generateAccessToken(user.id);
-      const refreshToken = generateRefreshToken(user.id);
-      
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
-      
-      res.json({
-        message: 'Login successful',
-        user: user,
-        accessToken
-      });
-      return;
-    }
-    
-    res.status(401).json({ error: 'Invalid email or password' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.status(404).json({ error: 'Use /api/users/login endpoint' });
 });
 
 app.post('/api/register', async (req, res) => {
-  try {
-    const { email, password, fullName, userType } = req.body;
-    const userId = Date.now().toString();
-    
-    const accessToken = generateAccessToken(userId);
-    const refreshToken = generateRefreshToken(userId);
-    
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-    
-    res.status(201).json({
-      id: userId,
-      message: 'Registration successful',
-      userType: userType,
-      accessToken
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  res.status(404).json({ error: 'Use /api/users/register endpoint' });
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -471,6 +423,103 @@ app.post('/api/generate-content', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// AI Job Description Generation
+app.post('/api/generate-job-description', async (req, res) => {
+  try {
+    const { jobTitle, company, jobType, location } = req.body;
+    
+    if (!jobTitle) {
+      return res.status(400).json({ error: 'Job title is required' });
+    }
+    
+    const description = generateJobDescription(jobTitle, company, jobType, location);
+    const requirements = generateJobRequirements(jobTitle);
+    
+    res.json({ description, requirements });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function generateJobDescription(jobTitle, company, jobType, location) {
+  const companyName = company || 'our company';
+  
+  const templates = {
+    'react': `We are seeking a skilled React Developer to join ${companyName}. You will be responsible for developing user interface components and implementing them following well-known React.js workflows.
+
+Key Responsibilities:
+• Develop new user-facing features using React.js
+• Build reusable components and front-end libraries
+• Translate designs and wireframes into high-quality code
+• Optimize components for maximum performance
+• Collaborate with team members and stakeholders`,
+    
+    'python': `Join ${companyName} as a Python Developer and contribute to building scalable applications. You will work on backend development, API integration, and data processing solutions.
+
+Key Responsibilities:
+• Develop and maintain Python applications
+• Design and implement RESTful APIs
+• Work with databases and data processing
+• Write clean, maintainable, and efficient code
+• Collaborate with cross-functional teams`,
+    
+    'full stack': `We are looking for a Full Stack Developer to join ${companyName}. You will work on both front-end and back-end development.
+
+Key Responsibilities:
+• Develop front-end website architecture
+• Design and develop back-end applications and APIs
+• Create servers and databases for functionality
+• Ensure cross-platform optimization
+• Work with development teams and product managers`
+  };
+  
+  const key = Object.keys(templates).find(k => jobTitle.toLowerCase().includes(k));
+  return key ? templates[key] : `Join ${companyName} as a ${jobTitle} and be part of our dynamic team.
+
+Key Responsibilities:
+• Execute core responsibilities related to ${jobTitle.toLowerCase()} role
+• Collaborate with team members on various projects
+• Contribute to company goals and objectives
+• Maintain high standards of work quality
+• Stay updated with industry trends`;
+}
+
+function generateJobRequirements(jobTitle) {
+  const templates = {
+    'react': `• 3+ years of experience with React.js
+• Strong proficiency in JavaScript
+• Experience with React.js workflows (Redux, Flux)
+• Familiarity with RESTful APIs
+• Knowledge of modern authorization mechanisms
+• Experience with front-end development tools
+• Bachelor's degree in Computer Science or related field`,
+    
+    'python': `• 3+ years of experience in Python development
+• Strong knowledge of Python frameworks (Django, Flask)
+• Experience with databases (PostgreSQL, MySQL, MongoDB)
+• Familiarity with RESTful API development
+• Knowledge of version control systems (Git)
+• Experience with cloud platforms (AWS, Azure)
+• Bachelor's degree in Computer Science or related field`,
+    
+    'full stack': `• 4+ years of experience in full-stack development
+• Proficiency in front-end technologies (HTML, CSS, JavaScript)
+• Strong backend development skills (Node.js, Python, Java)
+• Experience with databases (SQL and NoSQL)
+• Knowledge of cloud services and deployment
+• Familiarity with version control and CI/CD
+• Bachelor's degree in Computer Science or related field`
+  };
+  
+  const key = Object.keys(templates).find(k => jobTitle.toLowerCase().includes(k));
+  return key ? templates[key] : `• 2+ years of relevant experience
+• Strong technical skills related to the position
+• Excellent communication and teamwork abilities
+• Problem-solving and analytical thinking skills
+• Bachelor's degree in relevant field or equivalent experience
+• Proficiency in relevant tools and technologies`;
+}
 
 function getSmartResponse(message) {
   if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {

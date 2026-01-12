@@ -8,57 +8,9 @@ interface DailyJobsPageProps {
 const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState('');
+  const [jobs, setJobs] = useState<any[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
-  const todaysJobs = [
-    {
-      id: 1,
-      title: "Senior AI Engineer",
-      company: "TechCorp Inc.",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      salary: "$150k - $200k",
-      posted: "2 hours ago",
-      skills: ["Python", "TensorFlow", "Machine Learning", "AI"],
-      description: "Join our AI team to build cutting-edge machine learning solutions for enterprise clients.",
-      isNew: true
-    },
-    {
-      id: 2,
-      title: "React Developer",
-      company: "StartupXYZ",
-      location: "Remote",
-      type: "Full-time",
-      salary: "$120k - $160k",
-      posted: "4 hours ago",
-      skills: ["React", "TypeScript", "Node.js"],
-      description: "Build modern web applications using React and TypeScript in a fast-paced startup environment.",
-      isNew: true
-    },
-    {
-      id: 3,
-      title: "DevOps Engineer",
-      company: "CloudTech",
-      location: "Seattle, WA",
-      type: "Full-time",
-      salary: "$130k - $170k",
-      posted: "6 hours ago",
-      skills: ["AWS", "Kubernetes", "Docker", "CI/CD"],
-      description: "Manage cloud infrastructure and implement DevOps best practices for scalable applications.",
-      isNew: false
-    },
-    {
-      id: 4,
-      title: "Data Scientist",
-      company: "DataFlow Solutions",
-      location: "New York, NY",
-      type: "Full-time",
-      salary: "$140k - $180k",
-      posted: "8 hours ago",
-      skills: ["Python", "SQL", "Machine Learning", "Analytics"],
-      description: "Analyze complex datasets and build predictive models to drive business insights.",
-      isNew: false
-    }
-  ];
+  const [loading, setLoading] = useState(true);
 
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -67,25 +19,48 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
     day: 'numeric' 
   });
 
+  // Fetch jobs from backend
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/jobs');
+        if (response.ok) {
+          const data = await response.json();
+          const jobsArray = Array.isArray(data) ? data : [];
+          // Get today's jobs (posted within last 24 hours)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todaysJobs = jobsArray.filter((job: any) => {
+            const jobDate = new Date(job.createdAt || job.created_at);
+            return jobDate >= today;
+          });
+          setJobs(todaysJobs);
+          setFilteredJobs(todaysJobs);
+        }
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
   // Filter jobs based on search criteria
   useEffect(() => {
-    const filtered = todaysJobs.filter(job => {
+    const filtered = jobs.filter(job => {
       const matchesSearch = !searchTerm || 
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+        (job.title || job.jobTitle)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.skills?.some((skill: string) => skill.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesLocation = !location || 
-        job.location.toLowerCase().includes(location.toLowerCase());
+        job.location?.toLowerCase().includes(location.toLowerCase());
       
       return matchesSearch && matchesLocation;
     });
     setFilteredJobs(filtered);
-  }, [searchTerm, location]);
-
-  useEffect(() => {
-    setFilteredJobs(todaysJobs);
-  }, []);
+  }, [searchTerm, location, jobs]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,13 +124,17 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex items-center justify-between">
           <p className="text-gray-600">
-            {filteredJobs.length} of {todaysJobs.length} jobs found
-            {(searchTerm || location) && (
-              <span className="ml-2 text-blue-600">
-                {searchTerm && `for "${searchTerm}"`}
-                {searchTerm && location && " in "}
-                {location && `"${location}"`}
-              </span>
+            {loading ? 'Loading...' : (
+              <>
+                {filteredJobs.length} of {jobs.length} jobs found
+                {(searchTerm || location) && (
+                  <span className="ml-2 text-blue-600">
+                    {searchTerm && `for "${searchTerm}"`}
+                    {searchTerm && location && " in "}
+                    {location && `"${location}"`}
+                  </span>
+                )}
+              </>
             )}
           </p>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -164,7 +143,11 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {filteredJobs.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : filteredJobs.length === 0 ? (
           <div className="text-center py-12">
             <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
@@ -173,22 +156,22 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
         ) : (
           <div className="space-y-6">
             {filteredJobs.map((job) => (
-            <div key={job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow relative">
-              {job.isNew && (
-                <div className="absolute top-4 right-4">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                    NEW
-                  </span>
-                </div>
-              )}
+            <div key={job._id || job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow relative">
+              <div className="absolute top-4 right-4">
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                  NEW
+                </span>
+              </div>
               
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                      {job.title}
+                      {job.title || job.jobTitle}
                     </h3>
-                    <span className="text-sm text-gray-500 ml-4">{job.posted}</span>
+                    <span className="text-sm text-gray-500 ml-4">
+                      {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Today'}
+                    </span>
                   </div>
                   
                   <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
@@ -200,7 +183,7 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <DollarSign className="w-4 h-4" />
-                      <span>{job.salary}</span>
+                      <span>{typeof job.salary === 'object' && job.salary ? `$${job.salary.min} - $${job.salary.max}` : job.salary || 'Competitive'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Briefcase className="w-4 h-4" />
@@ -210,18 +193,23 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
 
                   <p className="text-gray-600 mb-4">{job.description}</p>
 
-                  <div className="flex flex-wrap gap-2">
-                    {job.skills.map((skill, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                  {job.skills && job.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {job.skills.map((skill: string, index: number) => (
+                        <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 lg:mt-0 lg:ml-6">
                   <button 
-                    onClick={() => onNavigate('apply-job', { jobId: job.id, jobTitle: job.title, companyName: job.company, fromPage: 'daily-jobs' })}
+                    onClick={() => {
+                      localStorage.setItem('selectedJob', JSON.stringify(job));
+                      onNavigate('job-application');
+                    }}
                     className="w-full lg:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
                     Apply Now

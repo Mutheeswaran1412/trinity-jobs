@@ -147,10 +147,10 @@ const EmployerLoginPage: React.FC<EmployerLoginPageProps> = ({ onNavigate, onLog
             <p className="text-gray-600 mb-4">
               New to hiring on ZyncJobs?{' '}
               <button
-                onClick={() => onNavigate('employers')}
+                onClick={() => onNavigate('employer-register')}
                 className="text-teal-600 hover:text-teal-700 font-semibold"
               >
-                Learn more
+                Register now
               </button>
             </p>
             <p className="text-gray-600">

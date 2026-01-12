@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles, Linkedin } from 'lucide-react';
+import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles, Camera, Edit2 } from 'lucide-react';
 import Notification from '../components/Notification';
 import ResumeUploadWithModeration from '../components/ResumeUploadWithModeration';
-import LinkedInImportModal from '../components/LinkedInImportModal';
+import ProfilePhotoEditor from '../components/ProfilePhotoEditor';
 import { aiSuggestions } from '../utils/aiSuggestions';
 
 interface CandidateProfilePageProps {
@@ -11,29 +11,94 @@ interface CandidateProfilePageProps {
 
 const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate }) => {
   
-  // Load existing user data on component mount
+  // Load profile on mount
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setFormData({
-        fullName: parsedUser.name || parsedUser.fullName || '',
-        email: parsedUser.email || '',
-        phone: parsedUser.phone || '',
-        location: parsedUser.location || '',
-        skills: parsedUser.skills || [],
-        experience: parsedUser.experience || '',
-        jobTitle: parsedUser.title || parsedUser.jobTitle || '',
-        salary: parsedUser.salary || '',
-        jobType: parsedUser.jobType || '',
-        education: parsedUser.education || '',
-        certifications: parsedUser.certifications || '',
-        resume: null,
-        yearsExperience: parsedUser.yearsExperience || '',
-        workAuthorization: parsedUser.workAuthorization || '',
-        securityClearance: parsedUser.securityClearance || ''
-      });
-    }
+    const loadProfile = async () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        
+        // Try to load latest profile from backend
+        try {
+          const response = await fetch(`http://localhost:5000/api/profile/${parsedUser.id || parsedUser._id || parsedUser.email}`);
+          if (response.ok) {
+            const profileData = await response.json();
+            // Merge backend profile data with localStorage data
+            setFormData({
+              fullName: profileData.name || parsedUser.name || parsedUser.fullName || '',
+              email: profileData.email || parsedUser.email || '',
+              phone: profileData.phone || parsedUser.phone || '',
+              location: profileData.location || parsedUser.location || '',
+              skills: profileData.skills || parsedUser.skills || [],
+              experience: profileData.experience || parsedUser.experience || '',
+              jobTitle: profileData.title || parsedUser.title || parsedUser.jobTitle || '',
+              salary: profileData.salary || parsedUser.salary || '',
+              jobType: profileData.jobType || parsedUser.jobType || '',
+              education: profileData.education || parsedUser.education || '',
+              certifications: profileData.certifications || parsedUser.certifications || '',
+              resume: null,
+              yearsExperience: profileData.yearsExperience || parsedUser.yearsExperience || '',
+              workAuthorization: profileData.workAuthorization || parsedUser.workAuthorization || '',
+              securityClearance: profileData.securityClearance || parsedUser.securityClearance || ''
+            });
+            setProfilePhoto(profileData.profilePhoto || parsedUser.profilePhoto || '');
+            setProfileFrame(profileData.profileFrame || parsedUser.profileFrame || 'none');
+            setCoverPhoto(profileData.coverPhoto || parsedUser.coverPhoto || '');
+            
+            // Update localStorage with latest data
+            const updatedUser = { ...parsedUser, ...profileData };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          } else {
+            // Fallback to localStorage data if backend fails
+            setFormData({
+              fullName: parsedUser.name || parsedUser.fullName || '',
+              email: parsedUser.email || '',
+              phone: parsedUser.phone || '',
+              location: parsedUser.location || '',
+              skills: parsedUser.skills || [],
+              experience: parsedUser.experience || '',
+              jobTitle: parsedUser.title || parsedUser.jobTitle || '',
+              salary: parsedUser.salary || '',
+              jobType: parsedUser.jobType || '',
+              education: parsedUser.education || '',
+              certifications: parsedUser.certifications || '',
+              resume: null,
+              yearsExperience: parsedUser.yearsExperience || '',
+              workAuthorization: parsedUser.workAuthorization || '',
+              securityClearance: parsedUser.securityClearance || ''
+            });
+            setProfilePhoto(parsedUser.profilePhoto || '');
+            setProfileFrame(parsedUser.profileFrame || 'none');
+            setCoverPhoto(parsedUser.coverPhoto || '');
+          }
+        } catch (error) {
+          console.log('Profile load error:', error);
+          // Fallback to localStorage data
+          setFormData({
+            fullName: parsedUser.name || parsedUser.fullName || '',
+            email: parsedUser.email || '',
+            phone: parsedUser.phone || '',
+            location: parsedUser.location || '',
+            skills: parsedUser.skills || [],
+            experience: parsedUser.experience || '',
+            jobTitle: parsedUser.title || parsedUser.jobTitle || '',
+            salary: parsedUser.salary || '',
+            jobType: parsedUser.jobType || '',
+            education: parsedUser.education || '',
+            certifications: parsedUser.certifications || '',
+            resume: null,
+            yearsExperience: parsedUser.yearsExperience || '',
+            workAuthorization: parsedUser.workAuthorization || '',
+            securityClearance: parsedUser.securityClearance || ''
+          });
+          setProfilePhoto(parsedUser.profilePhoto || '');
+          setProfileFrame(parsedUser.profileFrame || 'none');
+          setCoverPhoto(parsedUser.coverPhoto || '');
+        }
+      }
+    };
+    
+    loadProfile();
   }, []);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
@@ -67,7 +132,11 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
-  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
+  const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState('');
+  const [profileFrame, setProfileFrame] = useState('none');
+  const [coverPhoto, setCoverPhoto] = useState('');
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -300,10 +369,41 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
     });
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const coverPhotoData = reader.result as string;
+        setCoverPhoto(coverPhotoData);
+        
+        // Immediately save to localStorage
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        userData.coverPhoto = coverPhotoData;
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Immediately save to backend
+        try {
+          await fetch('http://localhost:5000/api/profile/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: userData.id || userData._id,
+              email: userData.email,
+              coverPhoto: coverPhotoData
+            })
+          });
+        } catch (err) {
+          console.log('Cover photo save to backend failed:', err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Get existing user data to preserve resume
       const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
       
       const profileData = {
@@ -312,6 +412,11 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         skills: formData.skills,
         title: formData.jobTitle,
         userType: 'jobseeker',
+        profilePhoto,
+        profileFrame,
+        coverPhoto,
+        userId: existingUser.id || existingUser._id,
+        email: formData.email || existingUser.email,
         profile_completed: !!(formData.fullName && formData.skills && formData.location && formData.jobTitle),
         profile: {
           ...existingUser.profile,
@@ -323,34 +428,28 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         resume: existingUser.resume || existingUser.profile?.resume
       };
       
-      // Save to localStorage for dashboard display
       localStorage.setItem('user', JSON.stringify(profileData));
       
-      const response = await fetch('http://localhost:5000/api/candidate-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(profileData)
+      // Save to backend
+      try {
+        await fetch('http://localhost:5000/api/profile/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profileData)
+        });
+      } catch (err) {
+        console.log('Backend save failed:', err);
+      }
+      
+      setNotification({
+        type: 'success',
+        message: 'Profile saved successfully!',
+        isVisible: true
       });
       
-      if (response.ok) {
-        setNotification({
-          type: 'success',
-          message: 'Profile saved successfully!',
-          isVisible: true
-        });
-        // Navigate back to dashboard after successful save
-        setTimeout(() => {
-          onNavigate && onNavigate('dashboard');
-        }, 2000);
-      } else {
-        setNotification({
-          type: 'error',
-          message: 'Failed to save profile!',
-          isVisible: true
-        });
-      }
+      setTimeout(() => {
+        onNavigate && onNavigate('dashboard');
+      }, 2000);
     } catch (error) {
       setNotification({
         type: 'error',
@@ -370,24 +469,74 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
       />
       <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Cover Photo Section */}
+          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-blue-700">
+            {coverPhoto && (
+              <img src={coverPhoto} alt="Cover" className="w-full h-full object-cover" />
+            )}
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="absolute top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center space-x-2 shadow-lg"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Edit Cover</span>
+            </button>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              className="hidden"
+            />
+          </div>
+
+          {/* Profile Photo Section */}
+          <div className="relative px-8 pb-6">
+            <div className="flex items-end space-x-6 -mt-16">
+              <div className="relative">
+                <div 
+                  className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center overflow-hidden shadow-lg"
+                  style={{ 
+                    borderColor: profileFrame === 'blue' ? '#0A66C2' : 
+                                profileFrame === 'green' ? '#057642' : 
+                                profileFrame === 'purple' ? '#7C3AED' : 
+                                profileFrame === 'gold' ? '#F59E0B' : 'white',
+                    borderWidth: profileFrame !== 'none' ? '4px' : '4px'
+                  }}
+                >
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-16 h-16 text-gray-400" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoEditor(true)}
+                  className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 shadow-lg"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 pb-4">
+                <h1 className="text-2xl font-bold text-gray-900">{formData.fullName || 'Your Name'}</h1>
+                <p className="text-gray-600">{formData.jobTitle || 'Job Title'}</p>
+                <p className="text-sm text-gray-500">{formData.location || 'Location'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-8 pb-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Profile</h1>
-            <p className="text-gray-600">Complete your profile to appear in employer searches and get matched with the best job opportunities</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Complete Your Profile</h2>
+            <p className="text-gray-600">Fill in your details to appear in employer searches and get matched with the best job opportunities</p>
             <div className="mt-4 space-y-3">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <strong>Required for visibility:</strong> Full Name, Skills, Location, and Job Title are required to appear in candidate searches.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowLinkedInModal(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-colors"
-              >
-                <Linkedin className="w-5 h-5" />
-                <span>Import from LinkedIn</span>
-              </button>
             </div>
           </div>
 
@@ -761,34 +910,40 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         }}
         userProfile={formData}
       />
-      
-      <LinkedInImportModal
-        isOpen={showLinkedInModal}
-        onClose={() => setShowLinkedInModal(false)}
-        onImport={(data) => {
-          setFormData({
-            ...formData,
-            fullName: data.name || formData.fullName,
-            email: data.email || formData.email,
-            phone: data.phone || formData.phone,
-            location: data.location || formData.location,
-            jobTitle: data.headline || formData.jobTitle,
-            experience: data.experience?.map((exp: any) => 
-              `${exp.title} at ${exp.company}\n${exp.duration}\n${exp.description}`
-            ).join('\n\n') || formData.experience,
-            education: data.education?.map((edu: any) => 
-              `${edu.degree} in ${edu.field} from ${edu.school} (${edu.year})`
-            ).join('\n') || formData.education,
-            skills: data.skills?.length > 0 ? data.skills : formData.skills,
-            certifications: data.certifications?.join(', ') || formData.certifications
-          });
-          setNotification({
-            type: 'success',
-            message: 'LinkedIn profile imported successfully!',
-            isVisible: true
-          });
+
+      <ProfilePhotoEditor
+        isOpen={showPhotoEditor}
+        onClose={() => setShowPhotoEditor(false)}
+        onSave={async (photo, frame) => {
+          setProfilePhoto(photo);
+          setProfileFrame(frame || 'none');
+          
+          // Immediately save to localStorage
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          userData.profilePhoto = photo;
+          userData.profileFrame = frame || 'none';
+          localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Immediately save to backend
+          try {
+            await fetch('http://localhost:5000/api/profile/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: userData.id || userData._id,
+                email: userData.email,
+                profilePhoto: photo,
+                profileFrame: frame || 'none'
+              })
+            });
+          } catch (err) {
+            console.log('Profile photo save to backend failed:', err);
+          }
         }}
+        currentPhoto={profilePhoto}
+        currentFrame={profileFrame}
       />
+    </div>
     </div>
     </>
   );

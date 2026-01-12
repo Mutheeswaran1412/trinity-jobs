@@ -4,11 +4,13 @@ import { Building2 } from 'lucide-react';
 interface Company {
   name: string;
   domain?: string;
+  logo?: string;
+  website?: string;
 }
 
 interface CompanyAutocompleteProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, companyData?: Company) => void;
   placeholder?: string;
   className?: string;
 }
@@ -22,6 +24,7 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
   const [suggestions, setSuggestions] = useState<Company[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,20 +39,23 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
 
   useEffect(() => {
     const fetchCompanies = async () => {
-      if (value.length < 2) {
+      if (value.length < 2 || isSelected) {
         setSuggestions([]);
+        setShowSuggestions(false);
         return;
       }
 
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/companies/search?q=${encodeURIComponent(value)}`);
+        const response = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(value)}`);
+        if (!response.ok) throw new Error('Failed to fetch');
         const data = await response.json();
         setSuggestions(data);
-        setShowSuggestions(true);
+        setShowSuggestions(data.length > 0);
       } catch (error) {
         console.error('Company search error:', error);
         setSuggestions([]);
+        setShowSuggestions(false);
       } finally {
         setLoading(false);
       }
@@ -57,16 +63,20 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
 
     const debounce = setTimeout(fetchCompanies, 300);
     return () => clearTimeout(debounce);
-  }, [value]);
+  }, [value, isSelected]);
 
   const getCompanyLogo = (domain?: string) => {
     if (!domain) return null;
-    return `https://img.logo.dev/${domain}?token=pk_X-1ZO13CRYuFHfXgt5hQ`;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
   };
 
-  const handleSelect = (company: Company) => {
-    onChange(company.name);
+  const handleSelect = (company: Company, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsSelected(true);
+    onChange(company.name, company);
     setShowSuggestions(false);
+    setSuggestions([]);
   };
 
   return (
@@ -74,8 +84,11 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
       <input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+        onChange={(e) => {
+          setIsSelected(false);
+          onChange(e.target.value);
+        }}
+        onFocus={() => !isSelected && suggestions.length > 0 && setShowSuggestions(true)}
         placeholder={placeholder}
         className={className}
       />
@@ -84,8 +97,8 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((company, index) => (
             <div
-              key={index}
-              onClick={() => handleSelect(company)}
+              key={`${company.domain || company.name}-${index}`}
+              onMouseDown={(e) => handleSelect(company, e)}
               className="px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center space-x-3"
             >
               {company.domain ? (
@@ -95,11 +108,9 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
                   className="w-8 h-8 rounded object-contain bg-white"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
-                    img.onerror = () => {
-                      img.style.display = 'none';
-                      img.nextElementSibling?.classList.remove('hidden');
-                    };
-                    img.src = `https://www.google.com/s2/favicons?domain=${company.domain}&sz=64`;
+                    img.style.display = 'none';
+                    const fallback = img.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.classList.remove('hidden');
                   }}
                 />
               ) : null}

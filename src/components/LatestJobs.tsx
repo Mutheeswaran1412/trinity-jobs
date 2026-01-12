@@ -1,78 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getSafeCompanyLogo } from '../utils/logoUtils';
 
 interface LatestJobsProps {
   onNavigate?: (page: string, data?: any) => void;
 }
 
 const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
-  const jobs = [
-    {
-      company: "Google",
-      location: "New York",
-      position: "Sr. Product Designer",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "2 Day ago",
-      type: "Full Time",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
-    },
-    {
-      company: "Microsoft",
-      location: "California",
-      position: "Web Designer",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "1 Day ago",
-      type: "Full Time",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
-    },
-    {
-      company: "Amazon",
-      location: "Southfield",
-      position: "IT Management",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "2 Day ago",
-      type: "Full Time",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
-    },
-    {
-      company: "Github",
-      location: "Southfield",
-      position: "Sr. Product Designer",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "2 Day ago",
-      type: "Full Time",
-      logo: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-    },
-    {
-      company: "Dropbox",
-      location: "New York",
-      position: "Web Designer",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "1 Day ago",
-      type: "Full Time",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/c/cb/Dropbox_logo_2017.svg"
-    },
-    {
-      company: "Adobe",
-      location: "California",
-      position: "IT Management",
-      description: "It is a long established fact that a reader of a page when looking at its layout.",
-      salary: "$560",
-      period: "Hour",
-      posted: "2 Day ago",
-      type: "Full Time",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/8/8d/Adobe_Corporate_Logo.svg"
-    }
-  ];
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLatestJobs = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/jobs?limit=6');
+        if (response.ok) {
+          const data = await response.json();
+          setJobs(Array.isArray(data) ? data.slice(0, 6) : []);
+        }
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLatestJobs();
+  }, []);
 
   return (
     <div className="bg-white py-16">
@@ -92,40 +44,54 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-          {jobs.map((job, index) => (
-            <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
+          {loading ? (
+            <div className="col-span-full text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading jobs...</p>
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-600">No jobs available yet. Be the first to post!</p>
+            </div>
+          ) : (
+            jobs.map((job, index) => (
+            <div key={job._id || index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mr-4 border border-gray-200">
-                  <img 
-                    src={job.logo} 
-                    alt={`${job.company} logo`}
-                    className="w-8 h-8 object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.parentElement!.innerHTML = `<span class="text-lg font-bold text-gray-600">${job.company.charAt(0)}</span>`;
-                    }}
-                  />
+                  {(() => {
+                    const logoUrl = getSafeCompanyLogo(job.company, job.companyLogo);
+                    return logoUrl ? (
+                      <img 
+                        src={logoUrl} 
+                        alt={`${job.company} logo`}
+                        className="w-8 h-8 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    ) : null;
+                  })()} 
                 </div>
                 <div>
                   <h5 className="font-semibold text-gray-900">{job.company}, {job.location}</h5>
-                  <span className="text-gray-600 text-sm">{job.position}</span>
+                  <span className="text-gray-600 text-sm">{job.title || job.jobTitle}</span>
                 </div>
               </div>
               
-              <p className="text-gray-600 text-sm mb-4">{job.description}</p>
+              <p className="text-gray-600 text-sm mb-4 line-clamp-2">{job.description}</p>
               
               <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
-                      // Store job data for application
                       localStorage.setItem('selectedJob', JSON.stringify({
-                        title: job.position,
+                        _id: job._id,
+                        title: job.title || job.jobTitle,
                         company: job.company,
                         location: job.location,
                         description: job.description,
-                        salary: `${job.salary}/${job.period}`,
+                        salary: job.salary,
                         type: job.type
                       }));
                       onNavigate && onNavigate('job-application');
@@ -136,7 +102,8 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
                   </button>
                   <button
                     onClick={() => onNavigate && onNavigate('job-detail', { 
-                      jobTitle: job.position, 
+                      jobTitle: job.title || job.jobTitle, 
+                      jobId: job._id,
                       companyName: job.company 
                     })}
                     className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
@@ -145,17 +112,18 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
                   </button>
                 </div>
                 <div className="text-right">
-                  <span className="font-semibold text-gray-900">{job.salary}</span>
-                  <span className="text-gray-600 text-sm">/ {job.period}</span>
+                  <span className="font-semibold text-gray-900 text-sm">
+                    {typeof job.salary === 'object' && job.salary ? `$${job.salary.min}-${job.salary.max}` : job.salary || 'Competitive'}
+                  </span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>{job.posted}</span>
+                <span>{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recently'}</span>
                 <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded">{job.type}</span>
               </div>
             </div>
-          ))}
+          )))}
         </div>
         
         <div className="text-center">
