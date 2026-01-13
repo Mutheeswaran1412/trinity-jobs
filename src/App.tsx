@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ErrorBoundary from './components/ErrorBoundary';
+import { NavigationHelper, User } from './utils/navigationHelper';
+import { useModalManager } from './hooks/useModalManager';
 import Header from './components/Header';
 import NewHero from './components/NewHero';
 import JobCategories from './components/JobCategories';

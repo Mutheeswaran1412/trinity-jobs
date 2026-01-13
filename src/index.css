@@ -1,3 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Force IBM Plex Sans on entire site */
+* {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+
+html {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}

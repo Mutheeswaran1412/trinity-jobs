@@ -406,29 +406,37 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                   <div className="flex items-start mb-4">
                     {/* Company Logo */}
                     <div className="flex-shrink-0 w-12 h-12 mr-4">
-                      {(() => {
-                        const logoUrl = sanitizeLogo(job.companyLogo || '') || getCompanyLogo(job.company);
-                        return logoUrl ? (
-                          <img 
-                            src={logoUrl} 
-                            alt={`${job.company} logo`}
-                            className="w-12 h-12 object-contain rounded border border-gray-200"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              // Try fallback logo
-                              const fallbackLogo = getCompanyLogo(job.company);
-                              if (fallbackLogo && fallbackLogo !== logoUrl) {
-                                const newImg = document.createElement('img');
-                                newImg.src = fallbackLogo;
-                                newImg.alt = `${job.company} logo`;
-                                newImg.className = 'w-12 h-12 object-contain rounded border border-gray-200';
-                                target.parentElement?.appendChild(newImg);
+                      <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
+                        <img 
+                          src={job.companyLogo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                          alt={`${job.company} logo`}
+                          className="w-10 h-10 object-contain"
+                          onLoad={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'block';
+                          }}
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            // Try multiple logo sources
+                            const logoSources = [
+                              `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
+                              `https://img.logo.dev/${job.company.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+                              `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+                            ];
+                            
+                            const currentIndex = logoSources.indexOf(img.src);
+                            if (currentIndex < logoSources.length - 1) {
+                              img.src = logoSources[currentIndex + 1];
+                            } else {
+                              // All sources failed, show company initial
+                              const container = img.parentElement;
+                              if (container) {
+                                container.innerHTML = `<div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-sm font-bold">${job.company.charAt(0)}</div>`;
                               }
-                            }}
-                          />
-                        ) : null;
-                      })()} 
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                     
                     {/* Job Info */}

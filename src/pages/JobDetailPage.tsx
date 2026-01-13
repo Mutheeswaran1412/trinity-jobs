@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/constants';
 
 interface JobDetailPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -13,23 +14,50 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
   const [jobPoster, setJobPoster] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const getFallbackLogo = (name: string) => {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=6366f1&color=ffffff&bold=true`;
+  };
+
+  const getCompanyLogo = (job: any) => {
+    const company = job.company || job.companyName || 'Company';
+    
+    // Try stored logo first
+    if (job.companyLogo && job.companyLogo.trim() !== '') {
+      return job.companyLogo;
+    }
+    
+    // Try Clearbit logo
+    if (job.companyWebsite) {
+      const domain = job.companyWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
+      return `https://logo.clearbit.com/${domain}`;
+    }
+    
+    // Try logo.dev
+    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return `https://img.logo.dev/${cleanCompany}.com?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+  };
+
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
         if (jobId) {
           // Fetch job details
-          const jobResponse = await fetch(`http://localhost:5000/api/jobs/${jobId}`);
+          const jobResponse = await fetch(`${API_ENDPOINTS.JOBS}/${jobId}`);
           if (jobResponse.ok) {
             const jobData = await jobResponse.json();
             setJob(jobData);
             
             // Fetch job poster (employer who posted this job)
-            const usersResponse = await fetch('http://localhost:5000/api/users');
+            const usersResponse = await fetch(API_ENDPOINTS.USERS);
             if (usersResponse.ok) {
               const users = await usersResponse.json();
               const poster = users.find((user: any) => 
-                user.userType === 'employer' && 
-                user.companyName?.toLowerCase() === jobData.company?.toLowerCase()
+                user.userType === 'employer' && (
+                  user.id === jobData.employerId || 
+                  user._id === jobData.employerId ||
+                  user.email === jobData.employerEmail ||
+                  user.companyName?.toLowerCase() === jobData.company?.toLowerCase()
+                )
               );
               setJobPoster(poster);
             }
@@ -117,29 +145,49 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-              <div className="flex items-center space-x-2 text-lg text-blue-600 font-medium mb-4">
-                <Building className="w-5 h-5" />
-                <span>{job.company}</span>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4" />
-                  <span>{job.location}</span>
+            <div className="flex items-start space-x-4 flex-1">
+              <img
+                src={getCompanyLogo(job)}
+                alt={job.company}
+                className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  const company = job.company || job.companyName || 'Company';
+                  
+                  // Try Google favicons as fallback
+                  if (!img.src.includes('favicon')) {
+                    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    img.src = `https://www.google.com/s2/favicons?domain=${cleanCompany}.com&sz=64`;
+                  } else {
+                    // Final fallback to initials
+                    img.src = getFallbackLogo(company);
+                  }
+                }}
+              />
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
+                <div className="flex items-center space-x-2 text-lg text-blue-600 font-medium mb-4">
+                  <Building className="w-5 h-5" />
+                  <span>{job.company}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Briefcase className="w-4 h-4" />
-                  <span>{job.type}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4" />
-                  <span>{typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{job.experience} experience</span>
+                
+                <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{job.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{job.type}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-4 h-4" />
+                    <span>{typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{job.experience} experience</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,19 +261,25 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact the Job Poster</h3>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-semibold">
-                  {jobPoster ? 
-                    (jobPoster.fullName || jobPoster.companyName || 'U').charAt(0).toUpperCase() + 
-                    (jobPoster.fullName?.split(' ')[1]?.charAt(0).toUpperCase() || jobPoster.companyName?.charAt(1).toUpperCase() || 'N')
-                    : 'HR'
-                  }
-                </div>
+                <img
+                  src={jobPoster?.companyLogo || getCompanyLogo(job)}
+                  alt={jobPoster?.name || jobPoster?.companyName || job.company}
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    const name = jobPoster?.name || jobPoster?.companyName || job.company || 'User';
+                    img.src = getFallbackLogo(name);
+                  }}
+                />
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {jobPoster?.fullName || jobPoster?.companyName || 'HR Team'}
+                    {jobPoster?.name || jobPoster?.fullName || job.employerName || 'Hiring Manager'}
                   </p>
-                  <p className="text-sm text-gray-600">{job.company}</p>
-                  <p className="text-sm text-gray-500">Recruiter</p>
+                  <p className="text-sm text-gray-600">
+                    {jobPoster?.companyName || jobPoster?.company || 'Recruiting Company'}
+                  </p>
+                  <p className="text-sm text-gray-500">{jobPoster?.jobTitle || jobPoster?.position || 'Recruiter'}</p>
+                  <p className="text-xs text-gray-400">Posting for: {job.company}</p>
                 </div>
               </div>
               <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center">

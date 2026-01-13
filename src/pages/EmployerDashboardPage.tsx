@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, User, Briefcase, MessageSquare, FileText, Bookmark, CreditCard, Settings, Trash2, LogOut, Search, Bell, Plus, MoreVertical, Users, Eye, Edit } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/constants';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 
 interface EmployerDashboardPageProps {
@@ -16,6 +17,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState('dashboard');
 
   useEffect(() => {
@@ -36,10 +38,15 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
 
   const fetchDashboardData = async (userData: any) => {
     try {
+      setError(null);
       const [jobsRes, appsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/jobs'),
-        fetch('http://localhost:5000/api/applications')
+        fetch(API_ENDPOINTS.JOBS),
+        fetch(API_ENDPOINTS.APPLICATIONS)
       ]);
+
+      if (!jobsRes.ok) {
+        throw new Error(`Jobs API error: ${jobsRes.status}`);
+      }
 
       if (jobsRes.ok) {
         const allJobs = await jobsRes.json();
@@ -79,7 +86,9 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
       setApplications([]);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -98,6 +107,25 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
     return getFallbackLogo(companyName);
   };
 
+  const getJobCompanyLogo = (job: any) => {
+    const company = job.company || job.companyName || companyName;
+    
+    // Try stored logo first
+    if (job.companyLogo && job.companyLogo.trim() !== '') {
+      return job.companyLogo;
+    }
+    
+    // Try Clearbit logo
+    if (job.companyWebsite) {
+      const domain = job.companyWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
+      return `https://logo.clearbit.com/${domain}`;
+    }
+    
+    // Try logo.dev
+    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return `https://img.logo.dev/${cleanCompany}.com?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+  };
+
   const stats = [
     { label: 'Posted Job', value: jobs.length.toString().padStart(2, '0'), icon: Users, color: 'bg-lime-400' },
     { label: 'Shortlisted', value: applications.filter(a => a.status === 'shortlisted').length.toString().padStart(2, '0'), icon: Bookmark, color: 'bg-lime-400' },
@@ -107,6 +135,22 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      {/* Error Display */}
+      {error && (
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
+          <div className="flex items-center">
+            <span className="mr-2">⚠️</span>
+            <span>{error}</span>
+            <button 
+              onClick={() => setError(null)}
+              className="ml-4 text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* User Profile */}
@@ -392,12 +436,21 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                         <div key={job._id} className="flex items-start justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
                           <div className="flex items-start space-x-3">
                             <img
-                              src={getDisplayLogo()}
-                              alt={job.title}
+                              src={getJobCompanyLogo(job)}
+                              alt={job.company || job.companyName || companyName}
                               className="w-10 h-10 rounded-lg object-cover"
                               onError={(e) => {
                                 const img = e.target as HTMLImageElement;
-                                img.src = getFallbackLogo(companyName);
+                                const company = job.company || job.companyName || companyName;
+                                
+                                // Try Google favicons as fallback
+                                if (!img.src.includes('favicon')) {
+                                  const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                  img.src = `https://www.google.com/s2/favicons?domain=${cleanCompany}.com&sz=64`;
+                                } else {
+                                  // Final fallback to initials
+                                  img.src = getFallbackLogo(company);
+                                }
                               }}
                             />
                             <div>
@@ -493,8 +546,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                       // Handle different URL formats
                                       if (!resumeUrl.startsWith('http')) {
                                         resumeUrl = resumeUrl.startsWith('/') 
-                                          ? `http://localhost:5000${resumeUrl}`
-                                          : `http://localhost:5000/uploads/${resumeUrl}`;
+                                          ? `http://localhost:5001${resumeUrl}`
+                                          : `http://localhost:5001/uploads/${resumeUrl}`;
                                       }
                                       
                                       // Test if file exists
@@ -526,21 +579,40 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                           <select
                             value={application.status}
                             onChange={async (e) => {
+                              const newStatus = e.target.value;
                               try {
-                                const response = await fetch(`http://localhost:5000/api/applications/${application._id}/status`, {
+                                const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/${application._id}/status`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ status: e.target.value }),
+                                  body: JSON.stringify({ status: newStatus }),
                                 });
+                                
                                 if (response.ok) {
+                                  // Update local state immediately
                                   setApplications(prev => 
                                     prev.map(app => 
-                                      app._id === application._id ? { ...app, status: e.target.value } : app
+                                      app._id === application._id ? { ...app, status: newStatus } : app
                                     )
                                   );
+                                  
+                                  // Show success message
+                                  const statusMessage = {
+                                    'pending': 'Application marked as pending',
+                                    'reviewed': 'Application marked as reviewed',
+                                    'shortlisted': 'Candidate shortlisted successfully!',
+                                    'rejected': 'Application rejected',
+                                    'hired': 'Candidate hired successfully!'
+                                  }[newStatus] || 'Status updated';
+                                  
+                                  alert(statusMessage);
+                                } else {
+                                  throw new Error(`Failed to update status: ${response.status}`);
                                 }
                               } catch (error) {
                                 console.error('Error updating status:', error);
+                                alert('Failed to update application status. Please try again.');
+                                // Reset select to original value
+                                e.target.value = application.status;
                               }
                             }}
                             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"

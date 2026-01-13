@@ -3,6 +3,7 @@ import Notification from '../components/Notification';
 import mistralAIService from '../services/mistralAIService';
 import CompanyAutoSuggest from '../components/CompanyAutoSuggest';
 import { getSafeCompanyLogo } from '../utils/logoUtils';
+import { API_ENDPOINTS } from '../config/constants';
 
 interface JobPostingPageProps {
   onNavigate: (page: string) => void;
@@ -104,7 +105,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
       setIsLoadingJobTitles(true);
       
       try {
-        const response = await fetch(`http://localhost:5000/api/suggest?q=${encodeURIComponent(value)}&type=job`);
+        const response = await fetch(`${API_ENDPOINTS.JOBS.replace('/jobs', '/suggest')}?q=${encodeURIComponent(value)}&type=job`);
         const data = await response.json();
         console.log('Job title API response:', data);
         
@@ -153,7 +154,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
       setIsLoadingLocations(true);
       
       try {
-        const response = await fetch(`http://localhost:5000/api/suggest?q=${encodeURIComponent(value)}&type=location`);
+        const response = await fetch(`${API_ENDPOINTS.JOBS.replace('/jobs', '/suggest')}?q=${encodeURIComponent(value)}&type=location`);
         const data = await response.json();
         console.log('Location API response:', data);
         
@@ -202,7 +203,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
       setIsLoadingSkills(true);
       
       try {
-        const response = await fetch(`http://localhost:5000/api/suggest?q=${encodeURIComponent(value)}&type=skill`);
+        const response = await fetch(`${API_ENDPOINTS.JOBS.replace('/jobs', '/suggest')}?q=${encodeURIComponent(value)}&type=skill`);
         const data = await response.json();
         console.log('Skills API response:', data);
         
@@ -1064,7 +1065,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     // If no logo, fetch from company database
     if (!companyLogo && companyName) {
       try {
-        const response = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(companyName)}`);
+        const response = await fetch(`${API_ENDPOINTS.JOBS.replace('/jobs', '/companies')}?search=${encodeURIComponent(companyName)}`);
         if (response.ok) {
           const companies = await response.json();
           if (companies.length > 0) {
@@ -1110,7 +1111,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate }) => {
     console.log('JobPosting - Full job post data:', jobPostData);
     
     try {
-      const response = await fetch('http://localhost:5000/api/jobs', {
+      const response = await fetch(API_ENDPOINTS.JOBS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

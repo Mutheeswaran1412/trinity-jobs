@@ -105,7 +105,8 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const response = await fetch('http://localhost:5000/api/applications');
       if (response.ok) {
-        const allApplications = await response.json();
+        const responseData = await response.json();
+        const allApplications = Array.isArray(responseData) ? responseData : (responseData.applications || []);
         // Filter applications for employer's jobs
         const employerApps = allApplications.filter((app: any) => {
           return app.jobId?.employerId === userData.id || 
@@ -398,17 +399,31 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex items-start mb-4">
                               {/* Company Logo */}
                               <div className="flex-shrink-0 w-12 h-12 mr-4">
-                                {job.companyLogo ? (
+                                <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
                                   <img 
-                                    src={job.companyLogo} 
+                                    src={job.companyLogo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
                                     alt={`${job.company} logo`}
-                                    className="w-12 h-12 object-contain rounded border border-gray-200"
+                                    className="w-10 h-10 object-contain"
                                     onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
+                                      const img = e.target as HTMLImageElement;
+                                      const logoSources = [
+                                        `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
+                                        `https://img.logo.dev/${job.company.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+                                        `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+                                      ];
+                                      
+                                      const currentIndex = logoSources.indexOf(img.src);
+                                      if (currentIndex < logoSources.length - 1) {
+                                        img.src = logoSources[currentIndex + 1];
+                                      } else {
+                                        const container = img.parentElement;
+                                        if (container) {
+                                          container.innerHTML = `<div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-sm font-bold">${job.company.charAt(0)}</div>`;
+                                        }
+                                      }
                                     }}
                                   />
-                                ) : null}
+                                </div>
                               </div>
                               
                               {/* Job Info */}
@@ -489,8 +504,30 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex items-start space-x-4 flex-1">
                               {/* Company Logo */}
                               <div className="flex-shrink-0 w-12 h-12">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded flex items-center justify-center border border-gray-200">
-                                  <span className="text-white font-bold text-lg">{job.company?.charAt(0).toUpperCase()}</span>
+                                <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
+                                  <img 
+                                    src={job.companyLogo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                    alt={`${job.company} logo`}
+                                    className="w-10 h-10 object-contain"
+                                    onError={(e) => {
+                                      const img = e.target as HTMLImageElement;
+                                      const logoSources = [
+                                        `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
+                                        `https://img.logo.dev/${job.company.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+                                        `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+                                      ];
+                                      
+                                      const currentIndex = logoSources.indexOf(img.src);
+                                      if (currentIndex < logoSources.length - 1) {
+                                        img.src = logoSources[currentIndex + 1];
+                                      } else {
+                                        const container = img.parentElement;
+                                        if (container) {
+                                          container.innerHTML = `<div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-sm font-bold">${job.company.charAt(0)}</div>`;
+                                        }
+                                      }
+                                    }}
+                                  />
                                 </div>
                               </div>
                               
@@ -668,17 +705,31 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex items-start mb-4">
                               {/* Company Logo */}
                               <div className="flex-shrink-0 w-12 h-12 mr-4">
-                                {application.jobId?.companyLogo ? (
+                                <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
                                   <img 
-                                    src={application.jobId.companyLogo} 
-                                    alt={`${application.jobId.company} logo`}
-                                    className="w-12 h-12 object-contain rounded border border-gray-200"
+                                    src={application.jobId?.companyLogo || `https://logo.clearbit.com/${application.jobId?.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                    alt={`${application.jobId?.company} logo`}
+                                    className="w-10 h-10 object-contain"
                                     onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
+                                      const img = e.target as HTMLImageElement;
+                                      const logoSources = [
+                                        `https://logo.clearbit.com/${application.jobId?.company.toLowerCase().replace(/\s+/g, '')}.com`,
+                                        `https://img.logo.dev/${application.jobId?.company.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+                                        `https://www.google.com/s2/favicons?domain=${application.jobId?.company.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+                                      ];
+                                      
+                                      const currentIndex = logoSources.indexOf(img.src);
+                                      if (currentIndex < logoSources.length - 1) {
+                                        img.src = logoSources[currentIndex + 1];
+                                      } else {
+                                        const container = img.parentElement;
+                                        if (container) {
+                                          container.innerHTML = `<div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-sm font-bold">${application.jobId?.company.charAt(0)}</div>`;
+                                        }
+                                      }
                                     }}
                                   />
-                                ) : null}
+                                </div>
                               </div>
                               
                               {/* Job Info */}

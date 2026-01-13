@@ -95,6 +95,18 @@ const CompanyAutoSuggest: React.FC<CompanyAutoSuggestProps> = ({
     return count.toString();
   };
 
+  const getCompanyLogo = (company: Company) => {
+    // Try multiple logo sources
+    const logoSources = [
+      company.logo,
+      `https://logo.clearbit.com/${company.name.toLowerCase().replace(/\s+/g, '')}.com`,
+      `https://img.logo.dev/${company.name.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+      `https://www.google.com/s2/favicons?domain=${company.name.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+    ];
+    
+    return logoSources.find(url => url) || logoSources[1];
+  };
+
   return (
     <div className="relative">
       <div className="relative">
@@ -142,17 +154,38 @@ const CompanyAutoSuggest: React.FC<CompanyAutoSuggestProps> = ({
                 className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 group"
               >
                 <div className="flex-shrink-0 w-10 h-10 mr-3">
-                  {company.logo && (
+                  <div className="w-10 h-10 rounded border border-gray-200 flex items-center justify-center bg-white">
                     <img 
-                      src={company.logo} 
+                      src={getCompanyLogo(company)} 
                       alt={company.name}
-                      className="w-10 h-10 rounded object-contain border border-gray-200"
+                      className="w-8 h-8 object-contain"
+                      onLoad={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = 'block';
+                      }}
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        img.style.display = 'none';
+                        // Try next logo source
+                        const currentSrc = img.src;
+                        const logoSources = [
+                          `https://logo.clearbit.com/${company.name.toLowerCase().replace(/\s+/g, '')}.com`,
+                          `https://img.logo.dev/${company.name.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+                          `https://www.google.com/s2/favicons?domain=${company.name.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
+                        ];
+                        
+                        const currentIndex = logoSources.indexOf(currentSrc);
+                        if (currentIndex < logoSources.length - 1) {
+                          img.src = logoSources[currentIndex + 1];
+                        } else {
+                          // All sources failed, show initial
+                          const container = img.parentElement;
+                          if (container) {
+                            container.innerHTML = `<div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">${company.name.charAt(0)}</div>`;
+                          }
+                        }
                       }}
                     />
-                  )}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
