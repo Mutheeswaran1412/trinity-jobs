@@ -322,7 +322,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
               </div>
             </div>
             <div className="flex items-center space-x-4 ml-6">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
+              <button type="button" aria-label="Notifications" className="relative p-2 text-gray-600 hover:text-gray-900">
                 <Bell className="w-6 h-6" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
@@ -458,7 +458,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                               <p className="text-xs text-gray-500">{job.type || 'Fulltime'} . {job.location}</p>
                             </div>
                           </div>
-                          <button className="text-gray-400 hover:text-gray-600">
+                          <button type="button" aria-label="Job options" className="text-gray-400 hover:text-gray-600">
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </div>
@@ -624,7 +624,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                             <option value="hired">Hired</option>
                           </select>
                           <button 
-                            onClick={() => onNavigate('candidate-profile', { candidateId: application.candidateId })}
+                            onClick={() => onNavigate('candidate-profile')}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
                           >
                             View Profile
