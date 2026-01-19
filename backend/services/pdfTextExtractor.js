@@ -1,12 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import pdf from 'pdf-parse';
+import * as pdfParse from 'pdf-parse';
 
 class PDFTextExtractor {
   async extractTextFromBuffer(buffer) {
     try {
       console.log('[PDF_EXTRACTOR] Extracting text from PDF buffer...');
-      const data = await pdf(buffer);
+      const data = await pdfParse.default(buffer);
       const extractedText = data.text;
       console.log('[PDF_EXTRACTOR] Extracted text length:', extractedText.length);
       

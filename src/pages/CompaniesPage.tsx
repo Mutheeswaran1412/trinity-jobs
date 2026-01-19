@@ -13,6 +13,7 @@ interface Company {
   employees: string;
   website: string;
   openJobs: number;
+  logo?: string;
 }
 
 const CompaniesPage = ({ onNavigate, user, onLogout }: { 
@@ -50,9 +51,28 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
     fetchCompanies();
   }, [searchTerm]);
 
-  // Get company logo (placeholder)
-  const getCompanyLogo = (companyName: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&size=64&background=3b82f6&color=ffffff&bold=true`;
+  // Get company logo - use Google favicons like employer registration
+  const getCompanyLogo = (company: Company) => {
+    // Use logo from API response if available
+    if (company.logo && !company.logo.includes('ui-avatars.com')) {
+      return company.logo;
+    }
+    
+    // Use Google favicons with website domain (same as employer registration)
+    if (company.website) {
+      const domain = company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    }
+    
+    // Fallback to letter avatar
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&size=64&background=3b82f6&color=ffffff&bold=true`;
+  };
+
+  // Handle logo error by showing letter avatar
+  const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    const companyName = target.getAttribute('data-company-name') || '';
+    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&size=64&background=3b82f6&color=ffffff&bold=true`;
   };
 
   return (
@@ -141,15 +161,28 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
             <div key={company._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center justify-center mb-6">
                 <img 
-                  src={getCompanyLogo(company.name)} 
+                  src={getCompanyLogo(company)} 
                   alt={company.name}
+                  data-company-name={company.name}
+                  onError={handleLogoError}
                   className="w-16 h-16 rounded-lg object-cover border border-gray-200"
                 />
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{company.name}</h3>
                 <p className="text-gray-600 mb-1">{company.location}</p>
-                <p className="text-sm text-gray-500 mb-4">{company.industry}</p>
+                <p className="text-sm text-gray-500 mb-2">{company.industry}</p>
+                {company.website && (
+                  <a 
+                    href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2"
+                  >
+                    <Globe className="w-4 h-4 mr-1" />
+                    Visit Website
+                  </a>
+                )}
                 {company.openJobs > 0 && (
                   <p className="text-sm text-blue-600 font-medium">{company.openJobs} open jobs</p>
                 )}

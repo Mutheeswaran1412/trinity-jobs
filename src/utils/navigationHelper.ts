@@ -1,1 +1,37 @@
-export interface User {\n  name: string;\n  type: 'candidate' | 'employer' | 'admin';\n  email?: string;\n}\n\nexport interface NavigationResult {\n  canNavigate: boolean;\n  shouldShowModal?: boolean;\n  modalType?: 'role-selection' | 'login';\n  message?: string;\n}\n\nexport class NavigationHelper {\n  private static employerPages = ['employers', 'candidate-search', 'hire-talent'];\n  private static candidatePages = ['job-application', 'candidate-profile', 'job-listings', 'companies'];\n  private static protectedPages = ['dashboard', 'settings', 'my-jobs', 'my-applications'];\n\n  static canNavigateToPage(page: string, user: User | null): NavigationResult {\n    // Public pages - always allow\n    if (!this.isProtectedPage(page)) {\n      return { canNavigate: true };\n    }\n\n    // Not logged in\n    if (!user) {\n      return {\n        canNavigate: false,\n        shouldShowModal: true,\n        modalType: 'role-selection'\n      };\n    }\n\n    // Employer-only pages\n    if (this.employerPages.includes(page)) {\n      if (user.type !== 'employer') {\n        return {\n          canNavigate: false,\n          message: 'Please login as an employer to access this feature.'\n        };\n      }\n    }\n\n    // Candidate-only pages\n    if (this.candidatePages.includes(page)) {\n      if (user.type !== 'candidate') {\n        return {\n          canNavigate: false,\n          message: 'Please login as a candidate to access this feature.'\n        };\n      }\n    }\n\n    return { canNavigate: true };\n  }\n\n  private static isProtectedPage(page: string): boolean {\n    return [\n      ...this.employerPages,\n      ...this.candidatePages,\n      ...this.protectedPages\n    ].includes(page);\n  }\n\n  static getCorrectDashboard(user: User | null): string {\n    if (!user) return 'home';\n    \n    switch (user.type) {\n      case 'admin': return 'admin-dashboard';\n      case 'employer': return 'employer-dashboard';\n      case 'candidate': return 'candidate-dashboard';\n      default: return 'home';\n    }\n  }\n}
+// Navigation helper utility for proper back navigation
+export const navigationHelper = {
+  // Go back to previous page using browser history
+  goBack: () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Fallback to home if no history
+      window.location.href = '/';
+    }
+  },
+
+  // Go back with fallback page
+  goBackWithFallback: (fallbackPage: string, onNavigate?: (page: string) => void) => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else if (onNavigate) {
+      onNavigate(fallbackPage);
+    } else {
+      window.location.href = '/';
+    }
+  },
+
+  // Check if we can go back
+  canGoBack: () => {
+    return window.history.length > 1;
+  },
+
+  // Navigate to specific page
+  navigateTo: (page: string, onNavigate?: (page: string, data?: any) => void, data?: any) => {
+    if (onNavigate) {
+      onNavigate(page, data);
+    } else {
+      window.location.href = `/${page}`;
+    }
+  }
+};

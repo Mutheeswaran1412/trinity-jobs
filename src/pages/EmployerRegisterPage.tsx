@@ -14,6 +14,7 @@ const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ onNavigate,
     password: '',
     confirmPassword: '',
     companyName: '',
+    companyWebsite: '',
     jobTitle: ''
   });
   const [error, setError] = useState('');
@@ -65,7 +66,7 @@ const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ onNavigate,
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-md mx-auto">
         <button
           onClick={() => onNavigate('register')}
@@ -134,6 +135,19 @@ const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ onNavigate,
                 onChange={(value) => setFormData({ ...formData, companyName: value })}
                 placeholder="Search your company (e.g., Google, Microsoft)..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Company Website
+              </label>
+              <input
+                type="url"
+                value={formData.companyWebsite}
+                onChange={(e) => setFormData({ ...formData, companyWebsite: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://company.com"
               />
             </div>
 

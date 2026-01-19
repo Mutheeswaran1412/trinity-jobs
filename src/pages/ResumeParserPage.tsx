@@ -1,20 +1,18 @@
 import React from 'react';
 import ResumeParserComponent from '../components/resume-parser/page';
+import Header from '../components/Header';
 
 interface ResumeParserPageProps {
   onNavigate: (page: string) => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
-const ResumeParserPage: React.FC<ResumeParserPageProps> = ({ onNavigate }) => {
+const ResumeParserPage: React.FC<ResumeParserPageProps> = ({ onNavigate, user, onLogout }) => {
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
+      <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button
-          onClick={() => onNavigate('candidate-dashboard')}
-          className="text-blue-600 hover:text-blue-700 mb-4"
-        >
-          ← Back to Dashboard
-        </button>
         <ResumeParserComponent onNavigate={onNavigate} />
       </div>
     </div>

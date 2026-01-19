@@ -48,6 +48,25 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  title: {
+    type: String,
+    trim: true
+  },
+  salary: {
+    type: String,
+    trim: true
+  },
+  availability: {
+    type: String,
+    enum: ['Available', 'Not Available', 'Available in 2 weeks', 'Available in 1 month'],
+    default: 'Available'
+  },
+  rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 4.0
+  },
   status: {
     type: String,
     enum: ['active', 'suspended', 'deleted'],

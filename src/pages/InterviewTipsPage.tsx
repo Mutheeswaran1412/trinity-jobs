@@ -1,11 +1,14 @@
 import React from 'react';
 import { ArrowLeft, MessageSquare, Users, Brain, Clock } from 'lucide-react';
+import Header from '../components/Header';
 
 interface InterviewTipsPageProps {
   onNavigate: (page: string) => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
-const InterviewTipsPage: React.FC<InterviewTipsPageProps> = ({ onNavigate }) => {
+const InterviewTipsPage: React.FC<InterviewTipsPageProps> = ({ onNavigate, user, onLogout }) => {
   const tips = [
     {
       icon: Brain,
@@ -31,17 +34,7 @@ const InterviewTipsPage: React.FC<InterviewTipsPageProps> = ({ onNavigate }) => 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => onNavigate('home')}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Home</span>
-          </button>
-        </div>
-      </div>
+      <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">

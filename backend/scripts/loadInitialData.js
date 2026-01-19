@@ -44,7 +44,8 @@ export async function loadInitialData() {
     const skills = Array.isArray(skillsData) ? skillsData : skillsData.skills;
 
     const jobCount = await Job.countDocuments();
-    if (jobCount === 0) {
+    // Disable automatic sample job loading - let employers post their own jobs
+    if (jobCount === 0 && process.env.LOAD_SAMPLE_DATA === 'true') {
       console.log('📦 Loading sample jobs into database...');
       const sampleJobs = [];
       

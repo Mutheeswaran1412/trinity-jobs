@@ -32,9 +32,13 @@ const EmployerLoginPage: React.FC<EmployerLoginPageProps> = ({ onNavigate, onLog
       
       localStorage.setItem('user', JSON.stringify(response.user));
       
+      // Use consistent name from backend - prioritize name field, fallback to company or email
+      const displayName = response.user.name || response.user.companyName || response.user.company || response.user.fullName || response.user.email.split('@')[0];
+      
       onLogin({ 
-        name: response.user.companyName || response.user.fullName || response.user.email.split('@')[0], 
-        type: 'employer' 
+        name: displayName, 
+        type: 'employer',
+        email: response.user.email
       });
       
       onNavigate('dashboard');

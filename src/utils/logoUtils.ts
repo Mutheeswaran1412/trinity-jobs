@@ -18,6 +18,7 @@ export const getCompanyLogo = (companyName: string, domain?: string): string => 
     'trinity technology solutions': 'trinitetech.com',
     'trinity technology solution': 'trinitetech.com',
     'trinity tech': 'trinitetech.com',
+    'trinitytechnologysolution': 'trinitetech.com',
     'trello': 'trello.com',
     'myntra': 'myntra.com',
     'cleartrip': 'cleartrip.com',
@@ -64,31 +65,29 @@ export const getCompanyLogo = (companyName: string, domain?: string): string => 
 export const sanitizeLogo = (logoUrl: string): string => {
   if (!logoUrl) return '';
   
-  // If it's already a valid img.logo.dev URL, return as is
+  // Block problematic tracking URLs but allow trinity-tech.com
+  if (logoUrl.includes('clearbit.com') || 
+      logoUrl.includes('google.com/s2/favicons') || 
+      logoUrl.includes('gstatic.com') ||
+      logoUrl.includes('logo.clearbit.com') ||
+      logoUrl.includes('t0.gstatic.com') ||
+      logoUrl.includes('t1.gstatic.com') ||
+      logoUrl.includes('trinitetech.com') ||
+      logoUrl.includes('trinitytechnologysolution.com')) {
+    return '';
+  }
+  
+  // Allow img.logo.dev URLs
   if (logoUrl.includes('img.logo.dev')) {
     return logoUrl;
   }
   
-  // Block clearbit and google favicon URLs - these cause tracking prevention errors
-  if (logoUrl.includes('clearbit.com') || 
-      logoUrl.includes('google.com/s2/favicons') || 
-      logoUrl.includes('gstatic.com') ||
-      logoUrl.includes('logo.clearbit.com')) {
-    return '';
-  }
-  
-  return logoUrl;
+  return '';
 };
 
 // Helper function to get safe logo URL for any company
 export const getSafeCompanyLogo = (companyName: string, existingLogo?: string): string => {
-  // First try to sanitize existing logo
-  const sanitized = sanitizeLogo(existingLogo || '');
-  if (sanitized) {
-    return sanitized;
-  }
-  
-  // If no valid existing logo, generate one from company name
+  // Always generate from company name to avoid tracking issues
   return getCompanyLogo(companyName);
 };
 

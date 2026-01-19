@@ -74,6 +74,7 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       const userData = {
         id: response.id,
         name: fullName,
+        fullName: fullName, // Keep both for compatibility
         email: email,
         userType: 'candidate'
       };
@@ -89,7 +90,18 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       // Login user and redirect
       setTimeout(() => {
         onLogin({ name: fullName, type: 'candidate', email: email });
-        onNavigate('dashboard');
+        
+        // Check for pending job application
+        const pendingApplication = localStorage.getItem('pendingJobApplication');
+        if (pendingApplication) {
+          const jobData = JSON.parse(pendingApplication);
+          localStorage.removeItem('pendingJobApplication');
+          // Redirect to job detail page to apply
+          onNavigate('job-detail', { jobId: jobData.jobId, jobTitle: jobData.jobTitle, companyName: jobData.company });
+        } else {
+          onNavigate('dashboard');
+        }
+        
         onClose();
       }, 1000);
       

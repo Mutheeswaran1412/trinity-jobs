@@ -45,27 +45,21 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
 
   const handleFindJobsClick = () => {
     if (onNavigate) {
-      // Check if user is logged in
-      if (user) {
-        // User is logged in, go directly to job listings
-        onNavigate('job-listings');
+      // Check if user is an employer
+      if (user?.type === 'employer') {
+        // Employer should go to candidate search
+        onNavigate('candidate-search');
       } else {
-        // User not logged in, show registration flow
-        onNavigate('register');
+        // Anyone can browse job listings without login
+        onNavigate('job-listings');
       }
     }
   };
 
   const handleCompaniesClick = () => {
     if (onNavigate) {
-      // Check if user is logged in
-      if (user) {
-        // User is logged in, go directly to companies
-        onNavigate('companies');
-      } else {
-        // User not logged in, show registration flow
-        onNavigate('register');
-      }
+      // Anyone can browse companies without login
+      onNavigate('companies');
     }
   };
 
@@ -119,7 +113,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 flex-1 justify-start ml-8">
             <button onClick={handleFindJobsClick} className="text-white hover:text-gray-300 font-medium transition-colors">
-              Job Search
+              {user?.type === 'employer' ? 'Candidate Search' : 'Job Search'}
             </button>
             <button onClick={handleCompaniesClick} className="text-white hover:text-gray-300 font-medium transition-colors">
               Companies
@@ -392,7 +386,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
           <div className="md:hidden py-4 border-t border-gray-600">
             <div className="space-y-4">
               <button onClick={handleFindJobsClick} className="block text-left text-white hover:text-gray-300 font-medium">
-                Job Search
+                {user?.type === 'employer' ? 'Candidate Search' : 'Job Search'}
               </button>
               <button onClick={handleCompaniesClick} className="block text-left text-white hover:text-gray-300 font-medium">
                 Companies

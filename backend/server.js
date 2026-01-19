@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+// import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -42,6 +43,7 @@ import profileRoutes from './routes/profile.js';
 import autocompleteRoutes from './routes/autocomplete.js';
 import companyAutocompleteRoutes from './routes/companyAutocomplete.js';
 import linkedinParserRoutes from './routes/linkedinParser.js';
+import dashboardRoutes from './routes/dashboard.js';
 import Notification from './models/Notification.js';
 import Message from './models/Message.js';
 import { loadInitialData } from './scripts/loadInitialData.js';
@@ -136,6 +138,32 @@ export async function sendNotification(userId, type, title, message, link = null
 }
 
 app.use(helmet());
+
+// Disable rate limiting for development
+// const limiter = rateLimit({
+//   windowMs: 1 * 60 * 1000,
+//   max: 1000,
+//   message: 'Too many requests from this IP, please try again later.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   skip: (req) => {
+//     return process.env.NODE_ENV === 'development' || req.ip === '127.0.0.1' || req.ip === '::1';
+//   }
+// });
+
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 50,
+//   message: 'Too many login attempts, please try again later.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   skip: (req) => {
+//     return process.env.NODE_ENV === 'development' || req.ip === '127.0.0.1' || req.ip === '::1';
+//   }
+// });
+
+// app.use('/api/users/login', loginLimiter);
+// app.use(limiter);
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -171,6 +199,7 @@ app.use('/api/admin/audit', adminAuditRoutes);
 app.use('/api/ai', aiScoringRoutes);
 app.use('/api/ai-flow', aiScoringFlowRoutes);
 app.use('/api/employer', employerCandidatesRoutes);
+app.use('/api/candidates', employerCandidatesRoutes);
 app.use('/api/admin/system', adminSystemRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/resume', resumeBasicRoutes);
@@ -182,6 +211,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/autocomplete', autocompleteRoutes);
 app.use('/api/companies', companyAutocompleteRoutes);
 app.use('/api', linkedinParserRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Resume parser with AI
 app.post('/api/resume-parser/parse', async (req, res) => {
@@ -394,12 +424,66 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
-    const userMessage = message?.toLowerCase() || '';
     
-    let response = getSmartResponse(userMessage);
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Check if API key exists
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error('OpenRouter API key not found');
+      return res.json({
+        response: "I'm here to help with jobs, careers, resumes, and interviews. What specific question do you have?",
+        sources: []
+      });
+    }
+
+    // Call OpenRouter API with Mistral
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:5173',
+        'X-Title': 'ZyncJobs'
+      },
+      body: JSON.stringify({
+        model: 'mistralai/mistral-7b-instruct:free',
+        messages: [
+          {
+            role: 'system',
+            content: `You are ZyncJobs AI Assistant, a helpful chatbot for a job portal called ZyncJobs. You help users with:
+- Job searching and applications
+- Resume building and optimization
+- Interview preparation
+- Career advice
+- Salary negotiation
+- Skills development
+- Company research
+
+Always be helpful, professional, and focus on job-related topics. Keep responses concise and actionable.`
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices?.[0]?.message?.content || "I'm here to help with jobs, careers, resumes, and interviews. What specific question do you have?";
     
     res.json({
-      response: response,
+      response: aiResponse,
       sources: []
     });
   } catch (error) {
@@ -525,38 +609,6 @@ function generateJobRequirements(jobTitle) {
 • Problem-solving and analytical thinking skills
 • Bachelor's degree in relevant field or equivalent experience
 • Proficiency in relevant tools and technologies`;
-}
-
-function getSmartResponse(message) {
-  if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-    return "Hello! 👋 I'm ZyncJobs AI Assistant. I can help you with job searching, resume building, interview preparation, and career advice. What would you like to know?";
-  }
-  
-  if (message.includes('job') || message.includes('work') || message.includes('career')) {
-    return "🔍 ZyncJobs has thousands of opportunities! I can help you:\n• Search for jobs by skills or location\n• Optimize your job applications\n• Understand job market trends\n• Prepare for interviews\n\nWhat specific help do you need?";
-  }
-  
-  if (message.includes('resume') || message.includes('cv')) {
-    return "📄 I can help you create an amazing resume! Here's what I can do:\n• AI-powered resume generation\n• ATS optimization tips\n• Keyword suggestions\n• Format recommendations\n\nTry our AI Resume Builder or ask me specific questions!";
-  }
-  
-  if (message.includes('interview')) {
-    return "🎯 Interview preparation is crucial! I can help with:\n• Common interview questions\n• STAR method responses\n• Technical interview prep\n• Salary negotiation tips\n\nWhat type of interview are you preparing for?";
-  }
-  
-  if (message.includes('skill') || message.includes('learn')) {
-    return "🚀 Skills development is key to career growth! Popular in-demand skills:\n• AI/Machine Learning\n• Cloud Computing (AWS, Azure)\n• Full-Stack Development\n• Data Science\n• Cybersecurity\n\nWhich area interests you most?";
-  }
-  
-  if (message.includes('salary') || message.includes('pay')) {
-    return "💰 Salary insights and negotiation tips:\n• Research market rates for your role\n• Use our salary report feature\n• Highlight your unique value\n• Practice negotiation scenarios\n\nWhat's your role or target position?";
-  }
-  
-  if (message.includes('company') || message.includes('employer')) {
-    return "🏢 Finding the right company is important! I can help you:\n• Research company culture\n• Understand hiring processes\n• Find company reviews\n• Connect with the right opportunities\n\nWhat type of company are you looking for?";
-  }
-  
-  return "I'm your ZyncJobs AI Assistant! 🤖 I can help with:\n\n🔍 Job searching & applications\n📄 Resume writing & optimization\n🎯 Interview preparation\n💰 Salary negotiation\n🚀 Skills development\n🏢 Company research\n\nWhat would you like to explore today?";
 }
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());

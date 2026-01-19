@@ -1,11 +1,14 @@
 import React from 'react';
 import { ArrowLeft, TrendingUp, DollarSign, MapPin, Users, Star, BarChart3 } from 'lucide-react';
+import Header from '../components/Header';
 
 interface SalaryReportPageProps {
   onNavigate: (page: string) => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
-const SalaryReportPage: React.FC<SalaryReportPageProps> = ({ onNavigate }) => {
+const SalaryReportPage: React.FC<SalaryReportPageProps> = ({ onNavigate, user, onLogout }) => {
   const jobRoles = [
     { role: "AI Engineer", salary: "$165k", growth: "+15%", demand: "Very High" },
     { role: "DevOps Engineer", salary: "$140k", growth: "+12%", demand: "High" },
@@ -35,17 +38,7 @@ const SalaryReportPage: React.FC<SalaryReportPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => onNavigate('home')}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Home</span>
-          </button>
-        </div>
-      </div>
+      <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16">

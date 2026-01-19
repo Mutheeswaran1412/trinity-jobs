@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Building, MapPin, Users, Globe, Briefcase, Save, Plus } from 'lucide-react';
 import Notification from '../components/Notification';
+import BackButton from '../components/BackButton';
 
 interface CompanyProfilePageProps {
   onNavigate?: (page: string) => void;
@@ -141,6 +142,13 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
       <div className="max-w-6xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="mb-8">
+            <BackButton 
+              variant="inline"
+              label="Back"
+              fallbackPage="dashboard"
+              onNavigate={onNavigate}
+              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4"
+            />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Company Profile</h1>
             <p className="text-gray-600">Complete your company profile to attract top talent</p>
           </div>

@@ -45,7 +45,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/jobs - Create new job (Employers and Admins only)
+// POST /api/jobs - Create new job (Auto-assign to mutheeswaran124@gmail.com)
 router.post('/', [
   body('jobTitle').notEmpty().withMessage('Job title is required'),
   body('company').notEmpty().withMessage('Company is required'),
@@ -61,19 +61,16 @@ router.post('/', [
 
     const jobData = {
       ...req.body,
-      status: 'pending', // All jobs start as pending for admin review
-      employerEmail: req.body.employerEmail || req.user?.email || 'employer@test.com'
+      status: 'approved', // Auto-approve all jobs
+      employerEmail: 'mutheeswaran124@gmail.com', // Always assign to this employer
+      postedBy: 'Mutheeswaran',
+      employerCompany: 'Trinity Technology',
+      isActive: true
     };
-    
-    // Only add employerId if it's a valid ObjectId
-    if (req.user?.id && req.user.id.match(/^[0-9a-fA-F]{24}$/)) {
-      jobData.employerId = req.user.id;
-    }
     
     const job = new Job(jobData);
     
-    // Auto-approve jobs (Mistral AI disabled)
-    job.status = 'approved';
+    // Set moderation flags to approved
     job.moderationFlags = {
       isSpam: false,
       isFake: false,
@@ -82,8 +79,10 @@ router.post('/', [
     };
     
     await job.save();
+    console.log('Job automatically created and assigned to mutheeswaran124@gmail.com:', job._id);
     res.status(201).json(job);
   } catch (error) {
+    console.error('Error creating job:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -129,6 +128,35 @@ router.get('/employer/:employerId', async (req, res) => {
       employerId: req.params.employerId,
       isActive: true,
       status: { $in: ['approved', 'pending'] }
+    }).sort({ createdAt: -1 }).lean();
+    
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/jobs/employer/email/:email - Get jobs by employer email
+router.get('/employer/email/:email', async (req, res) => {
+  try {
+    const jobs = await Job.find({ 
+      employerEmail: req.params.email,
+      isActive: true,
+      status: { $in: ['approved', 'pending'] }
+    }).sort({ createdAt: -1 }).lean();
+    
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/jobs/my-jobs - Get jobs for mutheeswaran124@gmail.com
+router.get('/my-jobs', async (req, res) => {
+  try {
+    const jobs = await Job.find({ 
+      employerEmail: 'mutheeswaran124@gmail.com',
+      isActive: true
     }).sort({ createdAt: -1 }).lean();
     
     res.json(jobs);

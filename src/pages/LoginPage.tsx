@@ -31,13 +31,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
       
       localStorage.setItem('user', JSON.stringify(response.user));
       
+      // Use consistent name from backend - prioritize name field, fallback to fullName or email
+      const displayName = response.user.name || response.user.fullName || response.user.email.split('@')[0];
+      
       const userType = response.user.userType === 'employer' ? 'employer' : 'candidate';
       onLogin({ 
-        name: response.user.fullName || response.user.email.split('@')[0], 
-        type: userType
+        name: displayName, 
+        type: userType,
+        email: response.user.email
       });
       
-      onNavigate('dashboard');
+      // Check for pending job application
+      const pendingApplication = localStorage.getItem('pendingJobApplication');
+      if (pendingApplication) {
+        const jobData = JSON.parse(pendingApplication);
+        localStorage.removeItem('pendingJobApplication');
+        // Redirect to job detail page to apply
+        onNavigate('job-detail', { jobId: jobData.jobId, jobTitle: jobData.jobTitle, companyName: jobData.company });
+      } else {
+        onNavigate('dashboard');
+      }
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
@@ -48,7 +61,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <Header onNavigate={onNavigate} />
 
       <div className="flex items-center justify-center py-16 px-4">

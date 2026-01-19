@@ -6,6 +6,7 @@ import Header from './components/Header';
 import NewHero from './components/NewHero';
 import JobCategories from './components/JobCategories';
 import LatestJobs from './components/LatestJobs';
+import HowItWorks from './components/HowItWorks';
 import TalentedPeople from './components/TalentedPeople';
 import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
@@ -105,8 +106,10 @@ function App() {
         }
         
         console.log('Mapped user type:', userType);
+        // Standardize name display - always use the name field from backend
+        const displayName = userData.name || userData.fullName || userData.email?.split('@')[0] || 'User';
         setUser({
-          name: userData.name || userData.fullName || userData.email?.split('@')[0] || 'User',
+          name: displayName,
           type: userType as 'candidate' | 'employer',
           email: userData.email
         });
@@ -169,7 +172,7 @@ function App() {
     }
 
     // Check authentication for candidate-only pages
-    const candidatePages = ['job-application', 'candidate-profile', 'job-listings', 'companies'];
+    const candidatePages = ['job-application', 'candidate-profile'];
     if (candidatePages.includes(page)) {
       if (!user) {
         // Not logged in, show role selection
@@ -186,6 +189,11 @@ function App() {
         return;
       }
       // User is logged in as candidate, proceed to page
+    }
+
+    // Ensure job-listings and companies are always accessible without authentication
+    if (page === 'job-listings' || page === 'companies') {
+      // No authentication required for browsing jobs and companies
     }
 
     // Special handling for dashboard - route to correct dashboard based on user type
@@ -262,6 +270,14 @@ function App() {
   };
 
   const handleLogin = (userData: {name: string, type: 'candidate' | 'employer' | 'admin', email?: string}) => {
+    // Store consistent user data in localStorage
+    const userToStore = {
+      name: userData.name,
+      fullName: userData.name, // Keep both for compatibility
+      email: userData.email,
+      userType: userData.type
+    };
+    localStorage.setItem('user', JSON.stringify(userToStore));
     setUser(userData);
     closeModals();
   };
@@ -341,6 +357,9 @@ function App() {
           jobTitle={currentData?.jobTitle || currentTopic}
           jobId={currentData?.jobId}
           companyName={currentData?.companyName}
+          jobData={currentData?.jobData}
+          user={user}
+          onLogout={handleLogout}
         />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -466,7 +485,7 @@ function App() {
   }
 
   if (currentPage === 'candidate-search') {
-    return <CandidateSearchPage onNavigate={handleNavigation} />;
+    return <CandidateSearchPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'hire-talent') {
@@ -648,8 +667,9 @@ function App() {
       <div className="min-h-screen bg-white">
         <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
         <NewHero onNavigate={handleNavigation} user={user} />
-        <JobCategories onNavigate={handleNavigation} />
         <LatestJobs onNavigate={handleNavigation} />
+        <HowItWorks onNavigate={handleNavigation} />
+        <JobCategories onNavigate={handleNavigation} />
         <TalentedPeople onNavigate={handleNavigation} />
         <CallToAction onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />

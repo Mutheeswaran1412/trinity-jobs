@@ -27,6 +27,12 @@ const jobSchema = new mongoose.Schema({
     required: [true, 'Job type is required'],
     enum: ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship']
   },
+  locationType: {
+    type: String,
+    required: [true, 'Location type is required'],
+    enum: ['Remote', 'On-site', 'Hybrid'],
+    default: 'On-site'
+  },
   salary: {
     min: { type: Number, default: 0 },
     max: { type: Number, default: 0 },
@@ -83,6 +89,19 @@ const jobSchema = new mongoose.Schema({
   employerEmail: {
     type: String,
     trim: true
+  },
+  // New fields for recruitment agency functionality
+  employerCompany: {
+    type: String,
+    trim: true // The actual company of the person posting (e.g., Trinity Technology)
+  },
+  postedFor: {
+    type: String,
+    trim: true // The company the job is posted for (e.g., Google)
+  },
+  isThirdPartyPosting: {
+    type: Boolean,
+    default: false // True if posting for a different company
   }
 }, {
   timestamps: true

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles, Camera, Edit2 } from 'lucide-react';
+import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles } from 'lucide-react';
 import Notification from '../components/Notification';
-import ResumeUploadWithModeration from '../components/ResumeUploadWithModeration';
-import ProfilePhotoEditor from '../components/ProfilePhotoEditor';
+import BackButton from '../components/BackButton';
 import { aiSuggestions } from '../utils/aiSuggestions';
 
 interface CandidateProfilePageProps {
@@ -41,13 +40,6 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               workAuthorization: profileData.workAuthorization || parsedUser.workAuthorization || '',
               securityClearance: profileData.securityClearance || parsedUser.securityClearance || ''
             });
-            setProfilePhoto(profileData.profilePhoto || parsedUser.profilePhoto || '');
-            setProfileFrame(profileData.profileFrame || parsedUser.profileFrame || 'none');
-            setCoverPhoto(profileData.coverPhoto || parsedUser.coverPhoto || '');
-            
-            // Update localStorage with latest data
-            const updatedUser = { ...parsedUser, ...profileData };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
           } else {
             // Fallback to localStorage data if backend fails
             setFormData({
@@ -67,9 +59,6 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               workAuthorization: parsedUser.workAuthorization || '',
               securityClearance: parsedUser.securityClearance || ''
             });
-            setProfilePhoto(parsedUser.profilePhoto || '');
-            setProfileFrame(parsedUser.profileFrame || 'none');
-            setCoverPhoto(parsedUser.coverPhoto || '');
           }
         } catch (error) {
           console.log('Profile load error:', error);
@@ -91,9 +80,6 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             workAuthorization: parsedUser.workAuthorization || '',
             securityClearance: parsedUser.securityClearance || ''
           });
-          setProfilePhoto(parsedUser.profilePhoto || '');
-          setProfileFrame(parsedUser.profileFrame || 'none');
-          setCoverPhoto(parsedUser.coverPhoto || '');
         }
       }
     };
@@ -131,12 +117,6 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
-  const [showResumeModal, setShowResumeModal] = useState(false);
-  const [showPhotoEditor, setShowPhotoEditor] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState('');
-  const [profileFrame, setProfileFrame] = useState('none');
-  const [coverPhoto, setCoverPhoto] = useState('');
-  const coverInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -145,12 +125,71 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({
-        ...formData,
-        resume: e.target.files[0]
-      });
+      const file = e.target.files[0];
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        setNotification({
+          type: 'error',
+          message: 'File size must be less than 10MB',
+          isVisible: true
+        });
+        return;
+      }
+      
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setNotification({
+          type: 'error',
+          message: 'Only PDF, DOC, and DOCX files are allowed',
+          isVisible: true
+        });
+        return;
+      }
+      
+      try {
+        // Upload file to backend
+        const uploadFormData = new FormData();
+        uploadFormData.append('resume', file);
+        
+        const response = await fetch('http://localhost:5000/api/upload/resume', {
+          method: 'POST',
+          body: uploadFormData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+        
+        const uploadResult = await response.json();
+        
+        // Update form data with uploaded file info
+        setFormData({
+          ...formData,
+          resume: {
+            name: file.name,
+            filename: uploadResult.filename,
+            url: uploadResult.fileUrl,
+            uploadDate: new Date().toLocaleDateString()
+          } as any
+        });
+        
+        setNotification({
+          type: 'success',
+          message: 'Resume uploaded successfully!',
+          isVisible: true
+        });
+      } catch (error) {
+        console.error('Upload error:', error);
+        setNotification({
+          type: 'error',
+          message: 'Failed to upload resume. Please try again.',
+          isVisible: true
+        });
+      }
     }
   };
 
@@ -370,35 +409,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const coverPhotoData = reader.result as string;
-        setCoverPhoto(coverPhotoData);
-        
-        // Immediately save to localStorage
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        userData.coverPhoto = coverPhotoData;
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Immediately save to backend
-        try {
-          await fetch('http://localhost:5000/api/profile/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: userData.id || userData._id,
-              email: userData.email,
-              coverPhoto: coverPhotoData
-            })
-          });
-        } catch (err) {
-          console.log('Cover photo save to backend failed:', err);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    // Removed cover upload functionality
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -407,38 +418,47 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
       const existingUser = JSON.parse(localStorage.getItem('user') || '{}');
       
       const profileData = {
-        ...formData,
-        name: formData.fullName,
-        skills: formData.skills,
-        title: formData.jobTitle,
-        userType: 'jobseeker',
-        profilePhoto,
-        profileFrame,
-        coverPhoto,
         userId: existingUser.id || existingUser._id,
         email: formData.email || existingUser.email,
-        profile_completed: !!(formData.fullName && formData.skills && formData.location && formData.jobTitle),
+        name: formData.fullName,
+        phone: formData.phone,
+        location: formData.location,
+        title: formData.jobTitle,
+        yearsExperience: formData.yearsExperience,
+        skills: formData.skills,
+        experience: formData.experience,
+        education: formData.education,
+        certifications: formData.certifications,
+        workAuthorization: formData.workAuthorization,
+        securityClearance: formData.securityClearance,
+        salary: formData.salary,
+        jobType: formData.jobType,
+        resume: formData.resume
+      };
+      
+      // Update localStorage
+      const updatedUser = {
+        ...existingUser,
+        ...profileData,
+        fullName: formData.fullName,
         profile: {
           ...existingUser.profile,
-          resume: existingUser.profile?.resume || existingUser.resume,
           skills: formData.skills,
           experience: formData.yearsExperience,
           bio: formData.experience
-        },
-        resume: existingUser.resume || existingUser.profile?.resume
+        }
       };
-      
-      localStorage.setItem('user', JSON.stringify(profileData));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       
       // Save to backend
-      try {
-        await fetch('http://localhost:5000/api/profile/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(profileData)
-        });
-      } catch (err) {
-        console.log('Backend save failed:', err);
+      const response = await fetch('http://localhost:5000/api/profile/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save profile');
       }
       
       setNotification({
@@ -451,6 +471,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         onNavigate && onNavigate('dashboard');
       }, 2000);
     } catch (error) {
+      console.error('Profile save error:', error);
       setNotification({
         type: 'error',
         message: 'Error saving profile!',
@@ -468,66 +489,23 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         onClose={() => setNotification({ ...notification, isVisible: false })}
       />
       <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Cover Photo Section */}
-          <div className="relative h-48 bg-gradient-to-r from-blue-500 to-blue-700">
-            {coverPhoto && (
-              <img src={coverPhoto} alt="Cover" className="w-full h-full object-cover" />
-            )}
-            <button
-              onClick={() => coverInputRef.current?.click()}
-              className="absolute top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center space-x-2 shadow-lg"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Edit Cover</span>
-            </button>
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleCoverUpload}
-              className="hidden"
-            />
-          </div>
-
-          {/* Profile Photo Section */}
-          <div className="relative px-8 pb-6">
-            <div className="flex items-end space-x-6 -mt-16">
-              <div className="relative">
-                <div 
-                  className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center overflow-hidden shadow-lg"
-                  style={{ 
-                    borderColor: profileFrame === 'blue' ? '#0A66C2' : 
-                                profileFrame === 'green' ? '#057642' : 
-                                profileFrame === 'purple' ? '#7C3AED' : 
-                                profileFrame === 'gold' ? '#F59E0B' : 'white',
-                    borderWidth: profileFrame !== 'none' ? '4px' : '4px'
-                  }}
-                >
-                  {profilePhoto ? (
-                    <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-16 h-16 text-gray-400" />
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPhotoEditor(true)}
-                  className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 shadow-lg"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex-1 pb-4">
-                <h1 className="text-2xl font-bold text-gray-900">{formData.fullName || 'Your Name'}</h1>
-                <p className="text-gray-600">{formData.jobTitle || 'Job Title'}</p>
-                <p className="text-sm text-gray-500">{formData.location || 'Location'}</p>
-              </div>
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-700 px-8 py-6">
+              <BackButton 
+                variant="inline"
+                label="Back"
+                fallbackPage="dashboard"
+                onNavigate={onNavigate}
+                className="inline-flex items-center text-sm text-blue-100 hover:text-white transition-colors mb-4"
+              />
+              <h1 className="text-2xl font-bold text-white">{formData.fullName || 'Complete Your Profile'}</h1>
+              <p className="text-blue-100">{formData.jobTitle || 'Job Title'}</p>
+              <p className="text-sm text-blue-200">{formData.location || 'Location'}</p>
             </div>
-          </div>
 
-          <div className="px-8 pb-8">
+            <div className="px-8 py-8">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Complete Your Profile</h2>
             <p className="text-gray-600">Fill in your details to appear in employer searches and get matched with the best job opportunities</p>
@@ -574,6 +552,31 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                   onChange={handleInputChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="jobTitle"
+                    placeholder="Job Title (e.g., Software Engineer)"
+                    value={formData.jobTitle}
+                    onChange={handleJobTitleSearch}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  {showJobSuggestions && jobSuggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {jobSuggestions.map((job, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onMouseDown={() => selectJobTitle(job)}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
+                        >
+                          {job}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     type="text"
@@ -648,18 +651,25 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 <Upload className="w-6 h-6 text-blue-600 mr-2" />
                 <h2 className="text-xl font-semibold text-gray-900">Resume</h2>
               </div>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">Upload your resume with AI extraction</p>
-                <p className="text-sm text-gray-500 mb-4">PDF, DOC, DOCX (Max 10MB) - Details will auto-fill your profile</p>
-                <button
-                  type="button"
-                  onClick={() => setShowResumeModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center mx-auto transition-colors"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Upload & Extract Details
-                </button>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                <p className="text-sm text-gray-500">Accepted formats: PDF, DOC, DOCX (Max 5MB)</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 font-medium mb-2">Our AI checks for:</p>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Spam or inappropriate content</li>
+                    <li>• File format and size validation</li>
+                    <li>• Duplicate or fake resumes</li>
+                    <li>• Profile information matching</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -782,6 +792,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     value={formData.jobTitle}
                     onChange={handleJobTitleSearch}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
                   />
                   {showJobSuggestions && jobSuggestions.length > 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -865,86 +876,10 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               </button>
             </div>
           </form>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <ResumeUploadWithModeration
-        isOpen={showResumeModal}
-        onClose={() => setShowResumeModal(false)}
-        onSuccess={(resumeData) => {
-          setFormData({ ...formData, resume: resumeData });
-          
-          // Save resume to user profile in localStorage
-          const userData = JSON.parse(localStorage.getItem('user') || '{}');
-          userData.profile = userData.profile || {};
-          userData.profile.resume = resumeData.url || resumeData;
-          userData.resume = resumeData; // Also save at root level for compatibility
-          localStorage.setItem('user', JSON.stringify(userData));
-          
-          setNotification({
-            type: 'success',
-            message: 'Resume uploaded successfully!',
-            isVisible: true
-          });
-        }}
-        onProfileUpdate={(profileData) => {
-          setFormData({
-            ...formData,
-            fullName: profileData.name || formData.fullName,
-            email: profileData.email || formData.email,
-            phone: profileData.phone || formData.phone,
-            location: profileData.location || formData.location,
-            jobTitle: profileData.title || formData.jobTitle,
-            yearsExperience: profileData.experience > 0 ? profileData.experience.toString() : formData.yearsExperience,
-            skills: profileData.skills.length > 0 ? profileData.skills : formData.skills,
-            education: profileData.education || formData.education,
-            experience: profileData.workExperience || formData.experience,
-            certifications: profileData.certifications.length > 0 ? profileData.certifications.join(', ') : formData.certifications
-          });
-          
-          setNotification({
-            type: 'success',
-            message: 'Profile auto-filled from resume!',
-            isVisible: true
-          });
-        }}
-        userProfile={formData}
-      />
-
-      <ProfilePhotoEditor
-        isOpen={showPhotoEditor}
-        onClose={() => setShowPhotoEditor(false)}
-        onSave={async (photo, frame) => {
-          setProfilePhoto(photo);
-          setProfileFrame(frame || 'none');
-          
-          // Immediately save to localStorage
-          const userData = JSON.parse(localStorage.getItem('user') || '{}');
-          userData.profilePhoto = photo;
-          userData.profileFrame = frame || 'none';
-          localStorage.setItem('user', JSON.stringify(userData));
-          
-          // Immediately save to backend
-          try {
-            await fetch('http://localhost:5000/api/profile/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: userData.id || userData._id,
-                email: userData.email,
-                profilePhoto: photo,
-                profileFrame: frame || 'none'
-              })
-            });
-          } catch (err) {
-            console.log('Profile photo save to backend failed:', err);
-          }
-        }}
-        currentPhoto={profilePhoto}
-        currentFrame={profileFrame}
-      />
-    </div>
-    </div>
     </>
   );
 };

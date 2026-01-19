@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, MapPin, Filter, Briefcase, Clock, DollarSign, X, Bookmark, BookmarkCheck } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackButton from '../components/BackButton';
 import { aiSuggestions } from '../utils/aiSuggestions';
 import { JobCardSkeleton, SearchLoading } from '../components/LoadingStates';
 import { sanitizeLogo, getCompanyLogo } from '../utils/logoUtils';
@@ -526,6 +527,12 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
       </div>
       
       <Footer onNavigate={onNavigate} />
+      
+      {/* Floating Back Button */}
+      <BackButton 
+        fallbackPage="home"
+        onNavigate={onNavigate}
+      />
     </div>
   );
 };

@@ -1,0 +1,32 @@
+# Development files
+*.bat
+*.md
+debug-activity.js
+health-check.js
+safe_cleanup_frontend.js
+test-dashboard.js
+docker-compose.yml
+Dockerfile
+.bolt/
+images/
+resume-builder-module.tar.gz
+
+# Backend Python files (if not needed)
+backend/ai_resume_app.py
+backend/main.py
+backend/requirements_ai.txt
+backend/package_ai.json
+backend/package_pdf.json
+
+# Documentation
+CLEARBIT_FIX_README.md
+DASHBOARD_UPDATES.md
+FIXES_APPLIED.md
+GITHUB_VERCEL_DEPLOY.md
+HOW_TO_SHARE.md
+INTERN_MODULES.md
+SINGLE_DEPLOYMENT.md
+VERCEL_DEPLOYMENT_FIX.md
+backend/API_ROUTES.md
+backend/SECURITY_FIXES.md
+backend/setup_guide.txt

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, User, Briefcase, MessageSquare, FileText, Bookmark, CreditCard, Settings, Trash2, LogOut, Search, Bell, Plus, MoreVertical, Users, Eye, Edit } from 'lucide-react';
+import { LayoutDashboard, User, Briefcase, MessageSquare, FileText, Bookmark, CreditCard, Settings, Trash2, LogOut, Search, Bell, Plus, MoreVertical, Users, Eye, Edit, UserPlus, FileSearch, Folder } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 
@@ -16,6 +16,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [companyWebsite, setCompanyWebsite] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState('dashboard');
@@ -36,12 +38,43 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
     }
   }, []);
 
+  // Add effect to refresh data when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('Dashboard became visible, refreshing data...');
+        fetchDashboardData(user);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
+
   const fetchDashboardData = async (userData: any) => {
     try {
       setError(null);
-      const [jobsRes, appsRes] = await Promise.all([
+      console.log('Fetching dashboard data for user:', userData);
+      
+      // Get user ID - try different possible fields
+      const userId = userData.id || userData._id || userData.userId;
+      const userEmail = userData.email;
+      const userName = userData.name || userData.fullName;
+      
+      console.log('Using userId:', userId, 'userEmail:', userEmail, 'userName:', userName);
+      
+      // First, let's debug what's in the database
+      const debugRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/debug?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`);
+      if (debugRes.ok) {
+        const debugData = await debugRes.json();
+        console.log('DEBUG - Database contents:', debugData);
+      }
+      
+      const [jobsRes, appsRes, statsRes, activityRes] = await Promise.all([
         fetch(API_ENDPOINTS.JOBS),
-        fetch(API_ENDPOINTS.APPLICATIONS)
+        fetch(API_ENDPOINTS.APPLICATIONS),
+        fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/stats?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`),
+        fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/recent-activity?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`)
       ]);
 
       if (!jobsRes.ok) {
@@ -53,10 +86,12 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         console.log('Dashboard - All jobs:', allJobs.length);
         console.log('Dashboard - User data for filtering:', userData);
         const employerJobs = Array.isArray(allJobs) ? allJobs.filter((job: any) => {
-          const matchesId = job.employerId === userData.id || job.employerId === userData._id;
-          const matchesEmail = job.employerEmail === userData.email;
-          console.log(`Job: ${job.jobTitle}, matchesId: ${matchesId}, matchesEmail: ${matchesEmail}`);
-          return matchesId || matchesEmail;
+          const matchesId = job.employerId === userId;
+          const matchesEmail = job.employerEmail === userEmail;
+          const matchesPostedBy = job.postedBy === userName;
+          const isThirdPartyPosting = job.employerEmail === userEmail && job.isThirdPartyPosting;
+          console.log(`Job: ${job.jobTitle} at ${job.company}, matchesId: ${matchesId}, matchesEmail: ${matchesEmail}, matchesPostedBy: ${matchesPostedBy}, isThirdParty: ${isThirdPartyPosting}`);
+          return matchesId || matchesEmail || matchesPostedBy || isThirdPartyPosting;
         }) : [];
         console.log('Dashboard - Filtered employer jobs:', employerJobs.length);
         setJobs(employerJobs);
@@ -68,8 +103,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           const allApps = response.applications || response || [];
           console.log('Dashboard - All applications:', allApps.length);
           const employerApps = Array.isArray(allApps) ? allApps.filter((app: any) => {
-            const matchesId = app.employerId === userData.id || app.employerId === userData._id;
-            const matchesEmail = app.employerEmail === userData.email;
+            const matchesId = app.employerId === userId;
+            const matchesEmail = app.employerEmail === userEmail;
             const matchesCompany = app.jobId?.company?.toLowerCase() === userData.companyName?.toLowerCase();
             console.log(`App: ${app.candidateName}, matchesId: ${matchesId}, matchesEmail: ${matchesEmail}, matchesCompany: ${matchesCompany}`);
             return matchesId || matchesEmail || matchesCompany;
@@ -84,6 +119,40 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         console.log('Applications API not available or returned error');
         setApplications([]);
       }
+
+      // Fetch dashboard stats - use local job count if API fails
+      let dashboardStats = { activeJobs: jobs.length, applications: 0, interviews: 0, hired: 0 };
+      if (statsRes.ok) {
+        try {
+          const stats = await statsRes.json();
+          dashboardStats = { ...dashboardStats, ...stats };
+        } catch (e) {
+          console.log('Stats API failed, using local count');
+        }
+      }
+      setDashboardStats(dashboardStats);
+
+      // Fetch recent activity - use local job data if API fails
+      let recentActivity = [];
+      if (activityRes.ok) {
+        try {
+          const activity = await activityRes.json();
+          recentActivity = activity;
+        } catch (e) {
+          console.log('Activity API failed, using local data');
+        }
+      }
+      
+      // If no activity from API, create from local jobs
+      if (recentActivity.length === 0 && jobs.length > 0) {
+        recentActivity = jobs.slice(0, 3).map(job => ({
+          type: 'job',
+          message: 'Job posted successfully',
+          time: '1 day ago',
+          details: { jobTitle: job.jobTitle || job.title }
+        }));
+      }
+      setRecentActivity(recentActivity);
     } catch (error) {
       console.error('Error fetching data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
@@ -99,42 +168,53 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   };
 
   const getDisplayLogo = () => {
-    if (companyLogo && companyLogo.trim() !== '') {
-      console.log('Using stored logo:', companyLogo);
+    if (companyLogo && companyLogo.trim() !== '' && !companyLogo.includes('clearbit.com') && !companyLogo.includes('gstatic.com')) {
       return companyLogo;
     }
-    console.log('Using fallback logo for:', companyName);
-    return getFallbackLogo(companyName);
+    
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(employerName || companyName)}&size=128&background=6366f1&color=ffffff&bold=true`;
   };
 
   const getJobCompanyLogo = (job: any) => {
     const company = job.company || job.companyName || companyName;
     
-    // Try stored logo first
-    if (job.companyLogo && job.companyLogo.trim() !== '') {
+    if (job.companyLogo && !job.companyLogo.includes('clearbit.com') && !job.companyLogo.includes('gstatic.com')) {
       return job.companyLogo;
     }
     
-    // Try Clearbit logo
-    if (job.companyWebsite) {
-      const domain = job.companyWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
-      return `https://logo.clearbit.com/${domain}`;
-    }
-    
-    // Try logo.dev
-    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return `https://img.logo.dev/${cleanCompany}.com?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&size=40&background=6366f1&color=ffffff&bold=true`;
   };
 
   const stats = [
-    { label: 'Posted Job', value: jobs.length.toString().padStart(2, '0'), icon: Users, color: 'bg-lime-400' },
-    { label: 'Shortlisted', value: applications.filter(a => a.status === 'shortlisted').length.toString().padStart(2, '0'), icon: Bookmark, color: 'bg-lime-400' },
-    { label: 'Application', value: applications.length > 999 ? `${(applications.length / 1000).toFixed(1)}k` : applications.length.toString().padStart(2, '0'), icon: Eye, color: 'bg-lime-400' },
-    { label: 'Save Candidate', value: '00', icon: Edit, color: 'bg-lime-400' }
+    { 
+      label: 'Active Jobs', 
+      value: dashboardStats?.activeJobs?.toString() || '0', 
+      icon: Briefcase, 
+      color: 'text-blue-600' 
+    },
+    { 
+      label: 'Applications', 
+      value: dashboardStats?.applications?.toString() || '0', 
+      icon: FileText, 
+      color: 'text-green-600' 
+    },
+    { 
+      label: 'Interviews', 
+      value: dashboardStats?.interviews?.toString() || '0', 
+      icon: Users, 
+      color: 'text-orange-600' 
+    },
+    { 
+      label: 'Hired', 
+      value: dashboardStats?.hired?.toString() || '0', 
+      icon: UserPlus, 
+      color: 'text-purple-600' 
+    }
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto flex min-h-screen bg-gray-50">
       {/* Error Display */}
       {error && (
         <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50">
@@ -172,6 +252,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             <div className="flex-1">
               <p className="font-semibold text-gray-900 text-sm">{employerName}</p>
               <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-600 font-medium">{companyName}</p>
               {companyWebsite && (
                 <a 
                   href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`}
@@ -340,7 +421,10 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         <div className="p-8">
           {activeMenu === 'dashboard' ? (
             <>
-              <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">Employer Dashboard</h1>
+                <p className="text-gray-600 mt-2">Manage your jobs and candidates</p>
+              </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -348,119 +432,75 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                        <h3 className={`text-3xl font-bold mb-1 ${stat.color}`}>{stat.value}</h3>
                         <p className="text-gray-500 text-sm">{stat.label}</p>
                       </div>
-                      <div className={`${stat.color} rounded-full p-3`}>
-                        <stat.icon className="w-6 h-6 text-gray-800" />
+                      <div className="bg-gray-50 rounded-full p-3">
+                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Job Views Chart */}
-                <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Job Views</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Quick Actions */}
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
                   
-                  <div className="mb-4">
-                    <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                      <option>All Jobs</option>
-                      {jobs.map(job => (
-                        <option key={job._id}>{job.title}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-center space-x-2 mb-6">
-                    <button className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">1h</button>
-                    <button className="px-3 py-1 text-xs bg-emerald-700 text-white rounded-full">Day</button>
-                    <button className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Week</button>
-                    <button className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Month</button>
-                    <button className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Year</button>
-                  </div>
-
-                  {/* Chart */}
-                  <div className="relative h-64">
-                    <div className="absolute inset-0 flex items-end justify-between space-x-2 px-4">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => {
-                        const height = Math.floor(Math.random() * 60) + 20;
-                        return (
-                          <div key={i} className="flex-1 flex flex-col items-center">
-                            <div 
-                              className="w-full bg-gradient-to-t from-emerald-400 to-emerald-200 rounded-t-lg transition-all hover:from-emerald-500 hover:to-emerald-300 cursor-pointer relative group" 
-                              style={{ height: `${height}%` }}
-                            >
-                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                {Math.floor(height * 3)} views
-                              </div>
-                            </div>
-                            <span className="text-xs text-gray-500 mt-2">{day}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => onNavigate('job-posting')}
+                      className="w-full flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left"
+                    >
+                      <Plus className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-gray-900">Post New Job</span>
+                    </button>
                     
-                    {/* Y-axis labels */}
-                    <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-400">
-                      <span>300</span>
-                      <span>200</span>
-                      <span>100</span>
-                      <span>50</span>
-                    </div>
+                    <button
+                      onClick={() => onNavigate('candidate-search')}
+                      className="w-full flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
+                    >
+                      <Search className="w-5 h-5 text-green-600" />
+                      <span className="font-medium text-gray-900">Search Candidates</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setActiveMenu('applications')}
+                      className="w-full flex items-center space-x-3 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors text-left"
+                    >
+                      <Folder className="w-5 h-5 text-yellow-600" />
+                      <span className="font-medium text-gray-900">Manage Applications</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Posted Jobs */}
+                {/* Recent Activity */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Posted Job</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
                   
                   <div className="space-y-4">
                     {loading ? (
                       <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                       </div>
-                    ) : jobs.length === 0 ? (
+                    ) : recentActivity.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-gray-500 text-sm mb-4">No jobs posted yet</p>
-                        <button
-                          onClick={() => onNavigate('job-posting')}
-                          className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
-                        >
-                          Post your first job
-                        </button>
+                        <p className="text-gray-500 text-sm">No recent activity</p>
                       </div>
                     ) : (
-                      jobs.slice(0, 5).map((job, index) => (
-                        <div key={job._id} className="flex items-start justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                          <div className="flex items-start space-x-3">
-                            <img
-                              src={getJobCompanyLogo(job)}
-                              alt={job.company || job.companyName || companyName}
-                              className="w-10 h-10 rounded-lg object-cover"
-                              onError={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                const company = job.company || job.companyName || companyName;
-                                
-                                // Try Google favicons as fallback
-                                if (!img.src.includes('favicon')) {
-                                  const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-                                  img.src = `https://www.google.com/s2/favicons?domain=${cleanCompany}.com&sz=64`;
-                                } else {
-                                  // Final fallback to initials
-                                  img.src = getFallbackLogo(company);
-                                }
-                              }}
-                            />
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-sm">{decodeHtmlEntities(job.title)}</h3>
-                              <p className="text-xs text-gray-500">{job.type || 'Fulltime'} . {job.location}</p>
-                            </div>
+                      recentActivity.map((activity, index) => (
+                        <div key={index} className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
+                          <div className="flex-1">
+                            <p className="text-gray-900 font-medium text-sm">{activity.message}</p>
+                            {activity.details && (
+                              <p className="text-gray-600 text-xs mt-1">
+                                {activity.details.candidateName && `${activity.details.candidateName} - `}
+                                {activity.details.jobTitle}
+                              </p>
+                            )}
                           </div>
-                          <button type="button" aria-label="Job options" className="text-gray-400 hover:text-gray-600">
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
+                          <span className="text-xs text-gray-500 ml-4">{activity.time}</span>
                         </div>
                       ))
                     )}
@@ -546,8 +586,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                       // Handle different URL formats
                                       if (!resumeUrl.startsWith('http')) {
                                         resumeUrl = resumeUrl.startsWith('/') 
-                                          ? `http://localhost:5001${resumeUrl}`
-                                          : `http://localhost:5001/uploads/${resumeUrl}`;
+                                          ? `${API_ENDPOINTS.BASE_URL}${resumeUrl}`
+                                          : `${API_ENDPOINTS.BASE_URL}/uploads/${resumeUrl}`;
                                       }
                                       
                                       // Test if file exists
@@ -638,6 +678,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             </>
           ) : null}
         </div>
+      </div>
       </div>
     </div>
   );

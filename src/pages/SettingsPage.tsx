@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Mail, Lock, User, Trash2 } from 'lucide-react';
 import Notification from '../components/Notification';
 
+
 interface SettingsPageProps {
   onNavigate: (page: string) => void;
+  user?: any;
+  onLogout?: () => void;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
-  const [user, setUser] = useState<any>(null);
+const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser, onLogout }) => {
+  const [user, setUser] = useState<any>(propUser || null);
   const [activeTab, setActiveTab] = useState('Account Information');
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({});
   const [notification, setNotification] = useState<{

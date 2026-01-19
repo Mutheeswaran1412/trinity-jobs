@@ -42,7 +42,8 @@ router.get('/', async (req, res) => {
           id: c.id,
           name: c.name,
           domain: c.domain,
-          logo: `https://img.logo.dev/${c.domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
+          website: `https://${c.domain}`,
+          logo: c.logo,
           followers: 10000,
           source: 'json'
         }));
@@ -63,7 +64,8 @@ router.get('/', async (req, res) => {
           id: c._id.toString(),
           name: c.name,
           domain: domain,
-          logo: c.logo || (domain ? `https://img.logo.dev/${domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200` : ''),
+          website: c.website,
+          logo: c.logo || `https://img.logo.dev/${domain}`,
           followers: c.followers || 5000,
           source: 'database'
         };
@@ -78,31 +80,52 @@ router.get('/', async (req, res) => {
       return res.json(uniqueMatches);
     }
     
-    // Regular query without search
+    // Regular query without search - return popular companies from JSON + DB companies
     const query = {};
     if (industry) query.industry = industry;
     if (employees) query.employees = employees;
     if (workSetting) query.workSetting = workSetting;
     if (isHiring === 'true') query.isHiring = true;
 
+    // Get popular companies from JSON
+    const jsonCompanies = popularCompanies.slice(0, 50).map(c => ({
+      _id: c.id.toString(),
+      name: c.name,
+      domain: c.domain,
+      website: `https://${c.domain}`,
+      logo: c.logo,
+      industry: 'Technology',
+      location: 'Global',
+      employees: '1000+',
+      rating: 4.5,
+      description: `${c.name} is a leading technology company.`,
+      openJobs: Math.floor(Math.random() * 20) + 1
+    }));
+
     const companies = await Company.find(query).sort({ name: 1 });
-    console.log('Found companies:', companies.length);
+    console.log('Found DB companies:', companies.length);
     
-    // Add job count for each company
+    // Add job count for DB companies
     const companiesWithJobs = await Promise.all(
       companies.map(async (company) => {
         const jobCount = await Job.countDocuments({ 
           company: company.name, 
           isActive: true 
         });
+        const domain = company.website ? company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : null;
         return {
           ...company.toObject(),
-          openJobs: jobCount
+          openJobs: jobCount,
+          website: company.website || (company.domain ? `https://${company.domain}` : null),
+          logo: company.logo || (domain ? `https://img.logo.dev/${domain}` : null)
         };
       })
     );
 
-    res.json(companiesWithJobs);
+    // Combine JSON companies with DB companies
+    const allCompanies = [...jsonCompanies, ...companiesWithJobs];
+    
+    res.json(allCompanies);
   } catch (error) {
     console.error('Companies route error:', error);
     res.status(500).json({ error: error.message });

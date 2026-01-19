@@ -13,13 +13,40 @@ export class AISuggestionService {
 
   private async callAI(prompt: string): Promise<string[]> {
     try {
-      // Simulate AI response for demo purposes
-      // In production, replace with actual AI API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+      // Call OpenRouter API with Mistral model
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_REACT_APP_OPENROUTER_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Trinity Jobs'
+        },
+        body: JSON.stringify({
+          model: 'mistralai/mistral-7b-instruct',
+          messages: [{
+            role: 'user',
+            content: prompt
+          }],
+          max_tokens: 200,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || '';
       
-      return this.fallbackSuggestions(prompt);
+      // Parse the response into an array
+      return content.split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .slice(0, 8);
     } catch (error) {
-      console.error('AI API error:', error);
+      console.error('OpenRouter API error:', error);
       return this.fallbackSuggestions(prompt);
     }
   }
@@ -163,18 +190,32 @@ export class AISuggestionService {
   async generateExperience(jobTitle: string, skills: string[]): Promise<string> {
     try {
       const skillsText = skills.length > 0 ? skills.join(', ') : 'various technologies';
-      const prompt = `Generate a professional work experience description for a ${jobTitle} with skills in ${skillsText}. Include 2-3 bullet points with specific achievements and metrics. Keep it concise and professional.`;
+      const prompt = `Create a comprehensive professional work experience description for a ${jobTitle} position. Include the following:
+
+1. 3-4 detailed bullet points with specific achievements and quantifiable results
+2. Use these skills: ${skillsText}
+3. Include metrics like percentages, numbers, time savings, revenue impact
+4. Show progression and leadership responsibilities
+5. Mention collaboration with teams and stakeholders
+6. Format each point starting with •
+7. Make it sound professional and impressive for job applications
+
+Example format:
+• Led development of scalable web applications using React and Node.js, serving 100K+ daily users
+• Optimized database queries and API performance, reducing response time by 40%
+• Collaborated with cross-functional teams of 8+ members to deliver projects 20% ahead of schedule
+• Mentored 3 junior developers and established coding standards that improved code quality by 30%`;
       
       const response = await this.callAI(prompt);
       return response.join('\n');
     } catch (error) {
-      return this.getFallbackExperience(jobTitle);
+      return this.getComprehensiveFallbackExperience(jobTitle, skills);
     }
   }
 
   async improveExperience(currentExperience: string): Promise<string> {
     try {
-      const prompt = `Improve this work experience description to be more professional and impactful. Add specific metrics and achievements where possible:\n\n${currentExperience}`;
+      const prompt = `Improve this work experience description to be more professional and impactful. Add specific metrics and achievements where possible. Format as bullet points starting with •:\n\n${currentExperience}`;
       
       const response = await this.callAI(prompt);
       return response.join('\n');
@@ -206,14 +247,51 @@ export class AISuggestionService {
     }
   }
 
-  private getFallbackExperience(jobTitle: string): string {
+  private getComprehensiveFallbackExperience(jobTitle: string, skills: string[]): string {
+    const skillsText = skills.length > 0 ? skills.slice(0, 3).join(', ') : 'modern technologies';
+    
     const experiences = {
-      'Software Engineer': '• Developed and maintained web applications using modern frameworks\n• Collaborated with cross-functional teams to deliver high-quality software solutions\n• Improved application performance by 30% through code optimization',
-      'Data Scientist': '• Analyzed large datasets to extract actionable business insights\n• Built machine learning models with 85%+ accuracy for predictive analytics\n• Presented findings to stakeholders and influenced strategic decisions',
-      'Product Manager': '• Led product development lifecycle from conception to launch\n• Managed cross-functional teams of 8+ members across engineering and design\n• Increased user engagement by 40% through data-driven feature improvements'
+      'Software Engineer': `• Developed and maintained scalable web applications using ${skillsText}, serving 50K+ daily active users
+• Implemented automated testing and CI/CD pipelines, reducing deployment time by 60% and bug reports by 45%
+• Collaborated with product managers and designers in agile teams to deliver 15+ features ahead of schedule
+• Mentored 2 junior developers and conducted code reviews, improving overall team code quality by 35%`,
+      
+      'Data Engineer': `• Built and optimized ETL pipelines processing 10TB+ daily data using ${skillsText}, improving data accuracy by 40%
+• Designed and implemented data warehouse solutions supporting 100+ business analysts and data scientists
+• Automated data quality monitoring and alerting systems, reducing data incidents by 70%
+• Led migration of legacy systems to cloud infrastructure, resulting in 50% cost reduction and 3x performance improvement`,
+      
+      'Data Scientist': `• Developed machine learning models using ${skillsText} with 90%+ accuracy for predictive analytics and customer segmentation
+• Analyzed large datasets (100M+ records) to extract actionable business insights, driving $2M+ revenue increase
+• Built automated reporting dashboards used by 50+ stakeholders across marketing, sales, and operations teams
+• Presented findings to C-level executives and influenced strategic decisions affecting company direction`,
+      
+      'Product Manager': `• Led product development lifecycle for 5+ features from conception to launch, achieving 25% user engagement increase
+• Managed cross-functional teams of 12+ members across engineering, design, and marketing departments
+• Conducted user research and A/B testing with 10K+ users, improving conversion rates by 30%
+• Defined product roadmap and prioritized features based on data analysis, resulting in 40% faster time-to-market`,
+      
+      'Frontend Developer': `• Built responsive web applications using ${skillsText}, improving user experience and reducing bounce rate by 25%
+• Optimized application performance and loading times, achieving 95+ Google PageSpeed scores
+• Collaborated with UX/UI designers to implement pixel-perfect designs across 10+ product features
+• Established component library and design system used by 8+ developers, reducing development time by 40%`,
+      
+      'Backend Developer': `• Designed and developed RESTful APIs using ${skillsText}, handling 1M+ requests per day with 99.9% uptime
+• Optimized database queries and implemented caching strategies, reducing response time by 50%
+• Built microservices architecture supporting scalable applications for 100K+ concurrent users
+• Implemented security best practices and monitoring systems, preventing security incidents and ensuring compliance`
     };
     
-    return experiences[jobTitle as keyof typeof experiences] || experiences['Software Engineer'];
+    const jobLower = jobTitle.toLowerCase();
+    
+    if (jobLower.includes('data engineer')) return experiences['Data Engineer'];
+    if (jobLower.includes('data scientist')) return experiences['Data Scientist'];
+    if (jobLower.includes('product manager')) return experiences['Product Manager'];
+    if (jobLower.includes('frontend')) return experiences['Frontend Developer'];
+    if (jobLower.includes('backend')) return experiences['Backend Developer'];
+    if (jobLower.includes('engineer') || jobLower.includes('developer')) return experiences['Software Engineer'];
+    
+    return experiences['Software Engineer'];
   }
 
   private getFallbackSkillsForRole(jobTitle: string): string[] {

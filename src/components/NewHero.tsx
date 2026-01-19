@@ -142,53 +142,6 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
           </div>
         </div>
       </div>
-
-      {/* How It Works Section */}
-      <div className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h6 className="text-blue-600 font-semibold text-lg mb-2">How It Work</h6>
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Follow Easy 4 Steps</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              It is a long established fact that a reader will be distracted by the 
-              readable content of a page when looking at its layout.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: "🔍",
-                title: "Search Jobs",
-                description: "The standard chunk of used below of those interested."
-              },
-              {
-                icon: "📄",
-                title: "CV/Resume",
-                description: "The standard chunk of used below of those interested."
-              },
-              {
-                icon: "👤",
-                title: "Create Account",
-                description: "The standard chunk of used below of those interested."
-              },
-              {
-                icon: "✅",
-                title: "Apply Them",
-                description: "The standard chunk of used below of those interested."
-              }
-            ].map((step, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl mx-auto mb-4">
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building } from 'lucide-react';
+import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 
 interface JobDetailPageProps {
@@ -7,12 +7,16 @@ interface JobDetailPageProps {
   jobTitle?: string;
   jobId?: number;
   companyName?: string;
+  user?: any;
+  onLogout?: () => void;
+  jobData?: any;
 }
 
-const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, jobId, companyName }) => {
+const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, jobId, companyName, user, onLogout, jobData }) => {
   const [job, setJob] = useState<any>(null);
   const [jobPoster, setJobPoster] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const getFallbackLogo = (name: string) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=6366f1&color=ffffff&bold=true`;
@@ -40,6 +44,13 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
+        // If jobData is passed from LatestJobs, use it directly
+        if (jobData) {
+          setJob(jobData);
+          setLoading(false);
+          return;
+        }
+        
         if (jobId) {
           // Fetch job details
           const jobResponse = await fetch(`${API_ENDPOINTS.JOBS}/${jobId}`);
@@ -108,7 +119,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
     };
 
     fetchJobDetails();
-  }, [jobId, jobTitle, companyName]);
+  }, [jobId, jobTitle, companyName, jobData]);
 
   if (loading) {
     return (
@@ -133,15 +144,34 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Job Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button 
-            onClick={() => onNavigate('company-profile', { companyName: job.company })}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4"
+            onClick={() => {
+              console.log('Back button clicked');
+              console.log('User:', user);
+              console.log('User type:', user?.type, user?.userType);
+              
+              // Try onNavigate first
+              try {
+                if (user?.type === 'employer' || user?.userType === 'employer') {
+                  console.log('Navigating to my-jobs');
+                  onNavigate('my-jobs');
+                } else {
+                  console.log('Navigating to job-listings');
+                  onNavigate('job-listings');
+                }
+              } catch (error) {
+                console.error('Navigation error:', error);
+                // Fallback to browser history
+                window.history.back();
+              }
+            }}
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to {job.company}
+            <span>Back to Jobs</span>
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -165,7 +195,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                 }}
               />
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.jobTitle || job.title}</h1>
                 <div className="flex items-center space-x-2 text-lg text-blue-600 font-medium mb-4">
                   <Building className="w-5 h-5" />
                   <span>{job.company}</span>
@@ -192,15 +222,32 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               </div>
             </div>
             
-            <div className="mt-6 lg:mt-0">
+            <div className="mt-6 lg:mt-0 flex items-center space-x-3">
+              {/* Always show share button for testing */}
+              <button 
+                onClick={() => setShowShareModal(true)}
+                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </button>
+              
+              {/* Apply button - Always show Login to Apply */}
               <button 
                 onClick={() => {
-                  localStorage.setItem('selectedJob', JSON.stringify(job));
-                  onNavigate('job-application');
+                  // Store job data for after login
+                  localStorage.setItem('pendingJobApplication', JSON.stringify({
+                    jobId: job.id || jobId,
+                    jobTitle: job.jobTitle || job.title,
+                    company: job.company,
+                    jobData: job
+                  }));
+                  // Always redirect to login
+                  onNavigate('login');
                 }}
                 className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
-                Apply Now
+                Login to Apply
               </button>
             </div>
           </div>
@@ -215,22 +262,51 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             {/* Job Description */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
-              <p className="text-gray-600 leading-relaxed">{job.description}</p>
+              <p className="text-gray-600 leading-relaxed mb-4">{job.jobDescription || job.description}</p>
+              
+              {/* Created By & On Details */}
+              <div className="border-t border-gray-100 pt-4 mt-4">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <span className="font-medium">Created By:</span>
+                    <span>{job.postedBy || jobPoster?.name || jobPoster?.fullName || 'System'}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="font-medium">On:</span>
+                    <span>{job.createdAt ? new Date(job.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: '2-digit', 
+                      day: '2-digit' 
+                    }) : '01/16/26'}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="font-medium">Company:</span>
+                    <span>{job.employerCompany || jobPoster?.company || job.company}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Responsibilities */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Key Responsibilities</h2>
               <ul className="space-y-3">
-                {Array.isArray(job.responsibilities) ? job.responsibilities.map((responsibility, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">{responsibility}</span>
-                  </li>
-                )) : (
+                {job.responsibilities ? (
+                  Array.isArray(job.responsibilities) ? job.responsibilities.map((responsibility, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{responsibility}</span>
+                    </li>
+                  )) : (
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{job.responsibilities}</span>
+                    </li>
+                  )
+                ) : (
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">{job.responsibilities || 'No responsibilities listed'}</span>
+                    <span className="text-gray-600">Develop and maintain high-quality software solutions</span>
                   </li>
                 )}
               </ul>
@@ -240,15 +316,22 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
               <ul className="space-y-3">
-                {Array.isArray(job.requirements) ? job.requirements.map((requirement, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">{requirement}</span>
-                  </li>
-                )) : (
+                {job.requirements ? (
+                  Array.isArray(job.requirements) ? job.requirements.map((requirement, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{requirement}</span>
+                    </li>
+                  )) : (
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{job.requirements}</span>
+                    </li>
+                  )
+                ) : (
                   <li className="flex items-start">
                     <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">{job.requirements || 'No requirements listed'}</span>
+                    <span className="text-gray-600">Bachelor's degree or equivalent experience required</span>
                   </li>
                 )}
               </ul>
@@ -350,22 +433,191 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               </div>
             </div>
 
-            {/* Apply Button */}
+            {/* Apply Button - Always show Login to Apply */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <button 
                 onClick={() => {
-                  localStorage.setItem('selectedJob', JSON.stringify(job));
-                  onNavigate('job-application');
+                  // Store job data for after login
+                  localStorage.setItem('pendingJobApplication', JSON.stringify({
+                    jobId: job.id || jobId,
+                    jobTitle: job.jobTitle || job.title,
+                    company: job.company,
+                    jobData: job
+                  }));
+                  // Always redirect to login
+                  onNavigate('login');
                 }}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
-                Apply for this Position
+                Login to Apply
               </button>
               <p className="text-xs text-gray-500 text-center mt-2">Posted {job.posted}</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Share this job</h3>
+              <button 
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {/* LinkedIn */}
+              <button
+                onClick={() => {
+                  const url = encodeURIComponent(window.location.href);
+                  const jobTitle = job.jobTitle || job.title;
+                  const company = job.company;
+                  const location = job.location;
+                  const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary');
+                  const experience = job.experience;
+                  const jobType = job.type;
+                  
+                  // Create comprehensive job post content
+                  const postContent = `🚀 Exciting Job Opportunity Alert! 🚀
+
+📍 Position: ${jobTitle}
+🏢 Company: ${company}
+📍 Location: ${location}
+💰 Salary: ${salary}
+⏰ Type: ${jobType}
+🎯 Experience: ${experience}
+
+📋 Job Description:
+${job.description || 'Great opportunity to join our team!'}
+
+${job.skills && Array.isArray(job.skills) ? `🔧 Required Skills:
+${job.skills.map(skill => `• ${skill}`).join('\n')}` : ''}
+
+${job.benefits && Array.isArray(job.benefits) ? `🎁 Benefits:
+${job.benefits.slice(0, 3).map(benefit => `• ${benefit}`).join('\n')}` : ''}
+
+💼 Ready to take your career to the next level? Apply now!
+
+#JobOpportunity #Hiring #${company.replace(/\s+/g, '')} #${jobTitle.replace(/\s+/g, '')} #TechJobs #CareerOpportunity
+
+Apply here: ${window.location.href}`;
+                  
+                  const encodedContent = encodeURIComponent(postContent);
+                  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&text=${encodedContent}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">in</span>
+                </div>
+                <span className="font-medium text-gray-900">Share on LinkedIn</span>
+              </button>
+
+              {/* Facebook */}
+              <button
+                onClick={() => {
+                  const url = encodeURIComponent(window.location.href);
+                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">f</span>
+                </div>
+                <span className="font-medium text-gray-900">Share on Facebook</span>
+              </button>
+
+              {/* Twitter */}
+              <button
+                onClick={() => {
+                  const url = encodeURIComponent(window.location.href);
+                  const jobTitle = job.jobTitle || job.title;
+                  const company = job.company;
+                  const location = job.location;
+                  const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max}` : (job.salary || 'Competitive');
+                  
+                  const tweetText = `🚀 ${jobTitle} at ${company}
+📍 ${location}
+💰 ${salary}
+
+${job.skills && Array.isArray(job.skills) ? `Skills: ${job.skills.slice(0, 3).join(', ')}` : ''}
+
+#JobAlert #Hiring #${company.replace(/\s+/g, '')} #TechJobs`;
+                  
+                  const encodedText = encodeURIComponent(tweetText);
+                  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${encodedText}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-black rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">X</span>
+                </div>
+                <span className="font-medium text-gray-900">Share on X (Twitter)</span>
+              </button>
+
+              {/* WhatsApp */}
+              <button
+                onClick={() => {
+                  const jobTitle = job.jobTitle || job.title;
+                  const company = job.company;
+                  const location = job.location;
+                  const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary');
+                  const experience = job.experience;
+                  
+                  const whatsappMessage = `🚀 *Job Opportunity*
+
+*Position:* ${jobTitle}
+*Company:* ${company}
+*Location:* ${location}
+*Salary:* ${salary}
+*Experience:* ${experience}
+
+*Description:*
+${job.description?.substring(0, 200)}...
+
+${job.skills && Array.isArray(job.skills) ? `*Skills Required:* ${job.skills.slice(0, 5).join(', ')}` : ''}
+
+Apply here: ${window.location.href}`;
+                  
+                  const encodedMessage = encodeURIComponent(whatsappMessage);
+                  window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">W</span>
+                </div>
+                <span className="font-medium text-gray-900">Share on WhatsApp</span>
+              </button>
+
+              {/* Copy Link */}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Link copied to clipboard!');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">🔗</span>
+                </div>
+                <span className="font-medium text-gray-900">Copy Link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

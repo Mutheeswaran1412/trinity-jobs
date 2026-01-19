@@ -35,7 +35,13 @@ router.get('/jobs', (req, res) => {
 router.get('/locations', (req, res) => {
   try {
     const { q } = req.query;
-    if (!q || q.length < 2) {
+    
+    if (!q) {
+      // Return all locations if no query
+      return res.json(locations);
+    }
+    
+    if (q.length < 2) {
       return res.json([]);
     }
 
@@ -53,7 +59,13 @@ router.get('/locations', (req, res) => {
 router.get('/skills', (req, res) => {
   try {
     const { q } = req.query;
-    if (!q || q.length < 2) {
+    
+    if (!q) {
+      // Return all skills if no query
+      return res.json(skills);
+    }
+    
+    if (q.length < 2) {
       return res.json([]);
     }
 

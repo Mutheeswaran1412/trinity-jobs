@@ -1,5 +1,5 @@
 import axios from 'axios';
-import pdf from 'pdf-parse';
+import * as pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import fs from 'fs';
 
@@ -14,7 +14,7 @@ export class ResumeModeratorAI {
     try {
       if (fileType === 'application/pdf') {
         const dataBuffer = fs.readFileSync(filePath);
-        const data = await pdf(dataBuffer);
+        const data = await pdfParse.default(dataBuffer);
         return data.text;
       } else if (fileType.includes('word')) {
         const result = await mammoth.extractRawText({ path: filePath });

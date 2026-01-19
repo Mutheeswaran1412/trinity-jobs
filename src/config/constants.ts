@@ -6,6 +6,7 @@ export const API_CONFIG = {
 
 // API endpoints helper
 export const API_ENDPOINTS = {
+  BASE_URL: API_CONFIG.BASE_URL,
   JOBS: `${API_CONFIG.BASE_URL}/api/jobs`,
   APPLICATIONS: `${API_CONFIG.BASE_URL}/api/applications`,
   USERS: `${API_CONFIG.BASE_URL}/api/users`,

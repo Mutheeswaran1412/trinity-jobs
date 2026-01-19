@@ -39,7 +39,7 @@ export const sendJobApplicationEmail = async (candidateEmail, candidateName, job
         
         <p>We have received your application and will review it shortly. You will be notified of any updates regarding your application status.</p>
         
-        <p>Best regards,<br>Trinity Jobs Team</p>
+        <p>Best regards,<br>ZyncJobs Team</p>
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="font-size: 12px; color: #6b7280;">This is an automated email. Please do not reply to this message.</p>
@@ -75,7 +75,7 @@ export const sendApplicationRejectionEmail = async (candidateEmail, candidateNam
         
         <p>We encourage you to continue exploring other opportunities on our platform.</p>
         
-        <p>Best regards,<br>Trinity Jobs Team</p>
+        <p>Best regards,<br>ZyncJobs Team</p>
       </div>
     `
   };
@@ -117,7 +117,7 @@ export const sendApplicationStatusEmail = async (candidateEmail, candidateName, 
         
         <p>We will keep you informed of any further updates.</p>
         
-        <p>Best regards,<br>Trinity Jobs Team</p>
+        <p>Best regards,<br>ZyncJobs Team</p>
       </div>
     `
   };

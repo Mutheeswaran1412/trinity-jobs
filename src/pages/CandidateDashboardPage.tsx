@@ -741,31 +741,129 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  <button 
+                    onClick={() => {
+                      console.log('Resume data:', user.resume);
+                      console.log('Resume keys:', Object.keys(user.resume || {}));
+                      
+                      if (!user.resume) {
+                        setNotification({
+                          type: 'error',
+                          message: 'No resume found. Please upload a resume first.',
+                          isVisible: true
+                        });
+                        return;
+                      }
+                      
+                      // Handle different resume data formats
+                      let resumeUrl = '';
+                      
+                      if (user.resume.filename) {
+                        // New format with filename from upload API
+                        resumeUrl = `http://localhost:5000/uploads/${user.resume.filename}`;
+                      } else if (user.resume.url) {
+                        // Direct URL format
+                        resumeUrl = user.resume.url.startsWith('http') 
+                          ? user.resume.url 
+                          : `http://localhost:5000${user.resume.url}`;
+                      } else if (user.resume.path) {
+                        // Path format
+                        resumeUrl = user.resume.path.startsWith('http') 
+                          ? user.resume.path 
+                          : `http://localhost:5000${user.resume.path}`;
+                      } else if (typeof user.resume === 'string') {
+                        // String format (legacy)
+                        resumeUrl = user.resume.startsWith('http') 
+                          ? user.resume 
+                          : `http://localhost:5000/uploads/${user.resume}`;
+                      } else {
+                        // Test with existing file
+                        resumeUrl = 'http://localhost:5000/uploads/resume-1768241848606-544295216.pdf';
+                      }
+                      
+                      console.log('Opening resume URL:', resumeUrl);
+                      
+                      if (resumeUrl) {
+                        // Open in new tab
+                        window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+                      } else {
+                        setNotification({
+                          type: 'error',
+                          message: 'Resume file not found. Please re-upload your resume.',
+                          isVisible: true
+                        });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
                     View
                   </button>
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = '.pdf,.doc,.docx';
-                      input.onchange = (e) => {
+                      input.onchange = async (e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (file) {
-                          const updatedUser = { 
-                            ...user, 
-                            resume: { 
-                              name: file.name, 
-                              uploadDate: new Date().toLocaleDateString() 
-                            } 
-                          };
-                          setUser(updatedUser);
-                          localStorage.setItem('user', JSON.stringify(updatedUser));
-                          setNotification({
-                            type: 'success',
-                            message: 'Resume updated successfully!',
-                            isVisible: true
-                          });
+                          try {
+                            // Upload new resume
+                            const uploadFormData = new FormData();
+                            uploadFormData.append('resume', file);
+                            
+                            const response = await fetch('http://localhost:5000/api/upload/resume', {
+                              method: 'POST',
+                              body: uploadFormData
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Upload failed');
+                            }
+                            
+                            const uploadResult = await response.json();
+                            
+                            const updatedUser = { 
+                              ...user, 
+                              resume: { 
+                                name: file.name,
+                                filename: uploadResult.filename,
+                                url: uploadResult.fileUrl,
+                                uploadDate: new Date().toLocaleDateString() 
+                              } 
+                            };
+                            setUser(updatedUser);
+                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                            
+                            // Save to backend profile
+                            if (user?.email) {
+                              try {
+                                await fetch('http://localhost:5000/api/profile/save', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    email: user.email, 
+                                    userId: user.id || user._id,
+                                    resume: updatedUser.resume
+                                  })
+                                });
+                              } catch (err) {
+                                console.log('Backend save failed:', err);
+                              }
+                            }
+                            
+                            setNotification({
+                              type: 'success',
+                              message: 'Resume updated successfully!',
+                              isVisible: true
+                            });
+                          } catch (error) {
+                            console.error('Upload error:', error);
+                            setNotification({
+                              type: 'error',
+                              message: 'Failed to upload resume. Please try again.',
+                              isVisible: true
+                            });
+                          }
                         }
                       };
                       input.click();

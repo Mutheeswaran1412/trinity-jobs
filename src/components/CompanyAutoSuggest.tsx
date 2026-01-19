@@ -177,11 +177,8 @@ const CompanyAutoSuggest: React.FC<CompanyAutoSuggestProps> = ({
                         if (currentIndex < logoSources.length - 1) {
                           img.src = logoSources[currentIndex + 1];
                         } else {
-                          // All sources failed, show initial
-                          const container = img.parentElement;
-                          if (container) {
-                            container.innerHTML = `<div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">${company.name.charAt(0)}</div>`;
-                          }
+                          // All sources failed, hide image
+                          img.style.display = 'none';
                         }
                       }}
                     />

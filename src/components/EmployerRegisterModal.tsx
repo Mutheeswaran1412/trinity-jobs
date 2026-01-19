@@ -109,9 +109,12 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
           // Store user data in localStorage
           localStorage.setItem('user', JSON.stringify(loginResponse.user));
           
+          // Use consistent name from backend - prioritize name field, fallback to company or email
+          const displayName = loginResponse.user.name || loginResponse.user.companyName || loginResponse.user.company || loginResponse.user.fullName || loginResponse.user.email.split('@')[0];
+          
           // Call onLogin
           onLogin({ 
-            name: loginResponse.user.name, 
+            name: displayName, 
             type: 'employer',
             email: loginResponse.user.email
           });

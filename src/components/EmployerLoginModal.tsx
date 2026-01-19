@@ -40,9 +40,12 @@ const EmployerLoginModal: React.FC<EmployerLoginModalProps> = ({ isOpen, onClose
       localStorage.setItem('user', JSON.stringify(response.user));
       console.log('Stored employer user data:', response.user);
       
+      // Use consistent name from backend - prioritize name field, fallback to company or email
+      const displayName = response.user.name || response.user.companyName || response.user.company || response.user.fullName || response.user.email.split('@')[0];
+      
       // Call onLogin with user data
       onLogin({ 
-        name: response.user.name || response.user.fullName || response.user.email.split('@')[0], 
+        name: displayName, 
         type: 'employer',
         email: response.user.email
       });
