@@ -686,8 +686,14 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+// Simple test endpoint to verify server is working
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Backend server is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Test resume parser route
@@ -765,7 +771,15 @@ app.get('/api/test', async (req, res) => {
   }
 });
 
-app.use(notFound);
+// Catch-all error handler for unhandled routes
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({ error: 'API endpoint not found', path: req.path });
+  } else {
+    res.status(404).json({ error: 'Route not found' });
+  }
+});
+
 app.use(errorHandler);
 
 httpServer.listen(PORT, () => {
