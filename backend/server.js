@@ -333,7 +333,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-app.post('/api/forgot-password', (req, res) => {
+app.post('/api/forgot-password', async (req, res) => {
   console.log('Forgot password request received:', req.body);
   
   const { email } = req.body;
