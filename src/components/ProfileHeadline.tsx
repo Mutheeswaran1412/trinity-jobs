@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface ProfileHeadlineProps {
   userId: string;
@@ -17,7 +18,7 @@ const ProfileHeadline: React.FC<ProfileHeadlineProps> = ({ userId, fallbackHeadl
       }
       
       try {
-        const response = await fetch(`http://localhost:5000/api/headline/rotation/${userId}`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/headline/rotation/${userId}`);
         if (response.ok) {
           const data = await response.json();
           setDisplayHeadline(data.headline || fallbackHeadline || '');

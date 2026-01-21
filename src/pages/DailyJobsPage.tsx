@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, Calendar, MapPin, Briefcase, DollarSign, Clock, Search } from 'lucide-react';
 
 interface DailyJobsPageProps {
@@ -23,7 +24,7 @@ const DailyJobsPage: React.FC<DailyJobsPageProps> = ({ onNavigate }) => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/jobs');
+        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/jobs');
         if (response.ok) {
           const data = await response.json();
           const jobsArray = Array.isArray(data) ? data : [];

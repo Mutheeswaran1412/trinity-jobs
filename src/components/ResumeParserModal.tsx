@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { X, Upload, FileText, User, CheckCircle, Loader } from 'lucide-react';
 
 interface ResumeParserModalProps {
@@ -49,7 +50,7 @@ const ResumeParserModal: React.FC<ResumeParserModalProps> = ({
       setParsing(true);
 
       // Upload and parse resume with backend
-      const parseResponse = await fetch('http://localhost:5000/api/resume/upload-and-parse', {
+      const parseResponse = await fetch('${API_ENDPOINTS.BASE_URL}/api/resume/upload-and-parse', {
         method: 'POST',
         body: formData // Don't set Content-Type header, let browser set it with boundary
       });

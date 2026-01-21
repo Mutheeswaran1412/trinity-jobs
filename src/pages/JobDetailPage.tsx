@@ -258,7 +258,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
   const fetchSimilarJobs = async (currentJob: any) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/search/similar/${currentJob._id}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/similar/${currentJob._id}`);
       if (response.ok) {
         const similarJobsData = await response.json();
         setSimilarJobs(similarJobsData.slice(0, 3));

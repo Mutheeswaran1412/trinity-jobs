@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface ResumeUploadProps {
   userId: string;
@@ -44,7 +45,7 @@ const ResumeUploadWithModeration: React.FC<ResumeUploadProps> = ({ userId, onUpl
       formData.append('resume', file);
       formData.append('userId', userId);
 
-      const response = await fetch('http://localhost:5000/api/resume/upload', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/resume/upload', {
         method: 'POST',
         body: formData
       });
@@ -65,7 +66,7 @@ const ResumeUploadWithModeration: React.FC<ResumeUploadProps> = ({ userId, onUpl
                 ? `Resume content from ${file.name}` 
                 : fileContent.substring(0, 2000);
               
-              const parseResponse = await fetch('http://localhost:5000/api/resume/parse-profile', {
+              const parseResponse = await fetch('${API_ENDPOINTS.BASE_URL}/api/resume/parse-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ resumeText })

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, MapPin, Mail, Phone, Download, ExternalLink, Github, Globe, MessageCircle } from 'lucide-react';
 import ProfileHeadline from '../components/ProfileHeadline';
 import DirectMessage from '../components/DirectMessage';
@@ -23,7 +24,7 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
 
   const fetchCandidateProfile = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/profile/${candidateId}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/${candidateId}`);
       if (response.ok) {
         const data = await response.json();
         setCandidate(data);
@@ -136,7 +137,7 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
                 </button>
                 {candidate.resume && (
                   <button
-                    onClick={() => window.open(candidate.resume.url || `http://localhost:5000/uploads/${candidate.resume.filename}`, '_blank')}
+                    onClick={() => window.open(candidate.resume.url || `${API_ENDPOINTS.BASE_URL}/uploads/${candidate.resume.filename}`, '_blank')}
                     className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
                   >
                     <Download className="w-4 h-4" />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { MessageCircle, Send, X } from 'lucide-react';
 
 interface Message {
@@ -36,12 +37,12 @@ export default function MessagingWidget({ currentUserId, recipientId, recipientN
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${conversationId}`);
+      const res = await fetch(`${API_ENDPOINTS.BASE_URL}/api/messages/${conversationId}`);
       const data = await res.json();
       setMessages(data);
       
       // Mark as read
-      await fetch(`http://localhost:5000/api/messages/${conversationId}/read/${currentUserId}`, {
+      await fetch(`${API_ENDPOINTS.BASE_URL}/api/messages/${conversationId}/read/${currentUserId}`, {
         method: 'PUT'
       });
     } catch (error) {
@@ -54,7 +55,7 @@ export default function MessagingWidget({ currentUserId, recipientId, recipientN
     if (!newMessage.trim()) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages', {
+      const res = await fetch('${API_ENDPOINTS.BASE_URL}/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

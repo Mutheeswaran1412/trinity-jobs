@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Building2 } from 'lucide-react';
 
 interface Company {
@@ -47,7 +48,7 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
 
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(value)}`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies?search=${encodeURIComponent(value)}`);
         if (!response.ok) throw new Error('Failed to fetch');
         const data = await response.json();
         setSuggestions(data);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Briefcase, Users, Eye, Edit, Trash2, Plus, ArrowLeft } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -23,7 +24,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
 
   const fetchEmployerJobs = async (userData: any) => {
     try {
-      const response = await fetch('http://localhost:5000/api/jobs');
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/jobs');
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
@@ -43,7 +44,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
   const handleDeleteJob = async (jobId: string) => {
     if (window.confirm('Are you sure you want to delete this job posting?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs/${jobId}`, {
           method: 'DELETE'
         });
         if (response.ok) {

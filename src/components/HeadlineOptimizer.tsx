@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Lightbulb, TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 
 interface HeadlineOptimizerProps {
@@ -27,7 +28,7 @@ const HeadlineOptimizer: React.FC<HeadlineOptimizerProps> = ({ user, onUpdateUse
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/headline/stats/${user.id}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/headline/stats/${user.id}`);
       if (response.ok) {
         const data = await response.json();
         setAbTestHeadlines(prev => ({
@@ -59,7 +60,7 @@ Full-Stack Developer | 5+ Years Building Scalable Applications
 
 Now create 5 headlines:`;
       
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt })
@@ -106,7 +107,7 @@ Now create 5 headlines:`;
   const startAbTest = async () => {
     if (currentHeadline && suggestions.length > 0 && user?.id) {
       try {
-        await fetch('http://localhost:5000/api/headline/start-test', {
+        await fetch('${API_ENDPOINTS.BASE_URL}/api/headline/start-test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

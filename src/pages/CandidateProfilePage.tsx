@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Upload, User, Briefcase, GraduationCap, Target, Save, Sparkles } from 'lucide-react';
 import Notification from '../components/Notification';
 import BackButton from '../components/BackButton';
@@ -19,7 +20,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         
         // Try to load latest profile from backend
         try {
-          const response = await fetch(`http://localhost:5000/api/profile/${parsedUser.id || parsedUser._id || parsedUser.email}`);
+          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/${parsedUser.id || parsedUser._id || parsedUser.email}`);
           if (response.ok) {
             const profileData = await response.json();
             // Merge backend profile data with localStorage data
@@ -155,7 +156,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         const uploadFormData = new FormData();
         uploadFormData.append('resume', file);
         
-        const response = await fetch('http://localhost:5000/api/upload/resume', {
+        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/upload/resume', {
           method: 'POST',
           body: uploadFormData
         });
@@ -451,7 +452,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       // Save to backend
-      const response = await fetch('http://localhost:5000/api/profile/save', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData)

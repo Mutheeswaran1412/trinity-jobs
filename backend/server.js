@@ -11,7 +11,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-// import rateLimit from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
@@ -164,38 +164,40 @@ export async function sendNotification(userId, type, title, message, link = null
 
 app.use(helmet());
 
-// Disable rate limiting for development
-// const limiter = rateLimit({
-//   windowMs: 1 * 60 * 1000,
-//   max: 1000,
-//   message: 'Too many requests from this IP, please try again later.',
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   skip: (req) => {
-//     return process.env.NODE_ENV === 'development' || req.ip === '127.0.0.1' || req.ip === '::1';
-//   }
-// });
+// Rate limiting for production security
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    return process.env.NODE_ENV === 'development' && (req.ip === '127.0.0.1' || req.ip === '::1');
+  }
+});
 
-// const loginLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000,
-//   max: 50,
-//   message: 'Too many login attempts, please try again later.',
-//   standardHeaders: true,
-//   legacyHeaders: false,
-//   skip: (req) => {
-//     return process.env.NODE_ENV === 'development' || req.ip === '127.0.0.1' || req.ip === '::1';
-//   }
-// });
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 5 : 50,
+  message: 'Too many login attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    return process.env.NODE_ENV === 'development' && (req.ip === '127.0.0.1' || req.ip === '::1');
+  }
+});
 
-// app.use('/api/users/login', loginLimiter);
-// app.use(limiter);
+app.use('/api/users/login', loginLimiter);
+app.use(limiter);
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
-    'https://trinity-jobs.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL, 'https://trinity-jobs.vercel.app'].filter(Boolean)
+    : [
+        'http://localhost:5173',
+        'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
+        'https://trinity-jobs.vercel.app',
+        process.env.FRONTEND_URL
+      ].filter(Boolean),
   credentials: true
 }));
 app.use(cookieParser());
@@ -314,8 +316,9 @@ app.post('/api/resume-parser/parse', async (req, res) => {
 });
 
 
-// Password reset functionality
-const resetTokens = new Map();
+import PasswordReset from './models/PasswordReset.js';
+
+// Password reset functionality - using database storage
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
@@ -343,10 +346,14 @@ app.post('/api/forgot-password', (req, res) => {
   
   try {
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpiry = Date.now() + 3600000;
     
-    resetTokens.set(resetToken, { email, expiry: resetExpiry });
-    console.log('Token generated and stored');
+    // Store in database instead of memory
+    await PasswordReset.create({
+      email,
+      token: resetToken
+    });
+    
+    console.log('Token generated and stored in database');
     
     const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
     console.log('Reset link:', resetLink);
@@ -419,33 +426,51 @@ ZyncJobs Team
   }
 });
 
-app.get('/api/verify-reset-token/:token', (req, res) => {
-  const { token } = req.params;
-  const tokenData = resetTokens.get(token);
-  
-  if (!tokenData || Date.now() > tokenData.expiry) {
-    return res.status(400).json({ error: 'Invalid or expired token' });
+app.get('/api/verify-reset-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const tokenData = await PasswordReset.findOne({ 
+      token, 
+      used: false,
+      expiresAt: { $gt: new Date() }
+    });
+    
+    if (!tokenData) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    
+    res.json({ valid: true, email: tokenData.email });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  res.json({ valid: true, email: tokenData.email });
 });
 
-app.post('/api/reset-password', (req, res) => {
-  const { token, newPassword } = req.body;
-  
-  if (!token || !newPassword) {
-    return res.status(400).json({ error: 'Token and password required' });
+app.post('/api/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and password required' });
+    }
+    
+    const tokenData = await PasswordReset.findOne({ 
+      token, 
+      used: false,
+      expiresAt: { $gt: new Date() }
+    });
+    
+    if (!tokenData) {
+      return res.status(400).json({ error: 'Invalid or expired token' });
+    }
+    
+    // Mark token as used
+    await PasswordReset.findByIdAndUpdate(tokenData._id, { used: true });
+    
+    console.log('Password reset successful for:', tokenData.email);
+    res.json({ success: true, message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  const tokenData = resetTokens.get(token);
-  if (!tokenData || Date.now() > tokenData.expiry) {
-    return res.status(400).json({ error: 'Invalid or expired token' });
-  }
-  
-  resetTokens.delete(token);
-  console.log('Password reset successful for:', tokenData.email);
-  
-  res.json({ success: true, message: 'Password reset successful' });
 });
 
 app.get('/api/test-suggest', (req, res) => {

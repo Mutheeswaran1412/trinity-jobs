@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import RoleGuard from '../components/RoleGuard';
 
 interface Resume {
@@ -26,7 +27,7 @@ const ResumeModerationDashboard: React.FC = () => {
   const fetchResumes = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/resume/moderation?status=${selectedStatus}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/resume/moderation?status=${selectedStatus}`);
       const data = await response.json();
       setResumes(data.resumes || []);
     } catch (error) {
@@ -38,7 +39,7 @@ const ResumeModerationDashboard: React.FC = () => {
 
   const moderateResume = async (resumeId: string, action: string, notes?: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/resume/${resumeId}/moderate`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/resume/${resumeId}/moderate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, notes })

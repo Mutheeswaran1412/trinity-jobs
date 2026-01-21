@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Search, MapPin, Users, Star, Building, Globe, Briefcase, Sparkles, Filter, TrendingUp, Clock } from 'lucide-react';
 import { searchAPI } from '../api/search';
 
@@ -38,7 +39,7 @@ const SearchEngine: React.FC = () => {
           limit: 20
         };
         
-        const response = await fetch('http://localhost:5000/api/search/advanced', {
+        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/search/advanced', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(searchParams)
@@ -64,7 +65,7 @@ const SearchEngine: React.FC = () => {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/search/trending?limit=4');
+        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/search/trending?limit=4');
         if (response.ok) {
           const data = await response.json();
           setTrending(data);

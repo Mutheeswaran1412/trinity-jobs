@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface AIScoringDemoPageProps {
   onNavigate: (page: string) => void;
@@ -71,7 +72,7 @@ Projects:
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/ai-flow/score-candidate', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/ai-flow/score-candidate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

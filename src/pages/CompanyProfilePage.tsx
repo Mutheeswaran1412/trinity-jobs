@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Upload, Building, MapPin, Users, Globe, Briefcase, Save, Plus } from 'lucide-react';
 import Notification from '../components/Notification';
 import BackButton from '../components/BackButton';
@@ -50,7 +51,7 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/company-profile', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/company-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
     };
     
     try {
-      const response = await fetch('http://localhost:5000/api/jobs', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { mistralResumeService } from '../services/mistralResumeService';
 
 interface JobRecommendation {
@@ -64,8 +65,8 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
       const skillNames = resumeSkills.map(s => s.skill.toLowerCase());
       const skillQuery = skillNames.join(',');
       
-      console.log('🔍 Fetching from ZyncJobs API:', `http://localhost:5000/api/jobs?skills=${skillQuery}&location=${location}`);
-      const response = await fetch(`http://localhost:5000/api/jobs?skills=${skillQuery}&location=${location}`);
+      console.log('🔍 Fetching from ZyncJobs API:', `${API_ENDPOINTS.BASE_URL}/api/jobs?skills=${skillQuery}&location=${location}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs?skills=${skillQuery}&location=${location}`);
       
       console.log('📡 ZyncJobs API Status:', response.status);
       if (response.ok) {

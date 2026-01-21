@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Zap, Check } from 'lucide-react';
 
 interface QuickApplyButtonProps {
@@ -42,7 +43,7 @@ const QuickApplyButton: React.FC<QuickApplyButtonProps> = ({
       // If no resume in current user object, fetch from API
       if (!userResume) {
         try {
-          const userResponse = await fetch(`http://localhost:5000/api/users`);
+          const userResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/api/users`);
           if (userResponse.ok) {
             const users = await userResponse.json();
             const fullUser = users.find(u => u.email === currentUser.email);
@@ -67,7 +68,7 @@ const QuickApplyButton: React.FC<QuickApplyButtonProps> = ({
       // Copy/attach the resume file for this application
       let attachedResumeUrl = userResume;
       try {
-        const attachResponse = await fetch('http://localhost:5000/api/resume/attach', {
+        const attachResponse = await fetch('${API_ENDPOINTS.BASE_URL}/api/resume/attach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -98,7 +99,7 @@ const QuickApplyButton: React.FC<QuickApplyButtonProps> = ({
       
       console.log('Sending quick apply with resume:', payload);
       
-      const response = await fetch('http://localhost:5000/api/applications', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

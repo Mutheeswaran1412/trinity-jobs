@@ -1,6 +1,8 @@
 // Connection Checker Utility
-export class ConnectionChecker {
-  private static API_BASE = 'http://localhost:5000/api';
+export import { API_ENDPOINTS } from '../config/api';
+
+class ConnectionChecker {
+  private static API_BASE = API_ENDPOINTS.BASE_URL + '/api';
   
   static async checkBackendConnection(): Promise<boolean> {
     try {
@@ -65,7 +67,7 @@ export class ConnectionChecker {
     if (!backendOk) {
       console.log('\n🔧 Troubleshooting Steps:');
       console.log('1. Check if backend server is running: python run.py');
-      console.log('2. Verify backend is on http://localhost:5000');
+      console.log('2. Verify backend is on', API_ENDPOINTS.BASE_URL);
       console.log('3. Check browser console for CORS errors');
       console.log('4. Try hard refresh (Ctrl+Shift+R)');
     }

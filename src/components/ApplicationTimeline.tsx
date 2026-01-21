@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Calendar, Users, Award, Briefcase } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface TimelineItem {
   status: string;
@@ -23,7 +24,7 @@ const ApplicationTimeline: React.FC<ApplicationTimelineProps> = ({ applicationId
 
   const fetchTimeline = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/timeline`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/${applicationId}/timeline`);
       if (response.ok) {
         const data = await response.json();
         setTimeline(data);

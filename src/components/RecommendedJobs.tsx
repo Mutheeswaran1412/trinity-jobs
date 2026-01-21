@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface Job {
   _id: string;
@@ -35,7 +36,7 @@ const RecommendedJobs: React.FC<RecommendedJobsProps> = ({ resumeSkills, locatio
       const skillQuery = skillNames.join(',');
       
       // Fetch jobs from your backend API
-      const response = await fetch(`http://localhost:5000/api/jobs?skills=${skillQuery}&location=${location}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs?skills=${skillQuery}&location=${location}`);
       
       if (response.ok) {
         const allJobs = await response.json();

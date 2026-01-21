@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, Search, Filter, MapPin, Star, Users, Code, Mail, Phone } from 'lucide-react';
 import CandidateProfileModal from '../components/CandidateProfileModal';
 import Header from '../components/Header';
@@ -44,8 +45,8 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
     const loadSkillsAndLocations = async () => {
       try {
         const [skillsResponse, locationsResponse] = await Promise.all([
-          fetch('http://localhost:5000/api/autocomplete/skills?q='),
-          fetch('http://localhost:5000/api/autocomplete/locations?q=')
+          fetch('${API_ENDPOINTS.BASE_URL}/api/autocomplete/skills?q='),
+          fetch('${API_ENDPOINTS.BASE_URL}/api/autocomplete/locations?q=')
         ]);
         
         if (skillsResponse.ok) {
@@ -73,7 +74,7 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
       if (selectedSkill) params.append('skill', selectedSkill);
       if (selectedLocation) params.append('location', selectedLocation);
       
-      const response = await fetch(`http://localhost:5000/api/candidates?${params}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidates?${params}`);
       if (response.ok) {
         const data = await response.json();
         setCandidates(data);
@@ -114,7 +115,7 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/autocomplete/skills?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/skills?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const suggestions = await response.json();
         setSkillSuggestions(suggestions);
@@ -131,7 +132,7 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
       return;
     }
     try {
-      const response = await fetch(`http://localhost:5000/api/autocomplete/locations?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/locations?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const suggestions = await response.json();
         setLocationSuggestions(suggestions);

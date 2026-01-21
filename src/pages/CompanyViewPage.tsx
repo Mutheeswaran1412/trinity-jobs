@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, MapPin, Users, Globe, Building, Briefcase } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -19,7 +20,7 @@ const CompanyViewPage: React.FC<CompanyViewPageProps> = ({ onNavigate, companyNa
     const fetchCompanyData = async () => {
       try {
         // Fetch company details
-        const companyResponse = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(companyName)}`);
+        const companyResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies?search=${encodeURIComponent(companyName)}`);
         if (companyResponse.ok) {
           const companies = await companyResponse.json();
           const foundCompany = companies.find(c => c.name === companyName);
@@ -27,7 +28,7 @@ const CompanyViewPage: React.FC<CompanyViewPageProps> = ({ onNavigate, companyNa
         }
 
         // Fetch jobs posted by this company
-        const jobsResponse = await fetch(`http://localhost:5000/api/jobs`);
+        const jobsResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs`);
         if (jobsResponse.ok) {
           const allJobs = await jobsResponse.json();
           const companyJobs = allJobs.filter(job => job.company === companyName);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Eye, CheckCircle, XCircle, Flag, FileText, Calendar, Building, User } from 'lucide-react';
 
 interface Job {
@@ -42,7 +43,7 @@ const JobModerationDashboard: React.FC = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/jobs/summary');
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/admin/jobs/summary');
       const data = await response.json();
       setSummary(data);
     } catch (error) {
@@ -59,7 +60,7 @@ const JobModerationDashboard: React.FC = () => {
         ...(filters.company && { company: filters.company })
       });
       
-      const response = await fetch(`http://localhost:5000/api/admin/jobs/pending?${params}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/admin/jobs/pending?${params}`);
       const data = await response.json();
       setJobs(data.jobs || []);
     } catch (error) {
@@ -71,7 +72,7 @@ const JobModerationDashboard: React.FC = () => {
 
   const moderateJob = async (jobId: string, action: string, data: any = {}) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}/${action}`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/admin/jobs/${jobId}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, [`${action}_by`]: 'admin123' })
@@ -89,7 +90,7 @@ const JobModerationDashboard: React.FC = () => {
 
   const analyzeJob = async (jobId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}/analyze`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/admin/jobs/${jobId}/analyze`, {
         method: 'POST'
       });
       const data = await response.json();

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Search, Building2 } from 'lucide-react';
 
 interface Company {
@@ -48,7 +49,7 @@ const CompanyAutoSuggest: React.FC<CompanyAutoSuggestProps> = ({
   const searchCompanies = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/companies?search=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies?search=${encodeURIComponent(searchQuery)}`);
       const data = await response.json();
       setResults(data);
       setIsOpen(true);

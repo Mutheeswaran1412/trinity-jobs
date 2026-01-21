@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { X, Linkedin, Sparkles, Upload } from 'lucide-react';
 
 interface LinkedInImportModalProps {
@@ -24,7 +25,7 @@ const LinkedInImportModal: React.FC<LinkedInImportModalProps> = ({ isOpen, onClo
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/parse-linkedin', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/parse-linkedin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: linkedInText })

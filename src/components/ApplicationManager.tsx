@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Mail, User, Phone, FileText, Clock, CheckCircle, XCircle, Eye, AlertCircle } from 'lucide-react';
 
 interface Application {
@@ -37,7 +38,7 @@ const ApplicationManager: React.FC<ApplicationManagerProps> = ({ jobId }) => {
       
       // Get employer's jobs first
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const jobsResponse = await fetch('http://localhost:5000/api/jobs');
+      const jobsResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs`);
       const allJobs = await jobsResponse.json();
       const employerJobs = allJobs.filter((job: any) => 
         job.employerId === user.id || 
@@ -49,7 +50,7 @@ const ApplicationManager: React.FC<ApplicationManagerProps> = ({ jobId }) => {
       // Get applications for employer's jobs
       let allApplications: any[] = [];
       for (const job of employerJobs) {
-        const response = await fetch(`http://localhost:5000/api/applications/job/${job._id}`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/job/${job._id}`);
         if (response.ok) {
           const jobApplications = await response.json();
           allApplications = [...allApplications, ...jobApplications.map((app: any) => ({
@@ -72,7 +73,7 @@ const ApplicationManager: React.FC<ApplicationManagerProps> = ({ jobId }) => {
       setUpdating(applicationId);
       console.log('Updating application:', applicationId, 'to status:', newStatus);
       
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/${applicationId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

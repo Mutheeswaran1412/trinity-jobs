@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { X, Upload, FileText, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 
 interface ResumeUploadModalProps {
@@ -71,7 +72,7 @@ const ResumeUploadModal: React.FC<ResumeUploadModalProps> = ({
         setAnalyzing(true);
 
         // ✅ FEATURES 1,3,4,5: Analyze with Mistral AI for comprehensive moderation
-        const analysisResponse = await fetch('http://localhost:5000/api/resume/analyze', {
+        const analysisResponse = await fetch('${API_ENDPOINTS.BASE_URL}/api/resume/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

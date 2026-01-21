@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Bell } from 'lucide-react';
 
 interface Notification {
@@ -26,7 +27,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${userId}`);
+      const res = await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications/${userId}`);
       const data = await res.json();
       setNotifications(data);
       setUnreadCount(data.filter((n: Notification) => !n.read).length);
@@ -37,7 +38,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PUT' });
+      await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications/${id}/read`, { method: 'PUT' });
       fetchNotifications();
     } catch (error) {
       console.error('Failed to mark as read:', error);
@@ -46,7 +47,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
 
   const markAllAsRead = async () => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/user/${userId}/read-all`, { method: 'PUT' });
+      await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications/user/${userId}/read-all`, { method: 'PUT' });
       fetchNotifications();
     } catch (error) {
       console.error('Failed to mark all as read:', error);

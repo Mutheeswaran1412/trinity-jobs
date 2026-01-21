@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface AutocompleteInputProps {
   type: 'jobs' | 'locations' | 'companies' | 'skills';
@@ -39,7 +40,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/autocomplete/${type}?q=${encodeURIComponent(value)}`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/${type}?q=${encodeURIComponent(value)}`);
         const data = await response.json();
         setSuggestions(data);
         setShowSuggestions(true);

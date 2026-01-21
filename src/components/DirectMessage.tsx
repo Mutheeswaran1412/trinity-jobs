@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Send, X, MessageCircle } from 'lucide-react';
 
 interface DirectMessageProps {
@@ -30,7 +31,7 @@ const DirectMessage: React.FC<DirectMessageProps> = ({
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/messages/${conversationId}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/messages/${conversationId}`);
       if (response.ok) {
         const data = await response.json();
         setMessages(data);
@@ -45,7 +46,7 @@ const DirectMessage: React.FC<DirectMessageProps> = ({
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

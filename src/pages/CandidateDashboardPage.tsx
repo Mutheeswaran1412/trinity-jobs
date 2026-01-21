@@ -196,7 +196,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         // Save to backend using email
         if (user?.email) {
           try {
-            const response = await fetch(`http://localhost:5000/api/candidate-profile`, {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidate-profile`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: user.email, profilePhoto: imageUrl })
@@ -362,7 +362,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     // Save to backend using email
                     if (user?.email) {
                       try {
-                        const response = await fetch(`http://localhost:5000/api/candidate-profile`, {
+                        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidate-profile`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ email: user.email, bannerPhoto: imageUrl })
@@ -737,25 +737,25 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       
                       if (user.resume.filename) {
                         // New format with filename from upload API
-                        resumeUrl = `http://localhost:5000/uploads/${user.resume.filename}`;
+                        resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/${user.resume.filename}`;
                       } else if (user.resume.url) {
                         // Direct URL format
                         resumeUrl = user.resume.url.startsWith('http') 
                           ? user.resume.url 
-                          : `http://localhost:5000${user.resume.url}`;
+                          : `${API_ENDPOINTS.BASE_URL}${user.resume.url}`;
                       } else if (user.resume.path) {
                         // Path format
                         resumeUrl = user.resume.path.startsWith('http') 
                           ? user.resume.path 
-                          : `http://localhost:5000${user.resume.path}`;
+                          : `${API_ENDPOINTS.BASE_URL}${user.resume.path}`;
                       } else if (typeof user.resume === 'string') {
                         // String format (legacy)
                         resumeUrl = user.resume.startsWith('http') 
                           ? user.resume 
-                          : `http://localhost:5000/uploads/${user.resume}`;
+                          : `${API_ENDPOINTS.BASE_URL}/uploads/${user.resume}`;
                       } else {
                         // Test with existing file
-                        resumeUrl = 'http://localhost:5000/uploads/resume-1768241848606-544295216.pdf';
+                        resumeUrl = '${API_ENDPOINTS.BASE_URL}/uploads/resume-1768241848606-544295216.pdf';
                       }
                       
                       console.log('Opening resume URL:', resumeUrl);
@@ -788,7 +788,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             const uploadFormData = new FormData();
                             uploadFormData.append('resume', file);
                             
-                            const response = await fetch('http://localhost:5000/api/upload/resume', {
+                            const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/upload/resume', {
                               method: 'POST',
                               body: uploadFormData
                             });
@@ -814,7 +814,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             // Save to backend profile
                             if (user?.email) {
                               try {
-                                await fetch('http://localhost:5000/api/profile/save', {
+                                await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ 
@@ -1200,7 +1200,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           // Save to backend immediately
           if (user?.email) {
             try {
-              await fetch('http://localhost:5000/api/profile/save', {
+              await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

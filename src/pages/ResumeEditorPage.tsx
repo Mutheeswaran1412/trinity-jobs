@@ -1,4 +1,5 @@
 import React, { useState, lazy, Suspense, ErrorBoundary } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import Header from '../components/Header';
 import aiService from '../services/aiService';
 import html2canvas from 'html2canvas';
@@ -333,7 +334,7 @@ const ResumeEditorPage: React.FC<ResumeEditorPageProps> = ({ onNavigate, user, o
 
   const saveToProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/save-resume', {
+      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/save-resume', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, Clock, CheckCircle, XCircle, Eye, AlertCircle, Briefcase, MapPin, Calendar, X, MessageSquare } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ApplicationTimeline from '../components/ApplicationTimeline';
@@ -60,7 +61,7 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/applications/candidate/${user.email}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/candidate/${user.email}`);
       if (response.ok) {
         const data = await response.json();
         setApplications(data);
@@ -79,7 +80,7 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
 
   const handleSaveApplication = async (appId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${appId}`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/${appId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${appId}/withdraw`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/${appId}/withdraw`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: withdrawalReason })

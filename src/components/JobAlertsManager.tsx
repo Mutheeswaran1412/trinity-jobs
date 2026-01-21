@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { Bell, Plus, Edit, Trash2, Mail, Smartphone } from 'lucide-react';
 
 interface JobAlert {
@@ -51,7 +52,7 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
   const fetchAlerts = async (userId?: string) => {
     const id = userId || user?._id || user?.id || 'demo-user';
     try {
-      const response = await fetch(`http://localhost:5000/api/job-alerts/user/${id}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/job-alerts/user/${id}`);
       if (response.ok) {
         const data = await response.json();
         setAlerts(data);
@@ -85,8 +86,8 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
 
     try {
       const url = editingAlert 
-        ? `http://localhost:5000/api/job-alerts/${editingAlert._id}`
-        : 'http://localhost:5000/api/job-alerts';
+        ? `${API_ENDPOINTS.BASE_URL}/api/job-alerts/${editingAlert._id}`
+        : '${API_ENDPOINTS.BASE_URL}/api/job-alerts';
       
       const method = editingAlert ? 'PUT' : 'POST';
       
@@ -130,7 +131,7 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
     if (!confirm('Are you sure you want to delete this alert?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/job-alerts/${alertId}`, {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/job-alerts/${alertId}`, {
         method: 'DELETE'
       });
 
