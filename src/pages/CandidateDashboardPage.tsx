@@ -8,6 +8,7 @@ import JobAlertsManager from '../components/JobAlertsManager';
 import LinksPortfolio from '../components/LinksPortfolio';
 import HeadlineOptimizer from '../components/HeadlineOptimizer';
 import ProfileHeadline from '../components/ProfileHeadline';
+import { API_ENDPOINTS } from '../config/env';
 
 interface CandidateDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -46,7 +47,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             const identifier = parsedUser.email || parsedUser.id || parsedUser._id;
             
             try {
-              const response = await fetch(`http://localhost:5000/api/profile/${identifier}`);
+              const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/${identifier}`);
               if (response.ok) {
                 const profileData = await response.json();
                 console.log('Profile data loaded from backend:', profileData);
@@ -107,7 +108,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
     }
     try {
       console.log('Dashboard: Fetching applications for email:', email);
-      const response = await fetch(`http://localhost:5000/api/applications/candidate/${email}`);
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/candidate/${email}`);
       console.log('Dashboard: Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
@@ -124,7 +125,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const fetchRecommendations = async (userId: string) => {
     if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/search/recommendations/${userId}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/recommendations/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setRecommendations(data.slice(0, 5));
@@ -136,7 +137,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
   const fetchTrending = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/search/trending?limit=5');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/trending?limit=5`);
       if (response.ok) {
         const data = await response.json();
         setTrending(data);
