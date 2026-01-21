@@ -8,14 +8,14 @@ import { sendWelcomeEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
-// Rate limiting for login attempts
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
-  message: 'Too many login attempts. Please try again after 15 minutes.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting for login attempts - DISABLED for production
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // 5 attempts
+//   message: 'Too many login attempts. Please try again after 15 minutes.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
 // Rate limiting for registration - DISABLED for production
 // const registerLimiter = rateLimit({
