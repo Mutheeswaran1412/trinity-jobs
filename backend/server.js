@@ -1,3 +1,10 @@
+// DOM Polyfills for PDF processing
+import { JSDOM } from 'jsdom';
+const dom = new JSDOM();
+global.DOMMatrix = dom.window.DOMMatrix;
+global.ImageData = dom.window.ImageData;
+global.Path2D = dom.window.Path2D;
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
