@@ -7,6 +7,7 @@ import LocationRadiusSearch from '../components/LocationRadiusSearch';
 import { aiSuggestions } from '../utils/aiSuggestions';
 import { JobCardSkeleton, SearchLoading } from '../components/LoadingStates';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import { API_ENDPOINTS } from '../config/env';
 
 const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: { 
   onNavigate?: (page: string) => void;
@@ -54,7 +55,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      let url = 'http://localhost:5000/api/jobs';
+      let url = API_ENDPOINTS.JOBS;
       
       // Use advanced search if filters are applied
       if (searchTerm || location || filters.industry.length > 0 || filters.companySize.length > 0 || filters.freshness) {
@@ -69,7 +70,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           limit: 50
         };
         
-        const response = await fetch('http://localhost:5000/api/search/advanced', {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/advanced`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(searchParams)
@@ -87,7 +88,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           const params = new URLSearchParams();
           if (searchTerm) params.append('q', searchTerm);
           if (location) params.append('location', location);
-          url = `http://localhost:5000/api/jobs/search/query?${params}`;
+          url = `${API_ENDPOINTS.JOBS}/search/query?${params}`;
         }
         
         console.log('Fetching jobs from:', url);
@@ -113,7 +114,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   // Fetch filter options and trending jobs
   const fetchFilterOptions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/search/filters');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/filters`);
       if (response.ok) {
         const data = await response.json();
         setFilterOptions(data);
@@ -125,7 +126,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
 
   const fetchTrending = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/search/trending?limit=5');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/trending?limit=5`);
       if (response.ok) {
         const data = await response.json();
         setTrending(data);
@@ -345,7 +346,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const handleLocationSearch = async (params: { latitude: number; longitude: number; radius: number; query?: string }) => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/search/radius', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/radius`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

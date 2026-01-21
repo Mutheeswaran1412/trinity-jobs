@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BackButton from '../components/BackButton';
+import { API_ENDPOINTS } from '../config/env';
 
 interface JobApplicationPageProps {
   onNavigate: (page: string) => void;
@@ -152,7 +153,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                           const formData = new FormData();
                           formData.append('resume', file);
                           
-                          const response = await fetch('http://localhost:5000/api/upload/resume', {
+                          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/upload/resume`, {
                             method: 'POST',
                             body: formData
                           });
@@ -440,7 +441,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                     const userData = JSON.parse(localStorage.getItem('user') || '{}');
                     const resumeUrl = applicationData.resumeUrl || userData?.profile?.resume || userData?.resume || '';
                     
-                    const response = await fetch('http://localhost:5000/api/applications', {
+                    const response = await fetch(API_ENDPOINTS.APPLICATIONS, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
