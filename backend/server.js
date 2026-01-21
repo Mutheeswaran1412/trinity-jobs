@@ -675,18 +675,26 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
     const { email } = req.params;
     const { userType } = req.query;
 
+    console.log('Analytics request for:', email, 'userType:', userType);
+
     if (userType === 'employer') {
       const Job = (await import('./models/Job.js')).default;
       const Application = (await import('./models/Application.js')).default;
       
+      // Check both postedBy and employerEmail fields
       const jobsPosted = await Job.countDocuments({ 
-        employerEmail: email,
+        $or: [
+          { employerEmail: email },
+          { postedBy: email }
+        ],
         isActive: true 
       });
 
       const applicationsReceived = await Application.countDocuments({ 
         employerEmail: email 
       });
+
+      console.log('Employer analytics:', { jobsPosted, applicationsReceived });
 
       res.json({
         jobsPosted,
@@ -701,6 +709,8 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
 
       const profileViews = Math.floor(applicationsSent * 2.5);
       const recruiterActions = Math.floor(applicationsSent * 1.2);
+
+      console.log('Candidate analytics:', { applicationsSent, profileViews, recruiterActions });
 
       res.json({
         searchAppearances: profileViews,
