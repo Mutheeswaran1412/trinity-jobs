@@ -85,8 +85,10 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
       'http://localhost:5173',
-      'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app'
-    ],
+      'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
+      'https://trinity-jobs.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
     credentials: true
   }
 });
@@ -187,8 +189,10 @@ app.use(helmet());
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app'
-  ],
+    'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
+    'https://trinity-jobs.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(cookieParser());
