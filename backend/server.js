@@ -643,6 +643,10 @@ function generateJobRequirements(jobTitle) {
 • Proficiency in relevant tools and technologies`;
 }
 
+app.get('/', (req, res) => {
+  res.json({ message: 'Trinity Jobs API is running!', status: 'OK' });
+});
+
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.get('/api/health', (req, res) => {
