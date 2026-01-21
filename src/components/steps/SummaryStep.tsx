@@ -15,7 +15,7 @@ const SummaryStep = () => {
     setIsGenerating(true);
     
     try {
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/generate-summary', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/generate-summary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

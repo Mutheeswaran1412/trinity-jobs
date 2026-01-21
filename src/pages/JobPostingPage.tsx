@@ -105,7 +105,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     const fetchCountries = async () => {
       try {
         console.log('Fetching countries...');
-        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/countries');
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/countries`);
         const data = await response.json();
         console.log('Countries data:', data);
         setCountries(data.countries || []);

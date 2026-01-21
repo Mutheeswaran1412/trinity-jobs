@@ -156,7 +156,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         const uploadFormData = new FormData();
         uploadFormData.append('resume', file);
         
-        const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/upload/resume', {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/upload/resume`, {
           method: 'POST',
           body: uploadFormData
         });
@@ -452,7 +452,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       // Save to backend
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData)

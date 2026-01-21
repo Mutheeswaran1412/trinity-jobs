@@ -24,7 +24,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
 
   const fetchEmployerJobs = async (userData: any) => {
     try {
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/jobs');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs`);
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 

@@ -55,7 +55,7 @@ export default function MessagingWidget({ currentUserId, recipientId, recipientN
     if (!newMessage.trim()) return;
 
     try {
-      const res = await fetch('${API_ENDPOINTS.BASE_URL}/api/messages', {
+      const res = await fetch(`${API_ENDPOINTS.BASE_URL}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

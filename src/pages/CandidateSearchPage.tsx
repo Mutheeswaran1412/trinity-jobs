@@ -45,8 +45,8 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
     const loadSkillsAndLocations = async () => {
       try {
         const [skillsResponse, locationsResponse] = await Promise.all([
-          fetch('${API_ENDPOINTS.BASE_URL}/api/autocomplete/skills?q='),
-          fetch('${API_ENDPOINTS.BASE_URL}/api/autocomplete/locations?q=')
+          fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/skills?q=`),
+          fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/locations?q=`)
         ]);
         
         if (skillsResponse.ok) {

@@ -43,7 +43,7 @@ const JobModerationDashboard: React.FC = () => {
 
   const fetchSummary = async () => {
     try {
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/admin/jobs/summary');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/admin/jobs/summary`);
       const data = await response.json();
       setSummary(data);
     } catch (error) {

@@ -755,7 +755,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           : `${API_ENDPOINTS.BASE_URL}/uploads/${user.resume}`;
                       } else {
                         // Test with existing file
-                        resumeUrl = '${API_ENDPOINTS.BASE_URL}/uploads/resume-1768241848606-544295216.pdf';
+                        resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/resume-1768241848606-544295216.pdf`;
                       }
                       
                       console.log('Opening resume URL:', resumeUrl);
@@ -788,7 +788,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             const uploadFormData = new FormData();
                             uploadFormData.append('resume', file);
                             
-                            const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/upload/resume', {
+                            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/upload/resume`, {
                               method: 'POST',
                               body: uploadFormData
                             });
@@ -814,7 +814,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             // Save to backend profile
                             if (user?.email) {
                               try {
-                                await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
+                                await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ 
@@ -1200,7 +1200,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           // Save to backend immediately
           if (user?.email) {
             try {
-              await fetch('${API_ENDPOINTS.BASE_URL}/api/profile/save', {
+              await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

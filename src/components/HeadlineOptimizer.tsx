@@ -60,7 +60,7 @@ Full-Stack Developer | 5+ Years Building Scalable Applications
 
 Now create 5 headlines:`;
       
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/chat', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt })
@@ -107,7 +107,7 @@ Now create 5 headlines:`;
   const startAbTest = async () => {
     if (currentHeadline && suggestions.length > 0 && user?.id) {
       try {
-        await fetch('${API_ENDPOINTS.BASE_URL}/api/headline/start-test', {
+        await fetch(`${API_ENDPOINTS.BASE_URL}/api/headline/start-test`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

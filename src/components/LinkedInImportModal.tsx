@@ -25,7 +25,7 @@ const LinkedInImportModal: React.FC<LinkedInImportModalProps> = ({ isOpen, onClo
     setError('');
 
     try {
-      const response = await fetch('${API_ENDPOINTS.BASE_URL}/api/parse-linkedin', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/parse-linkedin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: linkedInText })

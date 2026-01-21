@@ -87,7 +87,7 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
     try {
       const url = editingAlert 
         ? `${API_ENDPOINTS.BASE_URL}/api/job-alerts/${editingAlert._id}`
-        : '${API_ENDPOINTS.BASE_URL}/api/job-alerts';
+        : `${API_ENDPOINTS.BASE_URL}/api/job-alerts`;
       
       const method = editingAlert ? 'PUT' : 'POST';
       
