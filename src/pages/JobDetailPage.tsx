@@ -332,22 +332,6 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <ArrowLeft className="w-4 h-4 mr-1" />
             <span>Back to Jobs</span>
           </button>
-          
-          {/* Additional Home button for extra reliability */}
-          <button 
-            onClick={() => {
-              console.log('🏠 Home button clicked');
-              try {
-                onNavigate('home');
-              } catch (error) {
-                console.error('❌ Home navigation error:', error);
-                window.location.href = '/';
-              }
-            }}
-            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 transition-colors mb-4 cursor-pointer ml-4"
-          >
-            <span>🏠 Go to Home</span>
-          </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start space-x-4 flex-1">
