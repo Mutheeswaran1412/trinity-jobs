@@ -12,6 +12,18 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if both fields are filled
+    if (!searchTerm.trim()) {
+      alert('Please enter a job title or keyword');
+      return;
+    }
+    
+    if (!location.trim()) {
+      alert('Please enter a city or postcode');
+      return;
+    }
+    
     if (onNavigate) {
       onNavigate('job-listings', { searchTerm, location });
     }
@@ -58,6 +70,7 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
                             placeholder="Job Title, Keywords"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            required
                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -70,6 +83,7 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
                             placeholder="City Or Postcode"
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
+                            required
                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>

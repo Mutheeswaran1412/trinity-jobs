@@ -81,17 +81,17 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         throw new Error(`Jobs API error: ${jobsRes.status}`);
       }
 
+      let employerJobs = [];
+      let employerApps = [];
+
       if (jobsRes.ok) {
         const allJobs = await jobsRes.json();
         console.log('Dashboard - All jobs:', allJobs.length);
         console.log('Dashboard - User data for filtering:', userData);
-        const employerJobs = Array.isArray(allJobs) ? allJobs.filter((job: any) => {
-          const matchesId = job.employerId === userId;
-          const matchesEmail = job.employerEmail === userEmail;
-          const matchesPostedBy = job.postedBy === userName;
-          const isThirdPartyPosting = job.employerEmail === userEmail && job.isThirdPartyPosting;
-          console.log(`Job: ${job.jobTitle} at ${job.company}, matchesId: ${matchesId}, matchesEmail: ${matchesEmail}, matchesPostedBy: ${matchesPostedBy}, isThirdParty: ${isThirdPartyPosting}`);
-          return matchesId || matchesEmail || matchesPostedBy || isThirdPartyPosting;
+        employerJobs = Array.isArray(allJobs) ? allJobs.filter((job: any) => {
+          const matchesEmail = job.postedBy === userEmail;
+          console.log(`Job: ${job.jobTitle} at ${job.company}, matchesEmail: ${matchesEmail}`);
+          return matchesEmail;
         }) : [];
         console.log('Dashboard - Filtered employer jobs:', employerJobs.length);
         setJobs(employerJobs);
@@ -102,12 +102,10 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           const response = await appsRes.json();
           const allApps = response.applications || response || [];
           console.log('Dashboard - All applications:', allApps.length);
-          const employerApps = Array.isArray(allApps) ? allApps.filter((app: any) => {
-            const matchesId = app.employerId === userId;
+          employerApps = Array.isArray(allApps) ? allApps.filter((app: any) => {
             const matchesEmail = app.employerEmail === userEmail;
-            const matchesCompany = app.jobId?.company?.toLowerCase() === userData.companyName?.toLowerCase();
-            console.log(`App: ${app.candidateName}, matchesId: ${matchesId}, matchesEmail: ${matchesEmail}, matchesCompany: ${matchesCompany}`);
-            return matchesId || matchesEmail || matchesCompany;
+            console.log(`App: ${app.candidateName}, matchesEmail: ${matchesEmail}`);
+            return matchesEmail;
           }) : [];
           console.log('Dashboard - Filtered employer applications:', employerApps.length);
           setApplications(employerApps);
@@ -121,7 +119,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       }
 
       // Fetch dashboard stats - use local job count if API fails
-      let dashboardStats = { activeJobs: jobs.length, applications: 0, interviews: 0, hired: 0 };
+      let dashboardStats = { activeJobs: employerJobs.length, applications: employerApps.length, interviews: 0, hired: 0 };
       if (statsRes.ok) {
         try {
           const stats = await statsRes.json();
@@ -144,8 +142,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       }
       
       // If no activity from API, create from local jobs
-      if (recentActivity.length === 0 && jobs.length > 0) {
-        recentActivity = jobs.slice(0, 3).map(job => ({
+      if (recentActivity.length === 0 && employerJobs.length > 0) {
+        recentActivity = employerJobs.slice(0, 3).map(job => ({
           type: 'job',
           message: 'Job posted successfully',
           time: '1 day ago',

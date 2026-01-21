@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, MapPin, Filter, Briefcase, Clock, DollarSign, X, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Search, MapPin, Filter, Briefcase, Clock, DollarSign, X, Bookmark, BookmarkCheck, TrendingUp } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
+import LocationRadiusSearch from '../components/LocationRadiusSearch';
 import { aiSuggestions } from '../utils/aiSuggestions';
 import { JobCardSkeleton, SearchLoading } from '../components/LoadingStates';
-import { sanitizeLogo, getCompanyLogo } from '../utils/logoUtils';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 
 const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: { 
   onNavigate?: (page: string) => void;
   user?: {name: string, type: 'candidate' | 'employer'} | null;
   onLogout?: () => void;
-  searchParams?: { searchTerm?: string; location?: string };
+  searchParams?: { searchTerm?: string; location?: string; experience?: string };
 }) => {
   const [searchTerm, setSearchTerm] = useState(searchParams?.searchTerm || '');
   const [location, setLocation] = useState(searchParams?.location || '');
@@ -23,13 +23,21 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const [filters, setFilters] = useState({
     jobType: '',
     salaryRange: '',
-    experience: ''
+    experience: '',
+    department: [] as string[],
+    location: [] as string[],
+    workMode: [] as string[],
+    industry: [] as string[],
+    companySize: [] as string[],
+    freshness: ''
   });
   const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
+  const [filterOptions, setFilterOptions] = useState<any>({});
 
   // Load saved jobs from localStorage
   useEffect(() => {
@@ -42,30 +50,56 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
     }
   }, [user]);
 
-  // Fetch jobs from MongoDB
+  // Fetch jobs from MongoDB with advanced search
   const fetchJobs = async () => {
     setLoading(true);
     try {
       let url = 'http://localhost:5000/api/jobs';
       
-      // If search parameters exist, use search endpoint
-      if (searchTerm || location) {
-        const params = new URLSearchParams();
-        if (searchTerm) params.append('q', searchTerm);
-        if (location) params.append('location', location);
-        url = `http://localhost:5000/api/search?${params}`;
-      }
-      
-      const response = await fetch(url);
-      if (response.ok) {
-        const jobsData = await response.json();
-        const jobsArray = Array.isArray(jobsData) ? jobsData : [];
-        setJobs(jobsArray);
-        setFilteredJobs(jobsArray);
+      // Use advanced search if filters are applied
+      if (searchTerm || location || filters.industry.length > 0 || filters.companySize.length > 0 || filters.freshness) {
+        const searchParams = {
+          query: searchTerm,
+          location: location,
+          jobType: filters.jobType ? [filters.jobType] : [],
+          industry: filters.industry,
+          companySize: filters.companySize,
+          freshness: filters.freshness,
+          page: 1,
+          limit: 50
+        };
+        
+        const response = await fetch('http://localhost:5000/api/search/advanced', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(searchParams)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const jobsArray = Array.isArray(data.jobs) ? data.jobs : [];
+          setJobs(jobsArray);
+          setFilteredJobs(jobsArray);
+        }
       } else {
-        console.error('Failed to fetch jobs');
-        setJobs([]);
-        setFilteredJobs([]);
+        // Regular search
+        if (searchTerm || location) {
+          const params = new URLSearchParams();
+          if (searchTerm) params.append('q', searchTerm);
+          if (location) params.append('location', location);
+          url = `http://localhost:5000/api/jobs/search/query?${params}`;
+        }
+        
+        console.log('Fetching jobs from:', url);
+        const response = await fetch(url);
+        if (response.ok) {
+          const jobsData = await response.json();
+          console.log('Jobs received:', jobsData.length);
+          const jobsArray = Array.isArray(jobsData) ? jobsData : [];
+          const sortedJobs = jobsArray.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setJobs(sortedJobs);
+          setFilteredJobs(sortedJobs);
+        }
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -73,6 +107,31 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
       setFilteredJobs([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch filter options and trending jobs
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/search/filters');
+      if (response.ok) {
+        const data = await response.json();
+        setFilterOptions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
+  };
+
+  const fetchTrending = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/search/trending?limit=5');
+      if (response.ok) {
+        const data = await response.json();
+        setTrending(data);
+      }
+    } catch (error) {
+      console.error('Error fetching trending jobs:', error);
     }
   };
 
@@ -101,15 +160,80 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
       filtered = filtered.filter(job => job.type === filters.jobType);
     }
     
+    // Filter by department (based on job title/description)
+    if (filters.department.length > 0) {
+      filtered = filtered.filter(job => {
+        const jobText = `${job.title} ${job.description}`.toLowerCase();
+        return filters.department.some(dept => {
+          if (dept === 'Engineering - Software & QA') {
+            return jobText.includes('software') || jobText.includes('engineer') || jobText.includes('developer') || jobText.includes('qa');
+          }
+          if (dept === 'Sales & Business Development') {
+            return jobText.includes('sales') || jobText.includes('business') || jobText.includes('marketing');
+          }
+          if (dept === 'IT & Information Security') {
+            return jobText.includes('security') || jobText.includes('it ') || jobText.includes('system');
+          }
+          return false;
+        });
+      });
+    }
+    
+    // Filter by salary range
+    if (filters.salaryRange) {
+      filtered = filtered.filter(job => {
+        const salary = parseInt(job.salary?.replace(/[^0-9]/g, '') || '0');
+        if (filters.salaryRange === '0-3 Lakhs') return salary <= 300000;
+        if (filters.salaryRange === '3-6 Lakhs') return salary >= 300000 && salary <= 600000;
+        if (filters.salaryRange === '6-10 Lakhs') return salary >= 600000 && salary <= 1000000;
+        return true;
+      });
+    }
+    
+    // Filter by work mode
+    if (filters.workMode.length > 0) {
+      filtered = filtered.filter(job => {
+        const jobText = `${job.type} ${job.location} ${job.description}`.toLowerCase();
+        return filters.workMode.some(mode => {
+          if (mode === 'Remote') return jobText.includes('remote');
+          if (mode === 'Hybrid') return jobText.includes('hybrid');
+          if (mode === 'Work from office') return !jobText.includes('remote') && !jobText.includes('hybrid');
+          return false;
+        });
+      });
+    }
+    
+    // Sort by creation date (newest first)
+    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
     setFilteredJobs(filtered);
   }, [searchTerm, location, jobs, filters]);
 
   useEffect(() => {
     fetchJobs();
+    fetchFilterOptions();
+    fetchTrending();
+    
+    // Listen for job posting events to refresh the list
+    const handleJobPosted = () => {
+      console.log('New job posted, refreshing job listings...');
+      fetchJobs();
+    };
+    
+    window.addEventListener('jobPosted', handleJobPosted);
+    
+    return () => {
+      window.removeEventListener('jobPosted', handleJobPosted);
+    };
   }, []);
   
   useEffect(() => {
     if (searchParams?.searchTerm || searchParams?.location) {
+      setSearchTerm(searchParams.searchTerm || '');
+      setLocation(searchParams.location || '');
+      console.log('Search params received:', searchParams);
+      fetchJobs();
+    } else {
       fetchJobs();
     }
   }, [searchParams]);
@@ -155,7 +279,23 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   };
   
   const handleFilterChange = (filterType: string, value: string) => {
-    setFilters(prev => ({ ...prev, [filterType]: value }));
+    if (filterType === 'department' || filterType === 'location' || filterType === 'workMode' || filterType === 'industry' || filterType === 'companySize') {
+      setFilters(prev => {
+        const currentArray = prev[filterType as keyof typeof prev] as string[];
+        const isSelected = currentArray.includes(value);
+        return {
+          ...prev,
+          [filterType]: isSelected 
+            ? currentArray.filter(item => item !== value)
+            : [...currentArray, value]
+        };
+      });
+    } else {
+      setFilters(prev => ({ ...prev, [filterType]: value }));
+    }
+    
+    // Trigger search when filters change
+    setTimeout(() => fetchJobs(), 100);
   };
 
   const getJobSuggestions = async (input: string): Promise<string[]> => {
@@ -200,6 +340,35 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const selectLocationSuggestion = (suggestion: string) => {
     setLocation(suggestion);
     setShowLocationSuggestions(false);
+  };
+
+  const handleLocationSearch = async (params: { latitude: number; longitude: number; radius: number; query?: string }) => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/search/radius', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latitude: params.latitude,
+          longitude: params.longitude,
+          radius: params.radius,
+          query: params.query || '',
+          page: 1,
+          limit: 50
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const jobsArray = Array.isArray(data.jobs) ? data.jobs : [];
+        setJobs(jobsArray);
+        setFilteredJobs(jobsArray);
+      }
+    } catch (error) {
+      console.error('Error in location search:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveJob = (job: any) => {
@@ -261,6 +430,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                 onChange={handleJobInputChange}
                 onFocus={() => searchTerm.length >= 1 && setShowJobSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowJobSuggestions(false), 200)}
+                onKeyPress={(e) => e.key === 'Enter' && fetchJobs()}
                 className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {showJobSuggestions && jobSuggestions.length > 0 && (
@@ -287,6 +457,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                 onChange={handleLocationInputChange}
                 onFocus={() => location.length >= 1 && setShowLocationSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                onKeyPress={(e) => e.key === 'Enter' && fetchJobs()}
                 className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               {showLocationSuggestions && locationSuggestions.length > 0 && (
@@ -305,39 +476,276 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                 </div>
               )}
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+            <button 
+              onClick={() => fetchJobs()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors" 
+              title="Search jobs"
+            >
               <Search className="w-5 h-5" />
             </button>
           </div>
 
-          {/* All Filters Button */}
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 text-white hover:text-gray-300 font-medium"
-          >
-            <Filter className="w-4 h-4" />
-            <span>All filters</span>
-          </button>
+          {/* Quick Filters */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, freshness: '24h' }))}
+              className={`px-3 py-1 rounded-full text-sm border ${
+                filters.freshness === '24h' 
+                  ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Last 24 hours
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, freshness: '7d' }))}
+              className={`px-3 py-1 rounded-full text-sm border ${
+                filters.freshness === '7d' 
+                  ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              This week
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, workMode: prev.workMode.includes('Remote') ? prev.workMode.filter(m => m !== 'Remote') : [...prev.workMode, 'Remote'] }))}
+              className={`px-3 py-1 rounded-full text-sm border ${
+                filters.workMode.includes('Remote') 
+                  ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Remote Jobs
+            </button>
+          </div>
+
+
         </div>
       </div>
 
       {/* Job Listings */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <p className="text-gray-600">
-            {loading ? 'Searching...' : (
-              `${filteredJobs.length} results` +
-              (filteredJobs.length > 0 ? ` (${Math.floor(filteredJobs.length * 0.6)} new)` : '')
-            )}
-          </p>
+        <LocationRadiusSearch onSearch={handleLocationSearch} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Sidebar - Filters */}
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {/* Trending Jobs */}
+              {trending.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-orange-500" />
+                    Trending Jobs
+                  </h3>
+                  <div className="space-y-3">
+                    {trending.map((job: any) => (
+                      <div key={job._id} className="border-l-2 border-orange-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded" onClick={() => onNavigate && onNavigate(`job-detail/${job._id}`)}>
+                        <h4 className="font-medium text-sm">{job.jobTitle}</h4>
+                        <p className="text-xs text-gray-600">{job.company}</p>
+                        <p className="text-xs text-gray-500">{job.views} views</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Filters */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">All Filters</h3>
+              
+              {/* Department */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Department</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.department.includes('Engineering - Software & QA')}
+                      onChange={() => handleFilterChange('department', 'Engineering - Software & QA')}
+                    />
+                    <span className="text-sm">Engineering - Software & QA (34444)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.department.includes('Sales & Business Development')}
+                      onChange={() => handleFilterChange('department', 'Sales & Business Development')}
+                    />
+                    <span className="text-sm">Sales & Business Development (15502)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.department.includes('IT & Information Security')}
+                      onChange={() => handleFilterChange('department', 'IT & Information Security')}
+                    />
+                    <span className="text-sm">IT & Information Security (5116)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Experience */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Experience</h4>
+                <select 
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  value={filters.experience}
+                  onChange={(e) => handleFilterChange('experience', e.target.value)}
+                >
+                  <option value="">Any</option>
+                  <option value="0-1 years">0-1 years</option>
+                  <option value="1-3 years">1-3 years</option>
+                  <option value="3-5 years">3-5 years</option>
+                  <option value="5+ years">5+ years</option>
+                </select>
+              </div>
+              
+              {/* Salary */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Salary</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.salaryRange === '0-3 Lakhs'}
+                      onChange={() => handleFilterChange('salaryRange', filters.salaryRange === '0-3 Lakhs' ? '' : '0-3 Lakhs')}
+                    />
+                    <span className="text-sm">0-3 Lakhs (3019)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.salaryRange === '3-6 Lakhs'}
+                      onChange={() => handleFilterChange('salaryRange', filters.salaryRange === '3-6 Lakhs' ? '' : '3-6 Lakhs')}
+                    />
+                    <span className="text-sm">3-6 Lakhs (18634)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.salaryRange === '6-10 Lakhs'}
+                      onChange={() => handleFilterChange('salaryRange', filters.salaryRange === '6-10 Lakhs' ? '' : '6-10 Lakhs')}
+                    />
+                    <span className="text-sm">6-10 Lakhs (25907)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Location */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Location</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">Bengaluru (15212)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">Hyderabad (8126)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">Chennai (6997)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Work Mode */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Work mode</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.workMode.includes('Work from office')}
+                      onChange={() => handleFilterChange('workMode', 'Work from office')}
+                    />
+                    <span className="text-sm">Work from office (37469)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.workMode.includes('Hybrid')}
+                      onChange={() => handleFilterChange('workMode', 'Hybrid')}
+                    />
+                    <span className="text-sm">Hybrid (3327)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-2" 
+                      checked={filters.workMode.includes('Remote')}
+                      onChange={() => handleFilterChange('workMode', 'Remote')}
+                    />
+                    <span className="text-sm">Remote (1052)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Industry Filter */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Industry</h4>
+                <div className="space-y-2">
+                  {['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing'].map((industry) => (
+                    <label key={industry} className="flex items-center">
+                      <input 
+                        type="checkbox" 
+                        className="mr-2" 
+                        checked={filters.industry.includes(industry)}
+                        onChange={() => handleFilterChange('industry', industry)}
+                      />
+                      <span className="text-sm">{industry}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Company Size Filter */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Company Size</h4>
+                <div className="space-y-2">
+                  {['1-10', '11-50', '51-200', '201-500', '500+'].map((size) => (
+                    <label key={size} className="flex items-center">
+                      <input 
+                        type="checkbox" 
+                        className="mr-2" 
+                        checked={filters.companySize.includes(size)}
+                        onChange={() => handleFilterChange('companySize', size)}
+                      />
+                      <span className="text-sm">{size} employees</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+          
+          {/* Right Content - Job Results */}
+          <div className="lg:col-span-3">
+            <div className="mb-6">
+              <p className="text-gray-600">
+                {loading ? 'Searching...' : (
+                  `${filteredJobs.length} results` +
+                  (filteredJobs.length > 0 ? ` (${Math.floor(filteredJobs.length * 0.6)} new)` : '')
+                )}
+              </p>
+            </div>
 
         {/* Filter Panel */}
         {showFilters && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-              <button onClick={() => setShowFilters(false)}>
+              <button onClick={() => setShowFilters(false)} title="Close filters">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
@@ -401,98 +809,71 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
         ) : (
           <div className="space-y-6">
             {Array.isArray(filteredJobs) && filteredJobs.map((job) => (
-            <div key={job._id || job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div key={job._id || job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow max-w-4xl">
+              <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-start mb-4">
+                  <div className="flex items-start mb-3">
                     {/* Company Logo */}
-                    <div className="flex-shrink-0 w-12 h-12 mr-4">
-                      <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
-                        <img 
-                          src={job.companyLogo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
-                          alt={`${job.company} logo`}
-                          className="w-10 h-10 object-contain"
-                          onLoad={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            img.style.display = 'block';
-                          }}
-                          onError={(e) => {
-                            const img = e.target as HTMLImageElement;
-                            // Try multiple logo sources
-                            const logoSources = [
-                              `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
-                              `https://img.logo.dev/${job.company.toLowerCase().replace(/\s+/g, '')}.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`,
-                              `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=64`
-                            ];
-                            
-                            const currentIndex = logoSources.indexOf(img.src);
-                            if (currentIndex < logoSources.length - 1) {
-                              img.src = logoSources[currentIndex + 1];
-                            } else {
-                              // All sources failed, show company initial
-                              const container = img.parentElement;
-                              if (container) {
-                                container.innerHTML = `<div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white text-sm font-bold">${job.company.charAt(0)}</div>`;
-                              }
-                            }
-                          }}
-                        />
+                    <div className="flex-shrink-0 w-10 h-10 mr-3">
+                      <div className="w-10 h-10 rounded border border-gray-200 flex items-center justify-center bg-white">
+                        {job.companyLogo ? (
+                          <img 
+                            src={job.companyLogo}
+                            alt={`${job.company} logo`}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                            {/* Empty placeholder when no logo */}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
                     {/* Job Info */}
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 
-                          className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer"
-                          onClick={() => onNavigate && onNavigate('job-detail', { jobTitle: job.title || job.jobTitle, jobId: job._id || job.id, companyName: job.company })}
-                        >
-                          {decodeHtmlEntities(job.title || job.jobTitle)}
-                        </h3>
-                        <span className="text-sm text-gray-500 ml-4">
-                          {formatDate(job.createdAt)}
-                        </span>
-                      </div>
+                      <h3 
+                        className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer mb-1"
+                        onClick={() => onNavigate && onNavigate(`job-detail/${job._id || job.id}`)}
+                      >
+                        {decodeHtmlEntities(job.title || job.jobTitle)}
+                      </h3>
+                      <p className="text-blue-600 font-medium mb-2">{job.company}</p>
                       
-                      <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{job.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <DollarSign className="w-4 h-4" />
+                          <span>{formatSalary(job.salary)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Briefcase className="w-4 h-4" />
+                          <span>{job.type}</span>
+                        </div>
+                        <span className="text-gray-500">{formatDate(job.createdAt)}</span>
+                      </div>
+
+                      <p className="text-gray-600 text-sm">
+                        {job.description && job.description.length > 100 
+                          ? `${decodeHtmlEntities(job.description).substring(0, 100)}...` 
+                          : decodeHtmlEntities(job.description || '')}
+                      </p>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{job.location}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <DollarSign className="w-4 h-4" />
-                      <span>{formatSalary(job.salary)}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Briefcase className="w-4 h-4" />
-                      <span>{job.type}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-600 mb-4">
-                    {job.description && job.description.length > 150 
-                      ? `${decodeHtmlEntities(job.description).substring(0, 150)}...` 
-                      : decodeHtmlEntities(job.description || '')}
-                  </p>
-
-                  {job.requirements && (
-                    <div className="text-sm text-gray-600 mb-4">
-                      <strong>Requirements:</strong> {job.requirements.length > 100 
-                        ? `${decodeHtmlEntities(job.requirements).substring(0, 100)}...` 
-                        : decodeHtmlEntities(job.requirements)}
-                    </div>
-                  )}
                 </div>
 
-                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
+                <div className="flex items-center space-x-3">
                   {user?.type === 'candidate' && (
                     <button 
                       onClick={() => handleSaveJob(job)}
-                      className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-lg border transition-colors min-w-[100px] ${
+                      className={`flex items-center space-x-1 px-3 py-2 rounded-lg border transition-colors ${
                         savedJobs.includes(job._id || job.id)
                           ? 'bg-blue-50 border-blue-200 text-blue-700'
                           : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -503,18 +884,12 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                       ) : (
                         <Bookmark className="w-4 h-4" />
                       )}
-                      <span>{savedJobs.includes(job._id || job.id) ? 'Saved' : 'Save'}</span>
+                      <span className="text-sm">{savedJobs.includes(job._id || job.id) ? 'Saved' : 'Save'}</span>
                     </button>
                   )}
                   <button 
-                    onClick={() => handleApplyNow(job)}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
-                  >
-                    Apply Now
-                  </button>
-                  <button 
-                    onClick={() => onNavigate && onNavigate('job-detail', { jobTitle: job.title, jobId: job._id || job.id, companyName: job.company })}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    onClick={() => onNavigate && onNavigate(`job-detail/${job._id || job.id}`)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     View Details
                   </button>
@@ -524,6 +899,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
       
       <Footer onNavigate={onNavigate} />

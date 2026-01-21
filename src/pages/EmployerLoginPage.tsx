@@ -4,7 +4,7 @@ import { authAPI } from '../api/auth';
 import Header from '../components/Header';
 
 interface EmployerLoginPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, data?: any) => void;
   onLogin: (userData: {name: string, type: 'candidate' | 'employer'}) => void;
   onShowNotification?: (notification: {type: 'success' | 'error' | 'info', message: string}) => void;
 }
@@ -149,12 +149,15 @@ const EmployerLoginPage: React.FC<EmployerLoginPageProps> = ({ onNavigate, onLog
 
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-600 mb-4">
-              New to hiring on ZyncJobs?{' '}
+              Don't have an account?{' '}
               <button
-                onClick={() => onNavigate('employer-register')}
+                onClick={() => {
+                  console.log('Sign up button clicked in EmployerLoginPage');
+                  onNavigate('employer-register');
+                }}
                 className="text-teal-600 hover:text-teal-700 font-semibold"
               >
-                Register now
+                Sign up
               </button>
             </p>
             <p className="text-gray-600">

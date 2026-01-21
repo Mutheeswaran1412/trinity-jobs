@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
+import { getSafeCompanyLogo, getLetterAvatar } from '../utils/logoUtils';
+import QuickApplyButton from '../components/QuickApplyButton';
 
 interface JobDetailPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -15,30 +17,148 @@ interface JobDetailPageProps {
 const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, jobId, companyName, user, onLogout, jobData }) => {
   const [job, setJob] = useState<any>(null);
   const [jobPoster, setJobPoster] = useState<any>(null);
+  const [similarJobs, setSimilarJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
-
-  const getFallbackLogo = (name: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=6366f1&color=ffffff&bold=true`;
-  };
 
   const getCompanyLogo = (job: any) => {
     const company = job.company || job.companyName || 'Company';
     
-    // Try stored logo first
-    if (job.companyLogo && job.companyLogo.trim() !== '') {
-      return job.companyLogo;
+    // For Google, use a working Google logo URL
+    if (company.toLowerCase().includes('google')) {
+      return 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png';
     }
     
-    // Try Clearbit logo
-    if (job.companyWebsite) {
-      const domain = job.companyWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0];
-      return `https://logo.clearbit.com/${domain}`;
+    // For other major companies, use simple fallback
+    if (company.toLowerCase().includes('microsoft')) {
+      return 'https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31';
     }
     
-    // Try logo.dev
-    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return `https://img.logo.dev/${cleanCompany}.com?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ`;
+    // Always fallback to Trinity logo (same as registration form)
+    return '/images/trinity-tech-logo.svg';
+  };
+
+  const getJobSpecificContent = (jobTitle: string) => {
+    const title = (jobTitle || '').toLowerCase();
+    
+    if (title.includes('crypto') || title.includes('pki') || title.includes('architect')) {
+      return {
+        experience: '5-8 years',
+        responsibilities: [
+          'Design and implement cryptographic solutions and PKI architectures',
+          'Develop secure key management systems and certificate lifecycle processes',
+          'Collaborate with security teams to ensure compliance with industry standards',
+          'Lead technical reviews and provide guidance on cryptographic best practices'
+        ],
+        requirements: [
+          'Master\'s degree in Computer Science, Cybersecurity, or related field',
+          '5+ years of experience in cryptography and PKI implementation',
+          'Strong expertise in X.509 certificates, HSMs, and cryptographic protocols',
+          'Experience with security frameworks and compliance standards (FIPS, Common Criteria)'
+        ],
+        benefits: [
+          'Competitive salary with performance bonuses',
+          'Comprehensive health and security clearance benefits',
+          'Professional development and certification opportunities',
+          'Flexible work arrangements with security-compliant remote options'
+        ]
+      };
+    }
+    
+    if (title.includes('developer') || title.includes('engineer') || title.includes('software')) {
+      return {
+        experience: '3-5 years',
+        responsibilities: [
+          'Design, develop, and maintain high-quality software solutions',
+          'Collaborate with cross-functional teams to deliver innovative projects',
+          'Write clean, efficient, and well-documented code',
+          'Participate in code reviews and technical discussions'
+        ],
+        requirements: [
+          'Bachelor\'s degree in Computer Science or related field',
+          '3+ years of professional experience in software development',
+          'Strong expertise in JavaScript, Python, React, Node.js, SQL, Git, AWS, Docker',
+          'Experience with agile development methodologies'
+        ],
+        benefits: [
+          'Competitive salary and equity package',
+          'Comprehensive health, dental, and vision insurance',
+          'Flexible work arrangements and remote work options',
+          'Professional development and learning opportunities'
+        ]
+      };
+    }
+    
+    if (title.includes('marketing') || title.includes('digital')) {
+      return {
+        experience: '2-4 years',
+        responsibilities: [
+          'Develop and execute comprehensive marketing strategies',
+          'Manage digital marketing campaigns across multiple channels',
+          'Analyze market trends and customer behavior data',
+          'Collaborate with creative teams to produce engaging content'
+        ],
+        requirements: [
+          'Bachelor\'s degree in Marketing, Communications, or related field',
+          '2+ years of experience in digital marketing',
+          'Proficiency in Google Analytics, SEO, SEM, and social media platforms',
+          'Strong analytical and creative problem-solving skills'
+        ],
+        benefits: [
+          'Competitive salary with performance incentives',
+          'Health insurance and wellness programs',
+          'Creative work environment with flexible hours',
+          'Professional development and conference attendance'
+        ]
+      };
+    }
+    
+    if (title.includes('sales') || title.includes('account')) {
+      return {
+        experience: '2-5 years',
+        responsibilities: [
+          'Generate new business opportunities and manage client relationships',
+          'Develop and execute sales strategies to meet revenue targets',
+          'Conduct product demonstrations and negotiate contracts',
+          'Maintain accurate sales forecasts and pipeline management'
+        ],
+        requirements: [
+          'Bachelor\'s degree in Business, Sales, or related field',
+          '2+ years of proven sales experience with track record of success',
+          'Excellent communication and negotiation skills',
+          'Experience with CRM software and sales analytics tools'
+        ],
+        benefits: [
+          'Base salary plus commission and bonus structure',
+          'Comprehensive benefits package including health insurance',
+          'Car allowance and travel expense reimbursement',
+          'Sales incentive trips and recognition programs'
+        ]
+      };
+    }
+    
+    // Default fallback
+    return {
+      experience: '2-4 years',
+      responsibilities: [
+        'Execute key responsibilities aligned with role requirements',
+        'Collaborate effectively with team members and stakeholders',
+        'Contribute to project success and organizational goals',
+        'Maintain high standards of quality and professionalism'
+      ],
+      requirements: [
+        'Bachelor\'s degree or equivalent experience in relevant field',
+        '2+ years of professional experience in related role',
+        'Strong communication and problem-solving skills',
+        'Ability to work independently and as part of a team'
+      ],
+      benefits: [
+        'Competitive salary and benefits package',
+        'Health insurance and retirement plans',
+        'Professional development opportunities',
+        'Collaborative and supportive work environment'
+      ]
+    };
   };
 
   useEffect(() => {
@@ -47,7 +167,25 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
         // If jobData is passed from LatestJobs, use it directly
         if (jobData) {
           setJob(jobData);
+          
+          // Fetch job poster info based on employerEmail
+          if (jobData.employerEmail || jobData.postedBy) {
+            const usersResponse = await fetch(API_ENDPOINTS.USERS);
+            if (usersResponse.ok) {
+              const users = await usersResponse.json();
+              const poster = users.find((user: any) => 
+                user.email === (jobData.employerEmail || jobData.postedBy)
+              );
+              console.log('Looking for employer with email:', jobData.employerEmail || jobData.postedBy);
+              console.log('Found job poster:', poster);
+              setJobPoster(poster);
+            }
+          }
+          
           setLoading(false);
+          
+          // Fetch similar jobs
+          fetchSimilarJobs(jobData);
           return;
         }
         
@@ -63,13 +201,10 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             if (usersResponse.ok) {
               const users = await usersResponse.json();
               const poster = users.find((user: any) => 
-                user.userType === 'employer' && (
-                  user.id === jobData.employerId || 
-                  user._id === jobData.employerId ||
-                  user.email === jobData.employerEmail ||
-                  user.companyName?.toLowerCase() === jobData.company?.toLowerCase()
-                )
+                user.email === jobData.employerEmail || user.email === jobData.postedBy
               );
+              console.log('Looking for employer with email:', jobData.employerEmail || jobData.postedBy);
+              console.log('Found job poster:', poster);
               setJobPoster(poster);
             }
           }
@@ -120,6 +255,28 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
     fetchJobDetails();
   }, [jobId, jobTitle, companyName, jobData]);
+
+  const fetchSimilarJobs = async (currentJob: any) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/search/similar/${currentJob._id}`);
+      if (response.ok) {
+        const similarJobsData = await response.json();
+        setSimilarJobs(similarJobsData.slice(0, 3));
+      } else {
+        // Fallback to regular jobs API
+        const response = await fetch(API_ENDPOINTS.JOBS);
+        if (response.ok) {
+          const allJobs = await response.json();
+          const similar = allJobs
+            .filter((j: any) => j._id !== currentJob._id)
+            .slice(0, 3);
+          setSimilarJobs(similar);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching similar jobs:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -176,24 +333,13 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start space-x-4 flex-1">
-              <img
-                src={getCompanyLogo(job)}
-                alt={job.company}
-                className="w-16 h-16 rounded-lg object-cover border border-gray-200"
-                onError={(e) => {
-                  const img = e.target as HTMLImageElement;
-                  const company = job.company || job.companyName || 'Company';
-                  
-                  // Try Google favicons as fallback
-                  if (!img.src.includes('favicon')) {
-                    const cleanCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    img.src = `https://www.google.com/s2/favicons?domain=${cleanCompany}.com&sz=64`;
-                  } else {
-                    // Final fallback to initials
-                    img.src = getFallbackLogo(company);
-                  }
-                }}
-              />
+              <div className="w-16 h-16 rounded-lg flex items-center justify-center p-2">
+                <img
+                  src={getCompanyLogo(job)}
+                  alt={job.company}
+                  className="w-full h-full object-contain"
+                />
+              </div>
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.jobTitle || job.title}</h1>
                 <div className="flex items-center space-x-2 text-lg text-blue-600 font-medium mb-4">
@@ -216,7 +362,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4" />
-                    <span>{job.experience} experience</span>
+                    <span>{job.experience || job.experienceLevel || getJobSpecificContent(job.jobTitle || job.title).experience} experience</span>
                   </div>
                 </div>
               </div>
@@ -232,23 +378,51 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                 <span>Share</span>
               </button>
               
-              {/* Apply button - Always show Login to Apply */}
-              <button 
-                onClick={() => {
-                  // Store job data for after login
-                  localStorage.setItem('pendingJobApplication', JSON.stringify({
-                    jobId: job.id || jobId,
-                    jobTitle: job.jobTitle || job.title,
-                    company: job.company,
-                    jobData: job
-                  }));
-                  // Always redirect to login
-                  onNavigate('login');
-                }}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Login to Apply
-              </button>
+              {/* Apply buttons - Hide for employers */}
+              {user?.type !== 'employer' && user?.userType !== 'employer' && (
+                <div className="flex items-center space-x-3">
+                  {/* Quick Apply Button - Always show for logged in users */}
+                  <QuickApplyButton
+                    jobId={job._id || jobId}
+                    jobTitle={job.jobTitle || job.title}
+                    company={job.company}
+                    user={user}
+                    onSuccess={() => alert('Quick application submitted!')}
+                  />
+                  
+                  {/* Regular Apply Button */}
+                  <button 
+                    onClick={() => {
+                      if (user && (user.name || user.fullName)) {
+                        // User is logged in - go directly to application page
+                        localStorage.setItem('selectedJob', JSON.stringify({
+                          _id: job._id || jobId,
+                          jobTitle: job.jobTitle || job.title,
+                          company: job.company,
+                          location: job.location,
+                          description: job.description,
+                          salary: job.salary,
+                          type: job.type,
+                          jobData: job
+                        }));
+                        onNavigate('job-application');
+                      } else {
+                        // User is not logged in - store job data and go to login
+                        localStorage.setItem('pendingJobApplication', JSON.stringify({
+                          jobId: job._id || jobId,
+                          jobTitle: job.jobTitle || job.title,
+                          company: job.company,
+                          jobData: job
+                        }));
+                        onNavigate('login');
+                      }
+                    }}
+                    className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
+                    {user && (user.name || user.fullName) ? 'Apply with Cover Letter' : 'Login to Apply'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -291,7 +465,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Key Responsibilities</h2>
               <ul className="space-y-3">
-                {job.responsibilities ? (
+                {job.responsibilities && job.responsibilities.length > 0 ? (
                   Array.isArray(job.responsibilities) ? job.responsibilities.map((responsibility, index) => (
                     <li key={index} className="flex items-start">
                       <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -304,10 +478,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </li>
                   )
                 ) : (
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">Develop and maintain high-quality software solutions</span>
-                  </li>
+                  getJobSpecificContent(job.jobTitle || job.title).responsibilities.map((responsibility, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{responsibility}</span>
+                    </li>
+                  ))
                 )}
               </ul>
             </div>
@@ -316,7 +492,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
               <ul className="space-y-3">
-                {job.requirements ? (
+                {job.requirements && job.requirements.length > 0 ? (
                   Array.isArray(job.requirements) ? job.requirements.map((requirement, index) => (
                     <li key={index} className="flex items-start">
                       <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -329,10 +505,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </li>
                   )
                 ) : (
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">Bachelor's degree or equivalent experience required</span>
-                  </li>
+                  getJobSpecificContent(job.jobTitle || job.title).requirements.map((requirement, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600">{requirement}</span>
+                    </li>
+                  ))
                 )}
               </ul>
             </div>
@@ -346,22 +524,17 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               <div className="flex items-center space-x-3 mb-4">
                 <img
                   src={jobPoster?.companyLogo || getCompanyLogo(job)}
-                  alt={jobPoster?.name || jobPoster?.companyName || job.company}
+                  alt={jobPoster?.name || job.company}
                   className="w-12 h-12 rounded-full object-cover border border-gray-200"
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    const name = jobPoster?.name || jobPoster?.companyName || job.company || 'User';
-                    img.src = getFallbackLogo(name);
-                  }}
                 />
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {jobPoster?.name || jobPoster?.fullName || job.employerName || 'Hiring Manager'}
+                    {jobPoster?.name || job.employerName || 'Hiring Manager'}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {jobPoster?.companyName || jobPoster?.company || 'Recruiting Company'}
+                    {jobPoster?.company || job.employerCompany || job.company}
                   </p>
-                  <p className="text-sm text-gray-500">{jobPoster?.jobTitle || jobPoster?.position || 'Recruiter'}</p>
+                  <p className="text-sm text-gray-500">Recruiter</p>
                   <p className="text-xs text-gray-400">Posting for: {job.company}</p>
                 </div>
               </div>
@@ -391,16 +564,25 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits & Perks</h3>
               <ul className="space-y-2">
-                {Array.isArray(job.benefits) ? job.benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600 text-sm">{benefit}</span>
-                  </li>
-                )) : (
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600 text-sm">{job.benefits || 'No benefits listed'}</span>
-                  </li>
+                {job.benefits && job.benefits.length > 0 ? (
+                  Array.isArray(job.benefits) ? job.benefits.map((benefit, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600 text-sm">{benefit}</span>
+                    </li>
+                  )) : (
+                    <li className="flex items-start">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600 text-sm">{job.benefits}</span>
+                    </li>
+                  )
+                ) : (
+                  getJobSpecificContent(job.jobTitle || job.title).benefits.map((benefit, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span className="text-gray-600 text-sm">{benefit}</span>
+                    </li>
+                  ))
                 )}
               </ul>
             </div>
@@ -409,50 +591,85 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Jobs</h3>
               <div className="space-y-4">
-                <div className="border-b border-gray-100 pb-3">
-                  <h4 className="font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-sm mb-1">
-                    Senior React Developer
-                  </h4>
-                  <p className="text-sm text-gray-600">Tech Solutions Inc.</p>
-                  <p className="text-xs text-gray-500">San Francisco, CA • $130k - $160k</p>
-                </div>
-                <div className="border-b border-gray-100 pb-3">
-                  <h4 className="font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-sm mb-1">
-                    Frontend Engineer
-                  </h4>
-                  <p className="text-sm text-gray-600">Digital Corp</p>
-                  <p className="text-xs text-gray-500">Remote • $110k - $140k</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-sm mb-1">
-                    Full Stack Developer
-                  </h4>
-                  <p className="text-sm text-gray-600">StartupXYZ</p>
-                  <p className="text-xs text-gray-500">New York, NY • $120k - $150k</p>
-                </div>
+                {similarJobs.length > 0 ? (
+                  similarJobs.map((similarJob, index) => (
+                    <div key={similarJob._id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                      <h4 
+                        className="font-medium text-blue-600 hover:text-blue-700 cursor-pointer text-sm mb-1"
+                        onClick={() => onNavigate && onNavigate('job-detail', { 
+                          jobTitle: similarJob.jobTitle, 
+                          jobId: similarJob._id, 
+                          companyName: similarJob.company,
+                          jobData: similarJob
+                        })}
+                      >
+                        {similarJob.jobTitle}
+                      </h4>
+                      <p className="text-sm text-gray-600">{similarJob.company}</p>
+                      <p className="text-xs text-gray-500">
+                        {similarJob.location} • {typeof similarJob.salary === 'object' 
+                          ? `${similarJob.salary.currency || '$'}${similarJob.salary.min}-${similarJob.salary.max}` 
+                          : 'Competitive salary'}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No similar jobs found</p>
+                )}
               </div>
             </div>
 
-            {/* Apply Button - Always show Login to Apply */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <button 
-                onClick={() => {
-                  // Store job data for after login
-                  localStorage.setItem('pendingJobApplication', JSON.stringify({
-                    jobId: job.id || jobId,
-                    jobTitle: job.jobTitle || job.title,
-                    company: job.company,
-                    jobData: job
-                  }));
-                  // Always redirect to login
-                  onNavigate('login');
-                }}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Login to Apply
-              </button>
-              <p className="text-xs text-gray-500 text-center mt-2">Posted {job.posted}</p>
-            </div>
+            {/* Apply Button - Hide for employers */}
+            {user?.type !== 'employer' && user?.userType !== 'employer' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex flex-col space-y-3">
+                  {/* Quick Apply Button */}
+                  {user && (user.name || user.fullName) && (
+                    <QuickApplyButton
+                      jobId={job._id || jobId}
+                      jobTitle={job.jobTitle || job.title}
+                      company={job.company}
+                      user={user}
+                      onSuccess={() => alert('Quick application submitted!')}
+                      className="w-full justify-center"
+                    />
+                  )}
+                  
+                  {/* Regular Apply Button */}
+                  <button 
+                    onClick={() => {
+                      if (user && user.name) {
+                        // User is logged in - go directly to application page
+                        localStorage.setItem('selectedJob', JSON.stringify({
+                          _id: job._id || jobId,
+                          jobTitle: job.jobTitle || job.title,
+                          company: job.company,
+                          location: job.location,
+                          description: job.description,
+                          salary: job.salary,
+                          type: job.type,
+                          jobData: job
+                        }));
+                        onNavigate('job-application');
+                      } else {
+                        // User is not logged in - store job data and go to login
+                        localStorage.setItem('pendingJobApplication', JSON.stringify({
+                          jobId: job._id || jobId,
+                          jobTitle: job.jobTitle || job.title,
+                          company: job.company,
+                          jobData: job
+                        }));
+                        onNavigate('login');
+                      }
+                    }}
+                    className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                  >
+                    {user && user.name ? 'Apply with Cover Letter' : 'Login to Apply'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-2">Posted {job.posted}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

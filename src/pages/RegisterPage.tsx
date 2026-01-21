@@ -28,7 +28,10 @@ const RegisterPage = ({ onNavigate }: { onNavigate?: (page: string) => void }) =
             <p className="text-gray-600 mb-8 leading-relaxed">
               Find your dream job, connect with top companies, and advance your tech career with personalized recommendations.
             </p>
-            <button className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
+            <button 
+              onClick={() => onNavigate && onNavigate('candidate-register')}
+              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+            >
               <span>Create free profile</span>
               <ArrowRight className="w-5 h-5" />
             </button>

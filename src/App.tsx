@@ -16,8 +16,9 @@ import RegisterModal from './components/RegisterModal';
 import EmployerLoginPage from './pages/EmployerLoginPage';
 import EmployerLoginModal from './components/EmployerLoginModal';
 import RoleSelectionModal from './components/RoleSelectionModal';
-import CandidateRegisterModal from './components/CandidateRegisterModal';
-import EmployerRegisterModal from './components/EmployerRegisterModal';
+import RoleSelectionPage from './pages/RoleSelectionPage';
+import CandidateRegisterPage from './pages/CandidateRegisterPage';
+import EmployerRegisterPage from './pages/EmployerRegisterPage';
 import EmployersPage from './pages/EmployersPage';
 import JobListingsPage from './pages/JobListingsPage';
 import CompaniesPage from './pages/CompaniesPage';
@@ -66,6 +67,10 @@ import AIScoringDemoPage from './pages/AIScoringDemoPage';
 
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
+import MobileNavigation from './components/MobileNavigation';
+import SkillAssessment from './components/SkillAssessment';
+import InterviewScheduling from './components/InterviewScheduling';
+import FeaturesPage from './pages/FeaturesPage';
 
 
 
@@ -155,8 +160,8 @@ function App() {
     const employerPages = ['employers', 'candidate-search', 'hire-talent'];
     if (employerPages.includes(page)) {
       if (!user) {
-        // Not logged in, show role selection
-        setShowRoleSelectionModal(true);
+        // Not logged in, navigate to role selection page
+        setCurrentPage('role-selection');
         return;
       }
       if (user.type !== 'employer') {
@@ -175,8 +180,8 @@ function App() {
     const candidatePages = ['job-application', 'candidate-profile'];
     if (candidatePages.includes(page)) {
       if (!user) {
-        // Not logged in, show role selection
-        setShowRoleSelectionModal(true);
+        // Not logged in, navigate to role selection page
+        setCurrentPage('role-selection');
         return;
       }
       if (user.type !== 'candidate') {
@@ -213,18 +218,14 @@ function App() {
       return;
     }
     if (page === 'register') {
-      // Check if user is already logged in
-      if (user) {
-        // User is logged in, show notification instead of redirecting
-        setNotification({
-          type: 'info',
-          message: 'You are logged in as a candidate. Please logout and login as an employer to access hiring features.',
-          isVisible: true
-        });
-        return;
-      }
-      // User not logged in, show role selection
-      setShowRoleSelectionModal(true);
+      console.log('Register navigation called - navigating to role selection page');
+      // Navigate to role selection page
+      setCurrentPage('role-selection');
+      return;
+    }
+    if (page === 'role-selection') {
+      // Navigate to role selection page
+      setCurrentPage('role-selection');
       return;
     }
     if (page === 'employer-login') {
@@ -232,7 +233,7 @@ function App() {
       return;
     }
     
-    // Close any open modals when navigating
+    // Close any open modals when navigating to actual pages
     setShowLoginModal(false);
     setShowRegisterModal(false);
     setShowEmployerLoginModal(false);
@@ -290,11 +291,13 @@ function App() {
   };
 
   const handleRoleSelection = (role: 'candidate' | 'employer') => {
+    // This function is now handled by the RoleSelectionPage component
+    // Keep for backward compatibility with any remaining modal usage
     setShowRoleSelectionModal(false);
     if (role === 'candidate') {
-      setShowCandidateRegisterModal(true);
+      setCurrentPage('candidate-register');
     } else {
-      setShowEmployerRegisterModal(true);
+      setCurrentPage('employer-register');
     }
   };
 
@@ -479,7 +482,7 @@ function App() {
     return (
       <div className="min-h-screen bg-white">
         <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
-        <JobPostingPage onNavigate={handleNavigation} />
+        <JobPostingPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
       </div>
     );
   }
@@ -544,8 +547,8 @@ function App() {
 
   if (currentPage === 'settings') {
     if (!user) {
-      // Not logged in, redirect to login
-      setShowRoleSelectionModal(true);
+      // Not logged in, redirect to role selection page
+      setCurrentPage('role-selection');
       return null;
     }
     return (
@@ -559,8 +562,8 @@ function App() {
 
   if (currentPage === 'my-jobs') {
     if (!user) {
-      // Not logged in, redirect to login
-      setShowRoleSelectionModal(true);
+      // Not logged in, redirect to role selection page
+      setCurrentPage('role-selection');
       return null;
     }
     return (
@@ -573,7 +576,7 @@ function App() {
 
   if (currentPage === 'my-applications') {
     if (!user) {
-      setShowRoleSelectionModal(true);
+      setCurrentPage('role-selection');
       return null;
     }
     return <MyApplicationsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
@@ -648,12 +651,50 @@ function App() {
     );
   }
 
+  if (currentPage === 'features') {
+    return <FeaturesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'skill-assessments') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <SkillAssessment />
+        <Footer onNavigate={handleNavigation} />
+        <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'interviews') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <InterviewScheduling />
+        <Footer onNavigate={handleNavigation} />
+        <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
+      </div>
+    );
+  }
+
   if (currentPage === 'login') {
     return <LoginPage onNavigate={handleNavigation} onLogin={handleLogin} />;
   }
 
   if (currentPage === 'employer-login') {
     return <EmployerLoginPage onNavigate={handleNavigation} onLogin={handleLogin} onShowNotification={(notif) => setNotification({...notif, isVisible: true})} />;
+  }
+
+  if (currentPage === 'candidate-register') {
+    return <CandidateRegisterPage onNavigate={handleNavigation} onLogin={handleLogin} />;
+  }
+
+  if (currentPage === 'role-selection') {
+    return <RoleSelectionPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'employer-register') {
+    return <EmployerRegisterPage onNavigate={handleNavigation} onLogin={handleLogin} />;
   }
 
   return (
@@ -674,6 +715,7 @@ function App() {
         <CallToAction onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       <ChatWidget />
+      <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
       
       {/* Modals */}
       <LoginModal 
@@ -698,18 +740,6 @@ function App() {
         isOpen={showRoleSelectionModal} 
         onClose={closeModals} 
         onSelectRole={handleRoleSelection} 
-      />
-      <CandidateRegisterModal 
-        isOpen={showCandidateRegisterModal} 
-        onClose={closeModals} 
-        onNavigate={handleNavigation}
-        onLogin={handleLogin}
-      />
-      <EmployerRegisterModal 
-        isOpen={showEmployerRegisterModal} 
-        onClose={closeModals} 
-        onNavigate={handleNavigation}
-        onLogin={handleLogin}
       />
       </div>
     </>

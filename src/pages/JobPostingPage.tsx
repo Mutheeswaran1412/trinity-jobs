@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Notification from '../components/Notification';
 import mistralAIService from '../services/mistralAIService';
 import CompanyAutoSuggest from '../components/CompanyAutoSuggest';
-import { getSafeCompanyLogo } from '../utils/logoUtils';
 import { API_ENDPOINTS } from '../config/constants';
 
 
@@ -89,14 +88,35 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
   const [jobTitleSuggestions, setJobTitleSuggestions] = useState<string[]>([]);
   const [skillSuggestions, setSkillSuggestions] = useState<string[]>([]);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [countries, setCountries] = useState<string[]>([]);
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false);
   const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
+  const [countrySuggestions, setCountrySuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isLoadingJobTitles, setIsLoadingJobTitles] = useState(false);
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const [skillInput, setSkillInput] = useState('');
+
+  // Load countries on component mount
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        console.log('Fetching countries...');
+        const response = await fetch('http://localhost:5000/api/countries');
+        const data = await response.json();
+        console.log('Countries data:', data);
+        setCountries(data.countries || []);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        // Fallback to basic countries if API fails
+        setCountries(['India', 'United States', 'United Kingdom', 'Canada', 'Australia']);
+      }
+    };
+    fetchCountries();
+  }, []);
 
   const updateJobData = (field: keyof JobData, value: any) => {
     setJobData(prev => ({ ...prev, [field]: value }));
@@ -165,12 +185,12 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       setIsLoadingLocations(true);
       
       try {
-        const response = await fetch(`${API_ENDPOINTS.JOBS.replace('/jobs', '/suggest')}?q=${encodeURIComponent(value)}&type=location`);
+        const response = await fetch(`http://localhost:5000/api/locations/search/${encodeURIComponent(value)}`);
         const data = await response.json();
         console.log('Location API response:', data);
         
-        if (data.suggestions && data.suggestions.length > 0) {
-          setLocationSuggestions(data.suggestions);
+        if (data.locations && data.locations.length > 0) {
+          setLocationSuggestions(data.locations);
           setShowLocationSuggestions(true);
         } else {
           setShowLocationSuggestions(false);
@@ -187,23 +207,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     }
   };
 
-  const getFallbackLocations = (input: string) => {
-    const key = input.toLowerCase();
-    const fallbacks: { [key: string]: string[] } = {
-      'ch': ['Chennai', 'Chicago', 'Charlotte', 'Chandigarh', 'Charleston', 'Chester', 'Christchurch', 'Chengdu'],
-      'ban': ['Bangalore', 'Bangkok', 'Bengaluru', 'Barcelona', 'Baton Rouge', 'Bandung', 'Bangor', 'Banjul'],
-      'new': ['New York', 'New Delhi', 'Newark', 'Newcastle', 'New Orleans', 'Newport', 'Newton', 'New Haven'],
-      'mum': ['Mumbai', 'Munich', 'Montreal', 'Melbourne', 'Murfreesboro', 'Muscat', 'Multan', 'Mysore'],
-      'remote': ['Remote', 'Work from Home', 'Hybrid', 'Telecommute', 'Virtual', 'Distributed', 'Online', 'Anywhere']
-    };
-    
-    for (const [prefix, suggestions] of Object.entries(fallbacks)) {
-      if (key.startsWith(prefix) || prefix.startsWith(key)) {
-        return suggestions;
-      }
-    }
-    return ['Remote', 'New York', 'London', 'Bangalore', 'Chennai', 'Mumbai', 'Singapore', 'Dubai'];
-  };
+
 
   // AI-powered skill suggestions
   const handleSkillInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,6 +356,27 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     setJobTitleSuggestions([]);
   };
 
+  // Handle country input change with suggestions
+  const handleCountryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    updateJobData('country', value);
+    
+    if (value.length >= 1) {
+      const filtered = countries.filter(country => 
+        country.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8);
+      setCountrySuggestions(filtered);
+      setShowCountrySuggestions(filtered.length > 0);
+    } else {
+      setShowCountrySuggestions(false);
+    }
+  };
+
+  const selectCountry = (country: string) => {
+    updateJobData('country', country);
+    setShowCountrySuggestions(false);
+  };
+
   const selectLocation = (location: string) => {
     updateJobData('jobLocation', location);
     setShowLocationSuggestions(false);
@@ -385,9 +410,18 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
 
   const renderStep1 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
-        <button onClick={() => onNavigate('employer-dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
+      <div className="text-center mb-8">
+        <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 p-2">
+          <img 
+            src="/images/trinity-logo.svg" 
+            alt="Trinity Technology" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
+          <button onClick={() => onNavigate('employer-dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
+        </div>
       </div>
       
       <div className="space-y-8">
@@ -446,15 +480,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             onSelect={(company) => {
               console.log('Selected company:', company);
               updateJobData('companyName', company.name);
-              
-              // Ensure we have a logo URL
-              let logoUrl = company.logo;
-              if (!logoUrl) {
-                // Use the logoUtils to get a safe logo
-                logoUrl = getSafeCompanyLogo(company.name);
-              }
-              
-              updateJobData('companyLogo', logoUrl || '');
+              updateJobData('companyLogo', company.logo || '');
               updateJobData('companyId', company.id);
             }}
           />
@@ -512,22 +538,31 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           </select>
         </div>
         
-        <div>
+        <div className="relative">
           <label className="block text-gray-700 font-medium mb-3">Country *</label>
-          <select
+          <input
+            type="text"
             value={jobData.country}
-            onChange={(e) => updateJobData('country', e.target.value)}
+            onChange={handleCountryChange}
+            onFocus={() => jobData.country.length >= 1 && setShowCountrySuggestions(true)}
+            onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 200)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select country</option>
-            <option value="United States">United States</option>
-            <option value="India">India</option>
-            <option value="United Kingdom">United Kingdom</option>
-            <option value="Canada">Canada</option>
-            <option value="Australia">Australia</option>
-            <option value="Germany">Germany</option>
-            <option value="Singapore">Singapore</option>
-          </select>
+            placeholder="e.g. India, United States"
+          />
+          {showCountrySuggestions && countrySuggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {countrySuggestions.map((country, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onMouseDown={() => selectCountry(country)}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                >
+                  {country}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         
         <div>
@@ -1036,7 +1071,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Job title</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">{jobData.jobTitle || 'Senior Software Engineer'}</span>
+                <span className="text-gray-800">{jobData.jobTitle}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1044,7 +1079,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Company for this job</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">{jobData.companyName || 'ZyncJobs'}</span>
+                <span className="text-gray-800">{jobData.companyName}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1061,8 +1096,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
               <span className="text-gray-600">Country and language</span>
               <div className="flex items-center space-x-2">
                 <div>
-                  <div className="text-gray-800">United States</div>
-                  <div className="text-gray-800">English</div>
+                  <div className="text-gray-800">{jobData.country}</div>
+                  <div className="text-gray-800">{jobData.language}</div>
                 </div>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
@@ -1071,7 +1106,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Location</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">{jobData.jobLocation || 'Remote'}</span>
+                <span className="text-gray-800">{jobData.jobLocation}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1079,7 +1114,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Job type</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">{jobData.jobType.join(', ') || 'Full-time'}</span>
+                <span className="text-gray-800">{jobData.jobType.join(', ')}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1095,7 +1130,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Benefits</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">{jobData.benefits.join(', ') || 'Visa sponsorship'}</span>
+                <span className="text-gray-800">{jobData.benefits.join(', ')}</span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1106,7 +1141,11 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
                 <div>
                   <div className="font-medium text-gray-800 mb-2">Overview</div>
                   <p className="text-gray-600 text-sm">
-                    We are seeking a highly skilled Senior Software Engineer to join our dynamic development team. This role offers an exciting opportunity to lead innovative
+                    {jobData.jobDescription ? jobData.jobDescription.substring(0, 150) + '...' : (
+                      <span className="text-blue-600 cursor-pointer" onClick={() => generateJobDescription(jobData.jobTitle)}>
+                        Click to generate description with AI 🤖
+                      </span>
+                    )}
                   </p>
                 </div>
                 <button className="text-blue-600 mt-1 hover:text-blue-700">✏️</button>
@@ -1128,34 +1167,52 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           onClick={handleSubmit}
           className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700"
         >
-          Post Job (Auto-assign to mutheeswaran124@gmail.com)
+          Post Job
         </button>
       </div>
     </div>
   );
 
   const handleSubmit = async () => {
+    // Check if user is logged in
+    if (!user || !user.email) {
+      setNotification({
+        type: 'error',
+        message: 'You must be logged in to post a job',
+        isVisible: true
+      });
+      return;
+    }
+
     // Get proper company logo
-    const logoUrl = getSafeCompanyLogo(jobData.companyName || 'ZyncJobs');
+    const logoUrl = jobData.companyLogo || '/images/trinity-logo.svg';
     
     const jobPostData = {
       jobTitle: jobData.jobTitle,
-      company: jobData.companyName || 'ZyncJobs',
+      company: user?.companyName || jobData.companyName || 'Your Company',
       companyLogo: logoUrl,
       location: jobData.jobLocation,
       jobType: jobData.jobType[0] || 'Full-time',
       description: jobData.jobDescription,
       requirements: jobData.skills,
       skills: jobData.skills,
+      experienceRange: jobData.experienceRange,
+      experience: jobData.experienceRange,
       salary: {
         min: parseFloat(jobData.minSalary.replace(/,/g, '')) || 0,
         max: parseFloat(jobData.maxSalary.replace(/,/g, '')) || 0,
         currency: 'USD',
         period: jobData.payRate === 'per year' ? 'yearly' : jobData.payRate === 'per month' ? 'monthly' : 'hourly'
-      }
+      },
+      benefits: jobData.benefits,
+      // Use the currently logged-in user's email
+      postedBy: user.email,
+      employerEmail: user.email,
+      employerName: user.name,
+      employerCompany: user?.companyName || jobData.companyName || 'Your Company'
     };
     
-    console.log('Posting job automatically to mutheeswaran124@gmail.com:', jobPostData);
+    console.log('Posting job for user:', user.email, jobPostData);
     
     try {
       const response = await fetch(API_ENDPOINTS.JOBS, {
@@ -1170,10 +1227,13 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         const result = await response.json();
         setNotification({
           type: 'success',
-          message: 'Job posted successfully and added to database! 🎉',
+          message: `Job posted successfully by ${user.email}! 🎉`,
           isVisible: true
         });
-        console.log('Job Posted and Auto-assigned:', result);
+        console.log('Job Posted by:', user.email, result);
+        
+        // Trigger event to refresh latest jobs
+        window.dispatchEvent(new CustomEvent('jobPosted', { detail: result }));
         
         // Clear the form
         setJobData({

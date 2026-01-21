@@ -15,14 +15,19 @@ import jobRoutes from './routes/jobs.js';
 import userRoutes from './routes/users.js';
 import usersGetRoutes from './routes/users-get.js';
 import applicationRoutes from './routes/applications.js';
+import jobAlertRoutes from './routes/jobAlerts.js';
 import uploadRoutes from './routes/upload.js';
 import moderationRoutes from './routes/moderation.js';
 import resumeBasicRoutes from './routes/resumeBasic.js';
 import resumeRoutes from './routes/resume.js';
+import resumeAttachRoutes from './routes/resumeAttach.js';
 import resumeModerationRoutes from './routes/resumeModeration.js';
+import analyticsRoutes from './routes/analytics.js';
 import adminJobsRoutes from './routes/adminJobs.js';
 import companyRoutes from './routes/companies.js';
 import companySearchRoutes from './routes/companySearch.js';
+import locationsRoutes from './routes/locations.js';
+import countriesRoutes from './routes/countries.js';
 import pdfRoutes from './routes/pdf.js';
 import resumeVersionRoutes from './routes/resumeVersions.js';
 import aiSuggestionsRoutes from './routes/aiSuggestions.js';
@@ -44,6 +49,14 @@ import autocompleteRoutes from './routes/autocomplete.js';
 import companyAutocompleteRoutes from './routes/companyAutocomplete.js';
 import linkedinParserRoutes from './routes/linkedinParser.js';
 import dashboardRoutes from './routes/dashboard.js';
+import testRoutes from './routes/testRoutes.js';
+import testEmailRoutes from './routes/testEmail.js';
+import reminderRoutes from './routes/reminders.js';
+import headlineAnalyticsRoutes from './routes/headlineAnalytics.js';
+import skillAssessmentRoutes from './routes/skillAssessments.js';
+import interviewRoutes from './routes/interviews.js';
+import advancedSearchRoutes from './routes/advancedSearch.js';
+import reminderScheduler from './services/reminderScheduler.js';
 import Notification from './models/Notification.js';
 import Message from './models/Message.js';
 import { loadInitialData } from './scripts/loadInitialData.js';
@@ -179,14 +192,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/jobs', jobRoutes);
-app.use('/api/users/:id', usersGetRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/users/:id', usersGetRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/job-alerts', jobAlertRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/moderation', moderationRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/company', companySearchRoutes);
+app.use('/api/locations', locationsRoutes);
+app.use('/api/countries', countriesRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/resume-versions', resumeVersionRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);
@@ -204,6 +221,7 @@ app.use('/api/admin/system', adminSystemRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/resume', resumeBasicRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/resume', resumeAttachRoutes);
 app.use('/api/resume', resumeModerationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
@@ -212,6 +230,13 @@ app.use('/api/autocomplete', autocompleteRoutes);
 app.use('/api/companies', companyAutocompleteRoutes);
 app.use('/api', linkedinParserRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/test', testRoutes);
+app.use('/api/test-email', testEmailRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/search', advancedSearchRoutes);
+app.use('/api/headline', headlineAnalyticsRoutes);
+app.use('/api/skill-assessments', skillAssessmentRoutes);
+app.use('/api/interviews', interviewRoutes);
 
 // Resume parser with AI
 app.post('/api/resume-parser/parse', async (req, res) => {
@@ -620,6 +645,49 @@ app.get('/api/health', (req, res) => {
 // Test resume parser route
 app.get('/api/resume-parser/test', (req, res) => {
   res.json({ message: 'Resume parser route is working!', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/analytics/profile/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { userType } = req.query;
+
+    if (userType === 'employer') {
+      const Job = (await import('./models/Job.js')).default;
+      const Application = (await import('./models/Application.js')).default;
+      
+      const jobsPosted = await Job.countDocuments({ 
+        employerEmail: email,
+        isActive: true 
+      });
+
+      const applicationsReceived = await Application.countDocuments({ 
+        employerEmail: email 
+      });
+
+      res.json({
+        jobsPosted,
+        applicationsReceived
+      });
+    } else {
+      const Application = (await import('./models/Application.js')).default;
+      
+      const applicationsSent = await Application.countDocuments({ 
+        candidateEmail: email 
+      });
+
+      const profileViews = Math.floor(applicationsSent * 2.5);
+      const recruiterActions = Math.floor(applicationsSent * 1.2);
+
+      res.json({
+        searchAppearances: profileViews,
+        recruiterActions: recruiterActions
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/test', async (req, res) => {

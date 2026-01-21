@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwt.js';
+import { sendWelcomeEmail } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -65,9 +66,11 @@ router.post('/register', registerLimiter, [
 
     // Send welcome email
     try {
-      await sendWelcomeEmail(email, userName, userType || 'candidate');
+      console.log('🚀 Attempting to send welcome email...');
+      const emailResult = await sendWelcomeEmail(email, userName, userType || 'candidate');
+      console.log('📧 Welcome email result:', emailResult);
     } catch (emailError) {
-      console.log('Welcome email failed:', emailError.message);
+      console.error('❌ Welcome email failed:', emailError.message);
     }
 
     // Generate tokens
@@ -99,100 +102,7 @@ router.post('/register', registerLimiter, [
   }
 });
 
-// Welcome email function
-async function sendWelcomeEmail(email, name, userType) {
-  try {
-    const nodemailer = await import('nodemailer');
-    
-    console.log('📧 Sending welcome email to:', email);
-    console.log('SMTP Config:', {
-      host: process.env.SMTP_SERVER,
-      port: process.env.SMTP_PORT,
-      user: process.env.SMTP_EMAIL
-    });
-    
-    const transporter = nodemailer.default.createTransport({
-      host: process.env.SMTP_SERVER,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
 
-    const subject = 'Welcome to ZyncJobs! 🎉';
-    const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background-color: #6366f1; padding: 40px 20px; text-align: center;">
-        <h1 style="color: white; margin: 0;">Welcome to ZyncJobs!</h1>
-      </div>
-      
-      <div style="padding: 40px 30px; background-color: #f9f9f9;">
-        <h2 style="color: #333;">Hello ${name || 'there'}! 👋</h2>
-        
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Thank you for joining ZyncJobs! We're excited to have you as part of our community.
-        </p>
-        
-        ${userType === 'employer' ? `
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          As an employer, you can now:
-        </p>
-        <ul style="color: #333; font-size: 16px; line-height: 1.8;">
-          <li>Post unlimited job openings</li>
-          <li>Search and connect with top candidates</li>
-          <li>Manage applications efficiently</li>
-          <li>Build your company profile</li>
-        </ul>
-        ` : `
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          As a job seeker, you can now:
-        </p>
-        <ul style="color: #333; font-size: 16px; line-height: 1.8;">
-          <li>Browse thousands of job opportunities</li>
-          <li>Apply to jobs with one click</li>
-          <li>Build your professional profile</li>
-          <li>Get AI-powered job recommendations</li>
-        </ul>
-        `}
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="http://localhost:5173" style="background-color: #6366f1; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Get Started
-          </a>
-        </div>
-        
-        <p style="color: #666; font-size: 14px;">
-          If you have any questions, feel free to reach out to our support team.
-        </p>
-      </div>
-      
-      <div style="background-color: #f1f1f1; padding: 20px; text-align: center;">
-        <p style="color: #666; margin: 0; font-size: 12px;">© 2025 ZyncJobs. All rights reserved.</p>
-      </div>
-    </div>
-  `;
-
-    const info = await transporter.sendMail({
-      from: `"ZyncJobs" <${process.env.SMTP_EMAIL}>`,
-      to: email,
-      subject,
-      html
-    });
-    
-    console.log('✅ Welcome email sent successfully to:', email);
-    console.log('Message ID:', info.messageId);
-    return true;
-  } catch (error) {
-    console.error('❌ Welcome email failed:', error.message);
-    console.error('Full error:', error);
-    return false;
-  }
-}
 
 // POST /api/users/login - Login user
 router.post('/login', loginLimiter, [

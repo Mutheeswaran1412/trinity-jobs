@@ -150,8 +150,12 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
 
         <div className="p-6">
           <div className="text-center mb-6">
-            <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Building className="w-6 h-6 text-green-600" />
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 p-2">
+              <img 
+                src="/images/trinity-tech-logo.svg" 
+                alt="Trinity Technology" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
             <p className="text-gray-600 text-sm">Join to find top talent</p>
@@ -186,7 +190,16 @@ const EmployerRegisterModal: React.FC<EmployerRegisterModalProps> = ({ isOpen, o
               />
               {companyLogo && (
                 <div className="mt-2 flex items-center space-x-2 text-xs text-green-600">
-                  <img src={companyLogo} alt="Company logo" className="w-6 h-6 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img 
+                    src={companyLogo} 
+                    alt="Company logo" 
+                    className="w-6 h-6 rounded object-cover" 
+                    onError={(e) => {
+                      console.log('Logo failed to load:', companyLogo);
+                      // Don't hide the element, just show a fallback
+                      (e.target as HTMLImageElement).src = '/images/trinity-tech-logo.svg';
+                    }} 
+                  />
                   <span>✓ Company verified</span>
                 </div>
               )}

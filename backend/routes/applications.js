@@ -20,7 +20,7 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl } = req.body;
+    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl, isQuickApply = false } = req.body;
 
     // Check for duplicate application
     const existingApplication = await Application.findOne({ jobId, candidateEmail });
@@ -34,7 +34,7 @@ router.post('/', [
       return res.status(404).json({ error: 'Job not found' });
     }
 
-    // Create application
+    // Create application with timeline
     const application = new Application({
       jobId: new mongoose.Types.ObjectId(jobId),
       candidateId: candidateId ? new mongoose.Types.ObjectId(candidateId) : null,
@@ -45,7 +45,14 @@ router.post('/', [
       employerEmail: job.employerEmail || '',
       coverLetter: coverLetter || '',
       resumeUrl: resumeUrl || '',
-      status: 'pending'
+      status: 'applied',
+      isQuickApply,
+      timeline: [{
+        status: 'applied',
+        date: new Date(),
+        note: isQuickApply ? 'Quick applied to position' : 'Applied to position',
+        updatedBy: candidateName
+      }]
     });
 
     await application.save();
@@ -57,7 +64,7 @@ router.post('/', [
           appliedJobs: {
             jobId: new mongoose.Types.ObjectId(jobId),
             appliedAt: new Date(),
-            status: 'pending'
+            status: 'applied'
           }
         }
       });
@@ -120,7 +127,7 @@ router.get('/job/:jobId', async (req, res) => {
 
 // PUT /api/applications/:id/status - Update application status
 router.put('/:id/status', [
-  body('status').isIn(['pending', 'reviewed', 'shortlisted', 'rejected', 'hired']).withMessage('Invalid status')
+  body('status').isIn(['applied', 'reviewed', 'shortlisted', 'hired', 'rejected']).withMessage('Invalid status')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -128,7 +135,7 @@ router.put('/:id/status', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { status } = req.body;
+    const { status, note, updatedBy } = req.body;
     const applicationId = req.params.id;
 
     const application = await Application.findById(applicationId).populate('jobId');
@@ -138,6 +145,15 @@ router.put('/:id/status', [
 
     const oldStatus = application.status;
     application.status = status;
+    
+    // Add to timeline
+    application.timeline.push({
+      status,
+      date: new Date(),
+      note: note || `Status updated to ${status}`,
+      updatedBy: updatedBy || 'System'
+    });
+    
     await application.save();
 
     // Update user's appliedJobs status
@@ -205,7 +221,7 @@ router.put('/:id', [
     }
 
     // Only allow editing if application is still pending
-    if (application.status !== 'pending') {
+    if (application.status !== 'applied') {
       return res.status(400).json({ error: 'Cannot edit application after it has been reviewed' });
     }
 
@@ -252,3 +268,96 @@ router.get('/', async (req, res) => {
 });
 
 export default router;
+
+// POST /api/applications/quick-apply - Quick apply to job
+router.post('/quick-apply', [
+  body('jobId').notEmpty().withMessage('Job ID is required'),
+  body('candidateId').notEmpty().withMessage('Candidate ID is required')
+], async (req, res) => {
+  try {
+    const { jobId, candidateId } = req.body;
+    
+    const candidate = await User.findById(candidateId);
+    const job = await Job.findById(jobId);
+    
+    if (!candidate || !job) {
+      return res.status(404).json({ error: 'Candidate or job not found' });
+    }
+
+    // Check for duplicate application
+    const existingApplication = await Application.findOne({ jobId, candidateEmail: candidate.email });
+    if (existingApplication) {
+      return res.status(400).json({ error: 'Already applied' });
+    }
+
+    const application = new Application({
+      jobId,
+      candidateId,
+      candidateName: candidate.name,
+      candidateEmail: candidate.email,
+      candidatePhone: candidate.phone || '',
+      employerId: job.employerId,
+      employerEmail: job.employerEmail,
+      resumeUrl: candidate.profile?.resume || '',
+      status: 'applied',
+      isQuickApply: true,
+      timeline: [{
+        status: 'applied',
+        date: new Date(),
+        note: 'Quick applied using saved profile',
+        updatedBy: candidate.name
+      }]
+    });
+
+    await application.save();
+    res.json({ message: 'Quick apply successful!', application });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/applications/:id/withdraw - Withdraw application
+router.put('/:id/withdraw', [
+  body('reason').notEmpty().withMessage('Withdrawal reason is required')
+], async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const application = await Application.findById(req.params.id);
+    
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    if (application.status === 'withdrawn') {
+      return res.status(400).json({ error: 'Application already withdrawn' });
+    }
+
+    application.status = 'withdrawn';
+    application.withdrawnAt = new Date();
+    application.withdrawalReason = reason;
+    application.timeline.push({
+      status: 'withdrawn',
+      date: new Date(),
+      note: `Application withdrawn: ${reason}`,
+      updatedBy: application.candidateName
+    });
+    
+    await application.save();
+    res.json({ message: 'Application withdrawn successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/applications/:id/timeline - Get application timeline
+router.get('/:id/timeline', async (req, res) => {
+  try {
+    const application = await Application.findById(req.params.id).select('timeline');
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    res.json(application.timeline);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});

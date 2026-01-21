@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, ChevronDown, Info } from 'lucide-react';
+import { Camera, ChevronDown, Info, TrendingUp, Star } from 'lucide-react';
 import Notification from '../components/Notification';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import ResumeParserModal from '../components/ResumeParserModal';
 import ProfilePhotoEditor from '../components/ProfilePhotoEditor';
+import JobAlertsManager from '../components/JobAlertsManager';
+import LinksPortfolio from '../components/LinksPortfolio';
+import HeadlineOptimizer from '../components/HeadlineOptimizer';
+import ProfileHeadline from '../components/ProfileHeadline';
 
 interface CandidateDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -16,6 +20,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [completionPercentage, setCompletionPercentage] = useState(20);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -49,16 +55,19 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 localStorage.setItem('user', JSON.stringify(mergedUser));
                 calculateProfileCompletion(mergedUser);
                 fetchApplications(mergedUser.email);
+                fetchRecommendations(mergedUser.id || mergedUser._id);
               } else {
                 setUser(parsedUser);
                 calculateProfileCompletion(parsedUser);
                 fetchApplications(parsedUser.email);
+                fetchRecommendations(parsedUser.id || parsedUser._id);
               }
             } catch (err) {
               console.log('Backend fetch failed, using local data:', err);
               setUser(parsedUser);
               calculateProfileCompletion(parsedUser);
               fetchApplications(parsedUser.email);
+              fetchRecommendations(parsedUser.id || parsedUser._id);
             }
           } else {
             setUser(parsedUser);
@@ -88,6 +97,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
     };
     
     loadUserProfile();
+    fetchTrending();
   }, []);
 
   const fetchApplications = async (email: string) => {
@@ -108,6 +118,31 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       }
     } catch (error) {
       console.error('Dashboard: Error fetching applications:', error);
+    }
+  };
+
+  const fetchRecommendations = async (userId: string) => {
+    if (!userId) return;
+    try {
+      const response = await fetch(`http://localhost:5000/api/search/recommendations/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRecommendations(data.slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    }
+  };
+
+  const fetchTrending = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/search/trending?limit=5');
+      if (response.ok) {
+        const data = await response.json();
+        setTrending(data);
+      }
+    } catch (error) {
+      console.error('Error fetching trending jobs:', error);
     }
   };
 
@@ -208,7 +243,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
               Profile
             </button>
             <button 
-              onClick={() => setActiveTab('Applications')}
+              onClick={() => onNavigate('my-applications')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'Applications' 
                   ? 'border-red-500 text-gray-900' 
@@ -233,133 +268,71 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Applications Tab Content */}
-        {activeTab === 'Applications' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">📊 My Applications</h2>
-              <button
-                onClick={() => fetchApplications(user?.email)}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
-              >
-                Refresh
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{applications.length}</p>
-                  <p className="text-sm text-gray-600">Total Applied</p>
-                </div>
-              </div>
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{applications.filter(app => app.status === 'pending').length}</p>
-                  <p className="text-sm text-gray-600">Pending</p>
-                </div>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{applications.filter(app => app.status === 'shortlisted').length}</p>
-                  <p className="text-sm text-gray-600">Shortlisted</p>
-                </div>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">{applications.filter(app => app.status === 'hired').length}</p>
-                  <p className="text-sm text-gray-600">Hired</p>
-                </div>
-              </div>
-            </div>
-            
-            {applications.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No applications yet</h3>
-                <p className="text-gray-600 mb-4">Start applying to jobs to track your applications here</p>
-                <button
-                  onClick={() => onNavigate('job-listings')}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  Browse Jobs
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-4">Recent Applications</h3>
-                {applications.slice(0, 5).map((app: any) => (
-                  <div key={app._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{app.jobId?.jobTitle || 'Job Position'}</h4>
-                        <p className="text-sm text-gray-600">{app.jobId?.company || 'Company'}</p>
-                        <p className="text-xs text-gray-500 mt-1">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        app.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        app.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
-                        app.status === 'shortlisted' ? 'bg-green-100 text-green-800' :
-                        app.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {applications.length > 5 && (
-                  <button
-                    onClick={() => onNavigate('my-applications')}
-                    className="w-full text-center text-blue-600 hover:text-blue-700 font-medium py-2"
-                  >
-                    View All {applications.length} Applications →
-                  </button>
-                )}
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  onClick={() => onNavigate('job-listings')}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
-                >
-                  <div className="flex items-center">
-                    <svg className="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <div>
-                      <h4 className="font-medium">Apply to More Jobs</h4>
-                      <p className="text-sm text-gray-600">Browse and apply to new opportunities</p>
-                    </div>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={() => onNavigate('candidate-profile')}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
-                >
-                  <div className="flex items-center">
-                    <svg className="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <div>
-                      <h4 className="font-medium">Improve Profile</h4>
-                      <p className="text-sm text-gray-600">Complete your profile to get better matches</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Job Alerts Tab */}
+        {activeTab === 'Alerts' && (
+          <JobAlertsManager user={user} />
         )}
         
         {activeTab === 'Profile' && (
-        <>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Profile Content */}
+          <div className="lg:col-span-3">
+            {/* Recommendations Section */}
+            {recommendations.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                <div className="p-6 border-b">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                    Recommended for You
+                  </h2>
+                </div>
+                <div className="divide-y">
+                  {recommendations.map((job: any) => (
+                    <div key={job._id} className="p-6 hover:bg-gray-50 cursor-pointer" onClick={() => onNavigate(`job-detail/${job._id}`)}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-blue-600 hover:text-blue-800">
+                            {job.jobTitle}
+                          </h3>
+                          <p className="text-gray-600">{job.company}</p>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>{job.location}</span>
+                            <span>{job.jobType}</span>
+                            <span>{job.locationType}</span>
+                          </div>
+                          <p className="mt-2 text-gray-700 line-clamp-2">{job.description}</p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {job.skills?.slice(0, 3).map((skill: string) => (
+                              <span key={skill} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {job.salary?.max > 0 && (
+                            <p className="text-green-600 font-semibold">
+                              ${job.salary.min?.toLocaleString()} - ${job.salary.max?.toLocaleString()}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500 mt-1">
+                            {new Date(job.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t bg-gray-50">
+                  <button 
+                    onClick={() => onNavigate('job-listings')}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    View All Jobs →
+                  </button>
+                </div>
+              </div>
+            )}
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
           {/* Banner Section */}
@@ -494,7 +467,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 {user?.name || 'New User'}
               </h1>
               {user?.title || user?.jobTitle ? (
-                <p className="text-lg text-gray-700 mb-2">{user.title || user.jobTitle}</p>
+                <ProfileHeadline 
+                  userId={user?.id || user?._id || 'demo'} 
+                  fallbackHeadline={user.title || user.jobTitle}
+                />
               ) : (
                 <button 
                   onClick={() => onNavigate('candidate-profile')}
@@ -1006,7 +982,93 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             )}
           </div>
         </div>
-        </>
+        
+        {/* Portfolio Links Section */}
+        <LinksPortfolio 
+          user={user} 
+          onUpdateUser={(updatedUser) => {
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }} 
+        />
+        
+        {/* Headline Optimizer Section */}
+        <HeadlineOptimizer 
+          user={user} 
+          onUpdateUser={(updatedUser) => {
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }} 
+        />
+          </div>
+          
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Trending Jobs */}
+            {trending.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-orange-500" />
+                  Trending Jobs
+                </h3>
+                <div className="space-y-3">
+                  {trending.map((job: any) => (
+                    <div key={job._id} className="border-l-2 border-orange-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded" onClick={() => onNavigate(`job-detail/${job._id}`)}>
+                      <h4 className="font-medium text-sm">{job.jobTitle}</h4>
+                      <p className="text-xs text-gray-600">{job.company}</p>
+                      <p className="text-xs text-gray-500">{job.views} views</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <button 
+                    onClick={() => onNavigate('job-listings')}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    View All Trending →
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => onNavigate('job-listings')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  Browse All Jobs
+                </button>
+                <button
+                  onClick={() => onNavigate('skill-assessments')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  Take Skill Assessment
+                </button>
+                <button
+                  onClick={() => onNavigate('interviews')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  Schedule Interview
+                </button>
+                <button
+                  onClick={() => onNavigate('my-applications')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  My Applications
+                </button>
+                <button
+                  onClick={() => onNavigate('candidate-profile')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  Update Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         )}
       </div>
       
@@ -1020,30 +1082,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           setNotification({
             type: 'success',
             message: 'Resume uploaded and analyzed successfully!',
-            isVisible: true
-          });
-        }}
-        onProfileUpdate={(profileData) => {
-          const updatedUser = {
-            ...user,
-            // Only update fields that have actual data
-            ...(profileData.name && { name: profileData.name }),
-            ...(profileData.email && { email: profileData.email }),
-            ...(profileData.phone && { phone: profileData.phone }),
-            ...(profileData.location && { location: profileData.location }),
-            ...(profileData.title && { title: profileData.title }),
-            ...(profileData.experience > 0 && { yearsExperience: profileData.experience }),
-            ...(profileData.skills.length > 0 && { skills: profileData.skills }),
-            ...(profileData.education && { education: profileData.education })
-          };
-          
-          setUser(updatedUser);
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          calculateProfileCompletion(updatedUser);
-          
-          setNotification({
-            type: 'success',
-            message: 'Profile auto-filled from resume!',
             isVisible: true
           });
         }}
@@ -1094,6 +1132,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
               <button 
                 onClick={() => setShowVisibilityModal(false)}
                 className="text-gray-400 hover:text-gray-600"
+                title="Close modal"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

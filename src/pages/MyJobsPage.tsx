@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Briefcase, MapPin, DollarSign, Bookmark, Clock, Search, Filter } from 'lucide-react';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import { getCompanyLogo } from '../utils/logoUtils';
 
 interface MyJobsPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -58,15 +59,13 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const fetchPostedJobs = async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const response = await fetch('http://localhost:5000/api/jobs');
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
-          job.employerId === userData.id || 
-          job.employerEmail === userData.email ||
-          job.company?.toLowerCase() === userData.companyName?.toLowerCase()
+          job.postedBy === user?.email
         );
+        console.log('Filtering jobs for user:', user?.email, 'Found:', employerJobs.length);
         setPostedJobs(employerJobs);
       }
     } catch (error) {
@@ -88,8 +87,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
   };
 
   const fetchAppliedJobs = async () => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const userEmail = user?.email || userData?.email;
+    const userEmail = user?.email;
     
     if (!userEmail) return;
     
@@ -106,8 +104,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const fetchEmployerApplications = async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Fetching applications for employer:', userData.id, userData.email);
+      console.log('Fetching applications for employer:', user?.email);
       
       const response = await fetch('http://localhost:5000/api/applications');
       if (response.ok) {
@@ -118,10 +115,8 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
         console.log('All applications:', allApplications.length);
         
         const employerApps = allApplications.filter((app: any) => {
-          const match = app.employerId === userData.id || 
-                       app.employerEmail === userData.email ||
-                       app.jobId?.company?.toLowerCase() === userData.companyName?.toLowerCase();
-          console.log('Application match:', match, app.employerId, app.employerEmail, app.jobId?.company);
+          const match = app.employerEmail === user?.email;
+          console.log('Application match:', match, app.employerEmail);
           return match;
         });
         
@@ -152,6 +147,28 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       }
     } catch (error) {
       console.error('Error updating application status:', error);
+    }
+  };
+
+  const deleteJob = async (jobId: string) => {
+    if (!confirm('Are you sure you want to delete this job posting?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setPostedJobs(prev => prev.filter(job => (job._id || job.id) !== jobId));
+        alert('Job deleted successfully!');
+      } else {
+        alert('Failed to delete job. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      alert('Error deleting job. Please try again.');
     }
   };
 
@@ -189,29 +206,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     setFilteredJobs(filtered);
   };
 
-  const getCompanyLogo = (job: any) => {
-    if (job.companyLogo && job.companyLogo.trim() !== '' && 
-        !job.companyLogo.includes('clearbit.com') && 
-        !job.companyLogo.includes('gstatic.com') &&
-        !job.companyLogo.includes('trinitetech.com')) {
-      return job.companyLogo;
-    }
-    
-    if (user?.companyLogo && user.companyLogo.trim() !== '' && 
-        !user.companyLogo.includes('clearbit.com') &&
-        !user.companyLogo.includes('gstatic.com') &&
-        (job.company?.toLowerCase() === user.companyName?.toLowerCase() || 
-         job.employerEmail === user.email)) {
-      return user.companyLogo;
-    }
-    
-    return '';
-  };
 
-  const handleLogoError = (e: any, company: string) => {
-    const img = e.target as HTMLImageElement;
-    img.style.display = 'none';
-  };
 
   const handleSaveJob = (job: any) => {
     console.log('Save job:', job);
@@ -383,12 +378,15 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                         <div className="flex-1">
                           <div className="flex items-start mb-4">
                             <div className="flex-shrink-0 w-12 h-12 mr-4">
-                              <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
+                              <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center p-2">
                                 <img 
-                                  src={getCompanyLogo(job)}
+                                  src={getCompanyLogo(job.company)}
                                   alt={`${job.company} logo`}
-                                  className="w-10 h-10 object-contain"
-                                  onError={(e) => handleLogoError(e, job.company)}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
                                 />
                               </div>
                             </div>
@@ -435,6 +433,12 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                           >
                             View Job
                           </button>
+                          <button 
+                            onClick={() => deleteJob(job._id || job.id)}
+                            className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors min-w-[120px]"
+                          >
+                            Delete Job
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -452,10 +456,13 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex-shrink-0 w-12 h-12 mr-4">
                               <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
                                 <img 
-                                  src={getCompanyLogo(job)}
+                                  src={getCompanyLogo(job.company)}
                                   alt={`${job.company} logo`}
                                   className="w-10 h-10 object-contain"
-                                  onError={(e) => handleLogoError(e, job.company)}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
                                 />
                               </div>
                             </div>
@@ -519,10 +526,13 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex-shrink-0 w-12 h-12 mr-4">
                               <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
                                 <img 
-                                  src={getCompanyLogo(job)}
+                                  src={getCompanyLogo(job.company)}
                                   alt={`${job.company} logo`}
                                   className="w-10 h-10 object-contain"
-                                  onError={(e) => handleLogoError(e, job.company)}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
                                 />
                               </div>
                             </div>
@@ -530,7 +540,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex-1">
                               <div className="flex items-start justify-between mb-2">
                                 <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                                  {decodeHtmlEntities(job.title)}
+                                  {job.jobTitle || job.title || 'Job Position'}
                                 </h3>
                                 <span className="text-sm text-gray-500 ml-4">
                                   {formatDate(job.createdAt)}
@@ -686,10 +696,13 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex-shrink-0 w-12 h-12 mr-4">
                               <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
                                 <img 
-                                  src={getCompanyLogo(application.jobId || {})}
+                                  src={getCompanyLogo(application.jobId?.company || '')}
                                   alt={`${application.jobId?.company || 'Company'} logo`}
                                   className="w-10 h-10 object-contain"
-                                  onError={(e) => handleLogoError(e, application.jobId?.company || 'Company')}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
                                 />
                               </div>
                             </div>
@@ -697,7 +710,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                             <div className="flex-1">
                               <div className="flex items-start justify-between mb-2">
                                 <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                                  {application.jobId?.jobTitle || application.jobId?.title || 'Job Position'}
+                                  {application.jobTitle || application.jobId?.jobTitle || application.jobId?.title || 'Job Position'}
                                 </h3>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                   application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

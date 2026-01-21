@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/constants';
-import { getSafeCompanyLogo } from '../utils/logoUtils';
+import { getCompanyLogo } from '../utils/logoUtils';
 
 interface LatestJobsProps {
   onNavigate?: (page: string, data?: any) => void;
+  user?: any;
 }
 
 interface Job {
@@ -14,6 +15,7 @@ interface Job {
   location: string;
   jobType: string;
   description: string;
+  postedBy?: string;
   salary: {
     min: number;
     max: number;
@@ -23,20 +25,56 @@ interface Job {
   createdAt: string;
 }
 
-const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
+const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const deleteJob = async (jobId: string) => {
+    if (!confirm('Are you sure you want to delete this job posting?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_ENDPOINTS.JOBS}/${jobId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setJobs(prev => prev.filter(job => job._id !== jobId));
+        alert('Job deleted successfully!');
+      } else {
+        alert('Failed to delete job. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      alert('Error deleting job. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchLatestJobs();
+    
+    // Listen for job posting events to refresh the list
+    const handleJobPosted = () => {
+      console.log('New job posted, refreshing latest jobs...');
+      fetchLatestJobs();
+    };
+    
+    window.addEventListener('jobPosted', handleJobPosted);
+    
+    return () => {
+      window.removeEventListener('jobPosted', handleJobPosted);
+    };
   }, []);
 
   const fetchLatestJobs = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.JOBS}?limit=6`);
+      const response = await fetch(`${API_ENDPOINTS.JOBS}?limit=6&sort=newest`);
       if (response.ok) {
         const data = await response.json();
-        setJobs(data);
+        // Ensure jobs are sorted by creation date (newest first)
+        const sortedJobs = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setJobs(sortedJobs);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -55,12 +93,17 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInHours < 1) return 'Just now';
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
+    
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
+    
     return 'Recently';
   };
 
@@ -93,30 +136,19 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
               {jobs.map((job) => {
-                const logoUrl = getSafeCompanyLogo(job.company, job.companyLogo);
-                
                 return (
                   <div key={job._id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center mb-4">
-                      <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mr-4 border border-gray-200">
-                        {logoUrl ? (
-                          <img 
-                            src={logoUrl} 
-                            alt={`${job.company} logo`}
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              const container = target.parentElement;
-                              if (container) {
-                                container.innerHTML = `<div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">${job.company.charAt(0)}</div>`;
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
-                            {job.company.charAt(0)}
-                          </div>
-                        )}
+                      <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center p-2 mr-4">
+                        <img 
+                          src={getCompanyLogo(job.company)} 
+                          alt={`${job.company} logo`}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
                       </div>
                       <div>
                         <h5 className="font-semibold text-gray-900">{job.company}, {job.location}</h5>
@@ -139,6 +171,14 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate }) => {
                         >
                           View Details
                         </button>
+                        {user?.email === job.postedBy && (
+                          <button
+                            onClick={() => deleteJob(job._id)}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="font-semibold text-gray-900 text-sm">

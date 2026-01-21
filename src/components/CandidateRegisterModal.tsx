@@ -64,8 +64,8 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       const response = await authAPI.register({
         email,
         password,
-        fullName,
-        userType: 'jobseeker'
+        name: fullName,
+        userType: 'candidate'
       });
       
       setSuccess('Account created successfully!');
@@ -74,7 +74,6 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       const userData = {
         id: response.id,
         name: fullName,
-        fullName: fullName, // Keep both for compatibility
         email: email,
         userType: 'candidate'
       };

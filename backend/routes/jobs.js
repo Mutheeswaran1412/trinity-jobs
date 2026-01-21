@@ -3,8 +3,36 @@ import { body, validationResult } from 'express-validator';
 import Job from '../models/Job.js';
 import { requireRole, requirePermission, PERMISSIONS } from '../middleware/roleAuth.js';
 import { mistralDetector } from '../utils/mistralJobDetector.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load companies data for logo lookup
+let companiesData = [];
+try {
+  const companiesPath = path.join(__dirname, '../data/companies.json');
+  const rawData = fs.readFileSync(companiesPath, 'utf8');
+  companiesData = JSON.parse(rawData);
+} catch (error) {
+  console.error('Error loading companies data:', error);
+}
+
+// Helper function to get company logo
+function getCompanyLogo(companyName) {
+  if (!companyName) return null;
+  
+  const company = companiesData.find(c => 
+    c.name.toLowerCase().trim() === companyName.toLowerCase().trim() ||
+    c.name.toLowerCase().includes(companyName.toLowerCase()) ||
+    companyName.toLowerCase().includes(c.name.toLowerCase())
+  );
+  
+  return company ? company.logo : null;
+}
 
 // GET /api/jobs - Get all jobs
 router.get('/', async (req, res) => {
@@ -24,9 +52,15 @@ router.get('/', async (req, res) => {
       .skip((page - 1) * limit)
       .lean();
 
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+
     const total = await Job.countDocuments(query);
 
-    res.json(jobs);
+    res.json(jobsWithLogos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -39,13 +73,20 @@ router.get('/:id', async (req, res) => {
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
     }
-    res.json(job);
+    
+    // Add company logo
+    const jobWithLogo = {
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    };
+    
+    res.json(jobWithLogo);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/jobs - Create new job (Auto-assign to mutheeswaran124@gmail.com)
+// POST /api/jobs - Create new job
 router.post('/', [
   body('jobTitle').notEmpty().withMessage('Job title is required'),
   body('company').notEmpty().withMessage('Company is required'),
@@ -59,12 +100,23 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // Get employer info from request body or headers
+    const employerEmail = req.body.employerEmail || req.headers['x-employer-email'];
+    const employerName = req.body.employerName || req.headers['x-employer-name'];
+    const employerCompany = req.body.employerCompany || req.body.company;
+
+    if (!employerEmail) {
+      return res.status(400).json({ error: 'Employer email is required' });
+    }
+
     const jobData = {
       ...req.body,
-      status: 'approved', // Auto-approve all jobs
-      employerEmail: 'mutheeswaran124@gmail.com', // Always assign to this employer
-      postedBy: 'Mutheeswaran',
-      employerCompany: 'Trinity Technology',
+      status: 'approved',
+      employerEmail: employerEmail,
+      postedBy: employerEmail,
+      employerCompany: employerCompany,
+      experience: req.body.experienceRange || req.body.experience,
+      experienceLevel: req.body.experienceRange || req.body.experience,
       isActive: true
     };
     
@@ -79,7 +131,7 @@ router.post('/', [
     };
     
     await job.save();
-    console.log('Job automatically created and assigned to mutheeswaran124@gmail.com:', job._id);
+    console.log('Job created for employer:', employerEmail, 'Job ID:', job._id);
     res.status(201).json(job);
   } catch (error) {
     console.error('Error creating job:', error);
@@ -115,7 +167,14 @@ router.get('/search/query', async (req, res) => {
     }
 
     const jobs = await Job.find(query).sort({ createdAt: -1 }).limit(20).lean();
-    res.json(jobs);
+    
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+    
+    res.json(jobsWithLogos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -130,7 +189,13 @@ router.get('/employer/:employerId', async (req, res) => {
       status: { $in: ['approved', 'pending'] }
     }).sort({ createdAt: -1 }).lean();
     
-    res.json(jobs);
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+    
+    res.json(jobsWithLogos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -145,7 +210,13 @@ router.get('/employer/email/:email', async (req, res) => {
       status: { $in: ['approved', 'pending'] }
     }).sort({ createdAt: -1 }).lean();
     
-    res.json(jobs);
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+    
+    res.json(jobsWithLogos);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -159,7 +230,26 @@ router.get('/my-jobs', async (req, res) => {
       isActive: true
     }).sort({ createdAt: -1 }).lean();
     
-    res.json(jobs);
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+    
+    res.json(jobsWithLogos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/jobs/:id - Delete job from database
+router.delete('/:id', async (req, res) => {
+  try {
+    const job = await Job.findByIdAndDelete(req.params.id);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    res.json({ message: 'Job deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

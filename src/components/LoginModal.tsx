@@ -168,6 +168,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onNavigate, on
               </div>
             </div>
 
+            <LoadingButton
+              type="submit"
+              loading={loading}
+              loadingText="Signing In..."
+              className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
+            >
+              Sign In
+            </LoadingButton>
           </form>
 
           <div className="mt-6 text-center">
@@ -187,20 +195,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onNavigate, on
               Partner with us to help you hire top tech talent.
             </p>
 
-            <LoadingButton
-              type="submit"
-              loading={loading}
-              loadingText="Signing In..."
-              className="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold hover:bg-teal-700 transition-colors"
-            >
-              Sign In
-            </LoadingButton>
             <p className="text-gray-600">
               Don't have an account?{' '}
               <button
                 onClick={() => {
                   onClose();
-                  onNavigate('register');
+                  // Show role selection modal instead of direct register navigation
+                  onNavigate('role-selection');
                 }}
                 className="text-teal-600 hover:text-teal-700 font-semibold"
               >

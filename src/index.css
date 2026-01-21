@@ -10,3 +10,6 @@ body {
 html {
   font-family: 'IBM Plex Sans', sans-serif !important;
 }
+
+/* Import mobile styles */
+@import './styles/mobile.css';

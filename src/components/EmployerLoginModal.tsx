@@ -5,7 +5,7 @@ import { authAPI } from '../api/auth';
 interface EmployerLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, data?: any) => void;
   onLogin: (userData: {name: string, type: 'candidate' | 'employer', email?: string}) => void;
   onShowNotification?: (notification: {type: 'success' | 'error' | 'info', message: string}) => void;
 }
@@ -171,12 +171,13 @@ const EmployerLoginModal: React.FC<EmployerLoginModalProps> = ({ isOpen, onClose
               New to hiring on Trinitejob?{' '}
               <button
                 onClick={() => {
+                  console.log('Sign up button clicked in EmployerLoginModal');
                   onClose();
-                  onNavigate('employers');
+                  onNavigate('register');
                 }}
                 className="text-blue-600 hover:text-blue-700 font-semibold"
               >
-                Learn more
+                Sign up
               </button>
             </p>
           </div>

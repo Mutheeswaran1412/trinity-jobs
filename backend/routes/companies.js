@@ -1,145 +1,78 @@
 import express from 'express';
-import Company from '../models/Company.js';
-import Job from '../models/Job.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const router = express.Router();
-
-// Load companies from JSON file
-let popularCompanies = [];
+// Load companies data
+let companiesData = [];
 try {
   const companiesPath = path.join(__dirname, '../data/companies.json');
-  const data = fs.readFileSync(companiesPath, 'utf8');
-  popularCompanies = JSON.parse(data);
-  console.log(`✅ Loaded ${popularCompanies.length} companies from JSON`);
+  const rawData = fs.readFileSync(companiesPath, 'utf8');
+  companiesData = JSON.parse(rawData);
 } catch (error) {
-  console.error('❌ Error loading companies.json:', error.message);
+  console.error('Error loading companies data:', error);
 }
 
-// GET /api/companies - Get all companies
-router.get('/', async (req, res) => {
+// GET /api/companies - Get all companies or search companies
+router.get('/', (req, res) => {
   try {
-    console.log('Fetching companies from Company collection');
-    const { search, industry, employees, workSetting, isHiring } = req.query;
+    let companies = companiesData;
     
-    // If search query, return popular companies + DB results
-    if (search) {
-      const query = search.toLowerCase();
-      
-      // Search in popular companies from JSON
-      const popularMatches = popularCompanies
-        .filter(c => 
-          c.name.toLowerCase().includes(query) ||
-          c.domain.toLowerCase().includes(query)
-        )
-        .slice(0, 10)
-        .map(c => ({
-          id: c.id,
-          name: c.name,
-          domain: c.domain,
-          website: `https://${c.domain}`,
-          logo: c.logo,
-          followers: 10000,
-          source: 'json'
-        }));
-      
-      // Search in database
-      const dbQuery = {
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { location: { $regex: search, $options: 'i' } },
-          { industry: { $regex: search, $options: 'i' } }
-        ]
-      };
-      
-      const dbCompanies = await Company.find(dbQuery).limit(5).sort({ name: 1 });
-      const dbMatches = dbCompanies.map(c => {
-        const domain = c.website ? c.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : null;
-        return {
-          id: c._id.toString(),
-          name: c.name,
-          domain: domain,
-          website: c.website,
-          logo: c.logo || `https://img.logo.dev/${domain}`,
-          followers: c.followers || 5000,
-          source: 'database'
-        };
-      });
-      
-      // Combine and deduplicate
-      const allMatches = [...popularMatches, ...dbMatches];
-      const uniqueMatches = Array.from(
-        new Map(allMatches.map(item => [item.name.toLowerCase(), item])).values()
-      ).slice(0, 10);
-      
-      return res.json(uniqueMatches);
+    // If search query provided, filter companies
+    if (req.query.search) {
+      const searchTerm = req.query.search.toString().toLowerCase();
+      companies = companiesData.filter(company => 
+        company.name.toLowerCase().includes(searchTerm)
+      );
     }
     
-    // Regular query without search - return popular companies from JSON + DB companies
-    const query = {};
-    if (industry) query.industry = industry;
-    if (employees) query.employees = employees;
-    if (workSetting) query.workSetting = workSetting;
-    if (isHiring === 'true') query.isHiring = true;
-
-    // Get popular companies from JSON
-    const jsonCompanies = popularCompanies.slice(0, 50).map(c => ({
-      _id: c.id.toString(),
-      name: c.name,
-      domain: c.domain,
-      website: `https://${c.domain}`,
-      logo: c.logo,
-      industry: 'Technology',
-      location: 'Global',
-      employees: '1000+',
-      rating: 4.5,
-      description: `${c.name} is a leading technology company.`,
-      openJobs: Math.floor(Math.random() * 20) + 1
+    // Convert to the format expected by CompanyAutocomplete
+    const formattedCompanies = companies.map(company => ({
+      id: company.id.toString(),
+      name: company.name,
+      domain: company.domain,
+      logo: company.logoUrl || company.logo,
+      logoUrl: company.logoUrl || company.logo,
+      website: company.website || `https://${company.domain}`
     }));
-
-    const companies = await Company.find(query).sort({ name: 1 });
-    console.log('Found DB companies:', companies.length);
     
-    // Add job count for DB companies
-    const companiesWithJobs = await Promise.all(
-      companies.map(async (company) => {
-        const jobCount = await Job.countDocuments({ 
-          company: company.name, 
-          isActive: true 
-        });
-        const domain = company.website ? company.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : null;
-        return {
-          ...company.toObject(),
-          openJobs: jobCount,
-          website: company.website || (company.domain ? `https://${company.domain}` : null),
-          logo: company.logo || (domain ? `https://img.logo.dev/${domain}` : null)
-        };
-      })
-    );
-
-    // Combine JSON companies with DB companies
-    const allCompanies = [...jsonCompanies, ...companiesWithJobs];
-    
-    res.json(allCompanies);
+    res.json(formattedCompanies);
   } catch (error) {
-    console.error('Companies route error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error loading companies:', error);
+    res.json([]);
   }
 });
 
-// POST /api/companies - Create new company
-router.post('/', async (req, res) => {
-  try {
-    const company = new Company(req.body);
-    await company.save();
-    res.status(201).json(company);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+// GET /api/companies/logo/:companyName - Get company logo by name
+router.get('/logo/:companyName', (req, res) => {
+  const companyName = req.params.companyName.toLowerCase().trim();
+  
+  // Find exact match first
+  let company = companiesData.find(c => 
+    c.name.toLowerCase().trim() === companyName
+  );
+  
+  // If no exact match, try partial match
+  if (!company) {
+    company = companiesData.find(c => 
+      c.name.toLowerCase().includes(companyName) || 
+      companyName.includes(c.name.toLowerCase())
+    );
+  }
+  
+  if (company) {
+    res.json({ 
+      name: company.name,
+      domain: company.domain,
+      logo: company.logoUrl || company.logo,
+      logoUrl: company.logoUrl || company.logo
+    });
+  } else {
+    res.status(404).json({ error: 'Company not found' });
   }
 });
 

@@ -4,7 +4,7 @@ import { authAPI } from '../api/auth';
 import Header from '../components/Header';
 
 interface LoginPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, data?: any) => void;
   onLogin: (userData: {name: string, type: 'candidate' | 'employer'}) => void;
 }
 
@@ -46,8 +46,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
       if (pendingApplication) {
         const jobData = JSON.parse(pendingApplication);
         localStorage.removeItem('pendingJobApplication');
-        // Redirect to job detail page to apply
-        onNavigate('job-detail', { jobId: jobData.jobId, jobTitle: jobData.jobTitle, companyName: jobData.company });
+        // Store job data for application page
+        localStorage.setItem('selectedJob', JSON.stringify(jobData));
+        // Redirect to job application page
+        onNavigate('job-application');
       } else {
         onNavigate('dashboard');
       }
@@ -149,7 +151,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
             <p className="text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={() => onNavigate('register')}
+                onClick={() => {
+                  console.log('Sign up button clicked in LoginPage');
+                  console.log('Calling onNavigate with register');
+                  onNavigate('register');
+                }}
                 className="text-teal-600 hover:text-teal-700 font-semibold"
               >
                 Sign up

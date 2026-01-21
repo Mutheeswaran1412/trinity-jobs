@@ -65,9 +65,20 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
     return () => clearTimeout(debounce);
   }, [value, isSelected]);
 
-  const getCompanyLogo = (domain?: string) => {
-    if (!domain) return null;
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  const getCompanyLogo = (company: Company) => {
+    // Use Clearbit as primary (better quality logos)
+    if (company.domain) {
+      return `https://logo.clearbit.com/${company.domain}`;
+    }
+    return null;
+  };
+
+  const getFallbackLogo = (company: Company) => {
+    // Use Google favicon as fallback
+    if (company.domain) {
+      return `https://www.google.com/s2/favicons?domain=${company.domain}&sz=64`;
+    }
+    return null;
   };
 
   const handleSelect = (company: Company, e: React.MouseEvent) => {
@@ -101,23 +112,28 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
               onMouseDown={(e) => handleSelect(company, e)}
               className="px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center space-x-3"
             >
-              {company.domain ? (
-                <img
-                  src={getCompanyLogo(company.domain)}
-                  alt={company.name}
-                  className="w-8 h-8 rounded object-contain bg-white"
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    img.style.display = 'none';
-                    const fallback = img.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`w-8 h-8 rounded bg-indigo-100 flex items-center justify-center ${company.domain ? 'hidden' : ''}`}>
-                <Building2 className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 flex-shrink-0">
+                {getCompanyLogo(company) && (
+                  <img
+                    src={getCompanyLogo(company)!}
+                    alt={company.name}
+                    className="w-8 h-8 rounded object-contain bg-white border"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      const fallbackUrl = getFallbackLogo(company);
+                      if (fallbackUrl && img.src !== fallbackUrl) {
+                        img.src = fallbackUrl;
+                      } else {
+                        img.style.display = 'none';
+                      }
+                    }}
+                  />
+                )}
               </div>
-              <span className="text-gray-900">{company.name}</span>
+              <span className="text-gray-900 font-medium">{company.name}</span>
+              {company.domain && (
+                <span className="text-gray-500 text-sm ml-auto">{company.domain}</span>
+              )}
             </div>
           ))}
         </div>

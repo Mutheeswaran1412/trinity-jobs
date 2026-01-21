@@ -80,8 +80,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onNaviga
       const response = await authAPI.register({
         email: formData.email,
         password: formData.password,
-        fullName: formData.name,
-        userType: 'jobseeker' // Default to jobseeker, can be changed later
+        name: formData.name,
+        userType: 'candidate' // Default to candidate, can be changed later
       });
       
       const successMsg = 'Account created successfully! You can now sign in.';
@@ -130,6 +130,13 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onNaviga
 
         <div className="p-8">
           <div className="text-center mb-8">
+            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 p-2">
+              <img 
+                src="/images/trinity-tech-logo.svg" 
+                alt="Trinity Technology" 
+                className="w-full h-full object-contain"
+              />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
             <p className="text-gray-600">Join thousands of tech professionals</p>
           </div>

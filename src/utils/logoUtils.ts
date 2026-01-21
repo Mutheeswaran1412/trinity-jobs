@@ -1,111 +1,88 @@
-// Logo utility functions to ensure consistent logo URLs
-export const getCompanyLogo = (companyName: string, domain?: string): string => {
-  // If domain is provided, use img.logo.dev
+export const getCompanyLogo = (companyName: string): string => {
+  if (!companyName) return '';
+  
+  // Clean company name for URL
+  const cleanName = companyName.toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9]/g, '');
+  
+  // Try to get domain from company name
+  const domain = getCompanyDomain(companyName);
+  
   if (domain) {
-    return `https://img.logo.dev/${domain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`;
+    return `https://logo.clearbit.com/${domain}`;
   }
   
-  // Try to extract domain from company name
+  return '';
+};
+
+const getCompanyDomain = (companyName: string): string => {
+  const name = companyName.toLowerCase();
+  
+  // Common company domain mappings
   const domainMap: { [key: string]: string } = {
     'google': 'google.com',
     'microsoft': 'microsoft.com',
-    'amazon': 'amazon.com',
     'apple': 'apple.com',
+    'amazon': 'amazon.com',
+    'facebook': 'facebook.com',
     'meta': 'meta.com',
     'netflix': 'netflix.com',
     'tesla': 'tesla.com',
-    'stripe': 'stripe.com',
-    'trinity technology solutions': 'trinitetech.com',
-    'trinity technology solution': 'trinitetech.com',
-    'trinity tech': 'trinitetech.com',
-    'trinitytechnologysolution': 'trinitetech.com',
-    'trello': 'trello.com',
-    'myntra': 'myntra.com',
-    'cleartrip': 'cleartrip.com',
-    'makemytrip': 'makemytrip.com',
-    'mindtree': 'mindtree.com',
-    'reliance industries': 'ril.com',
-    'tcs': 'tcs.com',
-    'infosys': 'infosys.com',
-    'wipro': 'wipro.com',
-    'accenture': 'accenture.com',
-    'ibm': 'ibm.com',
-    'oracle': 'oracle.com',
-    'salesforce': 'salesforce.com',
-    'adobe': 'adobe.com',
     'uber': 'uber.com',
     'airbnb': 'airbnb.com',
     'spotify': 'spotify.com',
-    'linkedin': 'linkedin.com',
     'twitter': 'twitter.com',
-    'facebook': 'facebook.com',
+    'linkedin': 'linkedin.com',
     'instagram': 'instagram.com',
     'youtube': 'youtube.com',
+    'adobe': 'adobe.com',
+    'salesforce': 'salesforce.com',
+    'oracle': 'oracle.com',
+    'ibm': 'ibm.com',
+    'intel': 'intel.com',
+    'nvidia': 'nvidia.com',
+    'paypal': 'paypal.com',
+    'ebay': 'ebay.com',
+    'zoom': 'zoom.us',
+    'slack': 'slack.com',
+    'dropbox': 'dropbox.com',
     'github': 'github.com',
     'gitlab': 'gitlab.com',
-    'slack': 'slack.com',
-    'zoom': 'zoom.us',
-    'dropbox': 'dropbox.com',
     'atlassian': 'atlassian.com',
-    'jira': 'atlassian.com',
-    'confluence': 'atlassian.com'
+    'shopify': 'shopify.com',
+    'stripe': 'stripe.com',
+    'square': 'squareup.com',
+    'twilio': 'twilio.com',
+    'mongodb': 'mongodb.com',
+    'redis': 'redis.com',
+    'docker': 'docker.com',
+    'kubernetes': 'kubernetes.io',
+    'aws': 'aws.amazon.com',
+    'azure': 'azure.microsoft.com',
+    'gcp': 'cloud.google.com',
+    'trinity technology solutions': 'trinity-tech.com',
+    'trinity tech': 'trinity-tech.com',
+    'trinity': 'trinity-tech.com'
   };
   
-  const companyLower = companyName.toLowerCase().trim();
-  const matchedDomain = domainMap[companyLower];
-  
-  if (matchedDomain) {
-    return `https://img.logo.dev/${matchedDomain}?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200`;
+  // Check for exact matches first
+  if (domainMap[name]) {
+    return domainMap[name];
   }
   
-  // Return empty string if no logo found - component should handle fallback
-  return '';
-};
-
-export const sanitizeLogo = (logoUrl: string): string => {
-  if (!logoUrl) return '';
-  
-  // Block problematic tracking URLs but allow trinity-tech.com
-  if (logoUrl.includes('clearbit.com') || 
-      logoUrl.includes('google.com/s2/favicons') || 
-      logoUrl.includes('gstatic.com') ||
-      logoUrl.includes('logo.clearbit.com') ||
-      logoUrl.includes('t0.gstatic.com') ||
-      logoUrl.includes('t1.gstatic.com') ||
-      logoUrl.includes('trinitetech.com') ||
-      logoUrl.includes('trinitytechnologysolution.com')) {
-    return '';
+  // Check for partial matches
+  for (const [key, domain] of Object.entries(domainMap)) {
+    if (name.includes(key) || key.includes(name)) {
+      return domain;
+    }
   }
   
-  // Allow img.logo.dev URLs
-  if (logoUrl.includes('img.logo.dev')) {
-    return logoUrl;
+  // Try to construct domain from company name
+  const cleanName = name.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+  if (cleanName.length > 2) {
+    return `${cleanName}.com`;
   }
   
   return '';
-};
-
-// Helper function to get safe logo URL for any company
-export const getSafeCompanyLogo = (companyName: string, existingLogo?: string): string => {
-  // Always generate from company name to avoid tracking issues
-  return getCompanyLogo(companyName);
-};
-
-// Generate letter avatar as fallback
-export const getLetterAvatar = (companyName: string): string => {
-  const letter = companyName.charAt(0).toUpperCase();
-  const colors = [
-    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-    '#06B6D4', '#F97316', '#84CC16', '#EC4899', '#6366F1'
-  ];
-  const colorIndex = companyName.length % colors.length;
-  const color = colors[colorIndex];
-  
-  // Return SVG data URL
-  const svg = `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-    <rect width="32" height="32" fill="${color}" rx="4"/>
-    <text x="16" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">${letter}</text>
-  </svg>`;
-  
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
