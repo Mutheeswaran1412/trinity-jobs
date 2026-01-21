@@ -202,6 +202,11 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
@@ -210,6 +215,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/users/:id', usersGetRoutes);
+// Move applications route before catch-all
 app.use('/api/applications', applicationRoutes);
 app.use('/api/job-alerts', jobAlertRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -686,13 +692,22 @@ app.get('/robots.txt', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// Simple test endpoint to verify server is working
-app.get('/api/status', (req, res) => {
+// Simple health check endpoint
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'Backend server is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Test applications endpoint
+app.get('/api/applications/test', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Applications endpoint is working',
+    timestamp: new Date().toISOString()
   });
 });
 
