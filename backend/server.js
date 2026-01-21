@@ -16,7 +16,7 @@ import userRoutes from './routes/users.js';
 import usersGetRoutes from './routes/users-get.js';
 import applicationRoutes from './routes/applications.js';
 import jobAlertRoutes from './routes/jobAlerts.js';
-import uploadRoutes from './routes/upload.js';
+// import uploadRoutes from './routes/upload.js';
 import moderationRoutes from './routes/moderation.js';
 import resumeBasicRoutes from './routes/resumeBasic.js';
 import resumeRoutes from './routes/resume.js';
@@ -212,7 +212,7 @@ app.use('/api/users/:id', usersGetRoutes);
 // Move applications route before catch-all
 app.use('/api/applications', applicationRoutes);
 app.use('/api/job-alerts', jobAlertRoutes);
-app.use('/api/upload', uploadRoutes);
+// app.use('/api/upload', uploadRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
