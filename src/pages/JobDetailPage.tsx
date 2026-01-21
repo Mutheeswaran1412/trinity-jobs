@@ -306,29 +306,47 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button 
             onClick={() => {
-              console.log('Back button clicked');
-              console.log('User:', user);
-              console.log('User type:', user?.type, user?.userType);
+              console.log('🔙 Back button clicked');
+              console.log('📊 User:', user);
+              console.log('👤 User type:', user?.type, user?.userType);
               
-              // Try onNavigate first
+              // Always navigate to job-listings for simplicity and reliability
               try {
-                if (user?.type === 'employer' || user?.userType === 'employer') {
-                  console.log('Navigating to my-jobs');
-                  onNavigate('my-jobs');
-                } else {
-                  console.log('Navigating to job-listings');
-                  onNavigate('job-listings');
-                }
+                console.log('🏠 Navigating to job-listings');
+                onNavigate('job-listings');
               } catch (error) {
-                console.error('Navigation error:', error);
-                // Fallback to browser history
-                window.history.back();
+                console.error('❌ Navigation error:', error);
+                // Multiple fallback strategies
+                try {
+                  // Try going to home page
+                  onNavigate('home');
+                } catch (homeError) {
+                  console.error('❌ Home navigation error:', homeError);
+                  // Final fallback - reload to home
+                  window.location.href = '/';
+                }
               }
             }}
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             <span>Back to Jobs</span>
+          </button>
+          
+          {/* Additional Home button for extra reliability */}
+          <button 
+            onClick={() => {
+              console.log('🏠 Home button clicked');
+              try {
+                onNavigate('home');
+              } catch (error) {
+                console.error('❌ Home navigation error:', error);
+                window.location.href = '/';
+              }
+            }}
+            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 transition-colors mb-4 cursor-pointer ml-4"
+          >
+            <span>🏠 Go to Home</span>
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
