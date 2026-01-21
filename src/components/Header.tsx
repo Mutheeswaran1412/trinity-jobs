@@ -111,16 +111,27 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             console.log('Fetching analytics for:', userEmail, 'type:', user.type);
             
             const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/profile/${encodeURIComponent(userEmail)}?userType=${user.type}`);
+            
             if (response.ok) {
-              const data = await response.json();
-              console.log('Analytics data received:', data);
-              setProfileMetrics(data);
+              const contentType = response.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                console.log('Analytics data received:', data);
+                setProfileMetrics(data);
+              } else {
+                console.warn('Analytics API returned non-JSON response');
+                // Set default values if API returns HTML
+                setProfileMetrics({ jobsPosted: 0, applicationsReceived: 0, searchAppearances: 0, recruiterActions: 0 });
+              }
             } else {
               console.error('Analytics API error:', response.status);
+              setProfileMetrics({ jobsPosted: 0, applicationsReceived: 0, searchAppearances: 0, recruiterActions: 0 });
             }
           }
         } catch (error) {
           console.error('Error fetching profile metrics:', error);
+          // Set default values on error
+          setProfileMetrics({ jobsPosted: 0, applicationsReceived: 0, searchAppearances: 0, recruiterActions: 0 });
         }
       }
     };
