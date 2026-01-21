@@ -17,15 +17,15 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiting for registration
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // 3 registrations per hour
-  message: 'Too many accounts created. Please try again after an hour.',
-});
+// Rate limiting for registration - DISABLED for production
+// const registerLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hour
+//   max: 3, // 3 registrations per hour
+//   message: 'Too many accounts created. Please try again after an hour.',
+// });
 
 // POST /api/users/register - Register new user
-router.post('/register', registerLimiter, [
+router.post('/register', [
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ], async (req, res) => {
@@ -105,7 +105,7 @@ router.post('/register', registerLimiter, [
 
 
 // POST /api/users/login - Login user
-router.post('/login', loginLimiter, [
+router.post('/login', [
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
