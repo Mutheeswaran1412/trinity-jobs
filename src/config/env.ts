@@ -21,6 +21,9 @@ export const config = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
+  // Base URL
+  BASE_URL: config.API_URL,
+  
   // Auth
   LOGIN: `${config.API_URL}/api/users/login`,
   REGISTER: `${config.API_URL}/api/users/register`,
@@ -30,6 +33,12 @@ export const API_ENDPOINTS = {
   // Jobs
   JOBS: `${config.API_URL}/api/jobs`,
   SEARCH: `${config.API_URL}/api/search`,
+  
+  // Applications
+  APPLICATIONS: `${config.API_URL}/api/applications`,
+  
+  // Companies
+  COMPANIES: `${config.API_URL}/api/companies`,
   
   // Chat
   CHAT: `${config.API_URL}/api/chat`,
