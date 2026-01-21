@@ -100,12 +100,24 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
 
   useEffect(() => {
     const fetchProfileMetrics = async () => {
-      if (user?.email) {
+      if (user) {
         try {
-          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/profile/${encodeURIComponent(user.email)}?userType=${user.type}`);
-          if (response.ok) {
-            const data = await response.json();
-            setProfileMetrics(data);
+          // Get user data from localStorage to get email
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            const parsedUser = JSON.parse(userData);
+            const userEmail = parsedUser.email || parsedUser.id;
+            
+            console.log('Fetching analytics for:', userEmail, 'type:', user.type);
+            
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/profile/${encodeURIComponent(userEmail)}?userType=${user.type}`);
+            if (response.ok) {
+              const data = await response.json();
+              console.log('Analytics data received:', data);
+              setProfileMetrics(data);
+            } else {
+              console.error('Analytics API error:', response.status);
+            }
           }
         } catch (error) {
           console.error('Error fetching profile metrics:', error);
