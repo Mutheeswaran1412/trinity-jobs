@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '../config/env';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = API_ENDPOINTS.USERS.replace('/users', ''); // Get base API URL
 
 export interface LoginData {
   email: string;
@@ -39,7 +39,7 @@ export interface User {
 
 export const authAPI = {
   async register(userData: RegisterData): Promise<{ id: string; message: string; userType: string }> {
-    console.log('Calling register API:', API_BASE_URL + '/register');
+    console.log('Calling register API:', API_ENDPOINTS.REGISTER);
     console.log('Register data:', userData);
     
     const response = await fetch(API_ENDPOINTS.REGISTER, {
@@ -64,7 +64,7 @@ export const authAPI = {
   },
 
   async login(loginData: LoginData): Promise<{ message: string; user: User }> {
-    console.log('Calling login API:', API_BASE_URL + '/login');
+    console.log('Calling login API:', API_ENDPOINTS.LOGIN);
     console.log('Login data:', loginData);
     
     const response = await fetch(API_ENDPOINTS.LOGIN, {
