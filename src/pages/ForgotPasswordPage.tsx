@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
+import { API_ENDPOINTS } from '../config/env';
 
 interface ForgotPasswordPageProps {
   onNavigate: (page: string) => void;
@@ -21,7 +22,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNavigate }) =
 
     try {
       console.log('📡 Making API call...');
-      const response = await fetch('http://localhost:5000/api/forgot-password', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

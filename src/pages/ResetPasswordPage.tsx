@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import Header from '../components/Header';
+import { API_ENDPOINTS } from '../config/env';
 
 interface ResetPasswordPageProps {
   onNavigate: (page: string) => void;
@@ -45,7 +46,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate, token
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/verify-reset-token/${token}`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/verify-reset-token/${token}`);
         if (response.ok) {
           setTokenValid(true);
         } else {
@@ -79,7 +80,7 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate, token
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/reset-password', {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

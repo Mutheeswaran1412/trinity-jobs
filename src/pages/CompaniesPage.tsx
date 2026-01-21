@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Users, Star, Building, Globe } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { API_ENDPOINTS } from '../config/env';
 
 interface Company {
   _id: string;
@@ -31,7 +32,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await fetch(`http://localhost:5000/api/companies?${params}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies?${params}`);
       if (response.ok) {
         const data = await response.json();
         setCompanies(data);
