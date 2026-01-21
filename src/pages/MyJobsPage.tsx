@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Briefcase, MapPin, DollarSign, Bookmark, Clock, Search, Filter } from 'lucide-react';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 import { getCompanyLogo } from '../utils/logoUtils';
+import { API_ENDPOINTS } from '../config/env';
 
 interface MyJobsPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -59,7 +60,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const fetchPostedJobs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/jobs');
+      const response = await fetch(API_ENDPOINTS.JOBS);
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
@@ -75,7 +76,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const fetchAllJobs = async () => {
     try {
-      const jobsResponse = await fetch('http://localhost:5000/api/jobs');
+      const jobsResponse = await fetch(API_ENDPOINTS.JOBS);
       if (jobsResponse.ok) {
         const jobs = await jobsResponse.json();
         setAllJobs(jobs);
@@ -92,7 +93,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     if (!userEmail) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/candidate/${encodeURIComponent(userEmail)}`);
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/candidate/${encodeURIComponent(userEmail)}`);
       if (response.ok) {
         const applications = await response.json();
         setAppliedJobs(applications);
@@ -106,7 +107,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     try {
       console.log('Fetching applications for employer:', user?.email);
       
-      const response = await fetch('http://localhost:5000/api/applications');
+      const response = await fetch(API_ENDPOINTS.APPLICATIONS);
       if (response.ok) {
         const responseData = await response.json();
         console.log('Applications response:', responseData);
@@ -132,7 +133,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/${applicationId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -156,7 +157,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+      const response = await fetch(`${API_ENDPOINTS.JOBS}/${jobId}`, {
         method: 'DELETE',
       });
       
