@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, MapPin } from "lucide-react";
-import womenImage from '/images/women.png';
+import womenImage from '../assets/women.png';
 
 interface NewHeroProps {
   onNavigate?: (page: string, data?: any) => void;
