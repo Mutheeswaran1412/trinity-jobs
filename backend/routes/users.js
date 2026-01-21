@@ -43,8 +43,8 @@ router.post('/register', [
       return res.status(400).json({ error: 'User already exists with this email' });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password with lower rounds for faster processing
+    const hashedPassword = await bcrypt.hash(password, 8);
 
     // Create new user - support both name and fullName
     const userName = name || fullName || '';
@@ -64,14 +64,16 @@ router.post('/register', [
 
     await user.save();
 
-    // Send welcome email
-    try {
-      console.log('🚀 Attempting to send welcome email...');
-      const emailResult = await sendWelcomeEmail(email, userName, userType || 'candidate');
-      console.log('📧 Welcome email result:', emailResult);
-    } catch (emailError) {
-      console.error('❌ Welcome email failed:', emailError.message);
-    }
+    // Send welcome email asynchronously (don't wait for it)
+    setImmediate(async () => {
+      try {
+        console.log('🚀 Sending welcome email in background...');
+        await sendWelcomeEmail(email, userName, userType || 'candidate');
+        console.log('📧 Welcome email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Welcome email failed:', emailError.message);
+      }
+    });
 
     // Generate tokens
     const accessToken = generateAccessToken(user._id);

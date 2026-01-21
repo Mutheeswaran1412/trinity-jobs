@@ -61,6 +61,9 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
     }
 
     try {
+      // Show immediate success for better UX
+      setSuccess('Creating your account...');
+      
       const response = await authAPI.register({
         email,
         password,
@@ -70,9 +73,9 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       
       setSuccess('Account created successfully!');
       
-      // Store user data in localStorage
+      // Store user data in localStorage immediately
       const userData = {
-        id: response.id,
+        id: response.id || Date.now().toString(),
         name: fullName,
         email: email,
         userType: 'candidate'
@@ -80,7 +83,7 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       localStorage.setItem('user', JSON.stringify(userData));
       console.log('Stored candidate user data:', userData);
       
-      // Clear form
+      // Clear form immediately
       setFullName('');
       setEmail('');
       setPassword('');
@@ -94,7 +97,6 @@ const CandidateRegisterModal: React.FC<CandidateRegisterModalProps> = ({ isOpen,
       if (pendingApplication) {
         const jobData = JSON.parse(pendingApplication);
         localStorage.removeItem('pendingJobApplication');
-        // Redirect to job detail page to apply
         onNavigate('job-detail', { jobId: jobData.jobId, jobTitle: jobData.jobTitle, companyName: jobData.company });
       } else {
         onNavigate('dashboard');
