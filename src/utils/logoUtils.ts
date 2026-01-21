@@ -61,9 +61,10 @@ const getCompanyDomain = (companyName: string): string => {
     'aws': 'aws.amazon.com',
     'azure': 'azure.microsoft.com',
     'gcp': 'cloud.google.com',
-    'trinity technology solutions': 'trinity-tech.com',
-    'trinity tech': 'trinity-tech.com',
-    'trinity': 'trinity-tech.com'
+    'trinity technology solutions': 'trinitetech.com',
+    'trinity tech': 'trinitetech.com',
+    'trinitytech': 'trinitetech.com',
+    'trinity': 'trinitetech.com'
   };
   
   // Check for exact matches first
@@ -78,11 +79,6 @@ const getCompanyDomain = (companyName: string): string => {
     }
   }
   
-  // Try to construct domain from company name
-  const cleanName = name.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-  if (cleanName.length > 2) {
-    return `${cleanName}.com`;
-  }
-  
+  // Try to construct domain from company name (only for known patterns)
   return '';
 };

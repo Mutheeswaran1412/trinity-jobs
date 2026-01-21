@@ -57,6 +57,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
     try {
       let url = API_ENDPOINTS.JOBS;
       
+      console.log('🔍 Fetching jobs from API_ENDPOINTS.JOBS:', url);
+      
       // Use advanced search if filters are applied
       if (searchTerm || location || filters.industry.length > 0 || filters.companySize.length > 0 || filters.freshness) {
         const searchParams = {
@@ -70,6 +72,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           limit: 50
         };
         
+        console.log('🔍 Using advanced search with params:', searchParams);
+        
         const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/advanced`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -79,8 +83,13 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
         if (response.ok) {
           const data = await response.json();
           const jobsArray = Array.isArray(data.jobs) ? data.jobs : [];
+          console.log('✅ Advanced search jobs received:', jobsArray.length);
           setJobs(jobsArray);
           setFilteredJobs(jobsArray);
+        } else {
+          console.error('❌ Advanced search failed:', response.status, response.statusText);
+          setJobs([]);
+          setFilteredJobs([]);
         }
       } else {
         // Regular search
@@ -91,19 +100,31 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           url = `${API_ENDPOINTS.JOBS}/search/query?${params}`;
         }
         
-        console.log('Fetching jobs from:', url);
+        console.log('🔍 Fetching jobs from:', url);
         const response = await fetch(url);
+        
         if (response.ok) {
-          const jobsData = await response.json();
-          console.log('Jobs received:', jobsData.length);
-          const jobsArray = Array.isArray(jobsData) ? jobsData : [];
-          const sortedJobs = jobsArray.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          setJobs(sortedJobs);
-          setFilteredJobs(sortedJobs);
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const jobsData = await response.json();
+            console.log('✅ Jobs received:', jobsData.length);
+            const jobsArray = Array.isArray(jobsData) ? jobsData : [];
+            const sortedJobs = jobsArray.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setJobs(sortedJobs);
+            setFilteredJobs(sortedJobs);
+          } else {
+            console.error('❌ Non-JSON response received');
+            setJobs([]);
+            setFilteredJobs([]);
+          }
+        } else {
+          console.error('❌ Jobs API failed:', response.status, response.statusText);
+          setJobs([]);
+          setFilteredJobs([]);
         }
       }
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error('❌ Error fetching jobs:', error);
       setJobs([]);
       setFilteredJobs([]);
     } finally {

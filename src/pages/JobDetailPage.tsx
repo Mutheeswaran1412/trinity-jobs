@@ -333,12 +333,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start space-x-4 flex-1">
-              <div className="w-16 h-16 rounded-lg flex items-center justify-center p-2">
-                <img
-                  src={getCompanyLogo(job)}
-                  alt={job.company}
-                  className="w-full h-full object-contain"
-                />
+              <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center p-2">
+                <div className="w-full h-full bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {(job.company || 'T').charAt(0).toUpperCase()}
+                  </span>
+                </div>
               </div>
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.jobTitle || job.title}</h1>
