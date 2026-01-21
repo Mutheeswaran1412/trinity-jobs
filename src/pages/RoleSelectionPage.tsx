@@ -30,7 +30,7 @@ const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onNavigate, user,
               Where tech connects
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Be a part of the Dice community, where more than half of U.S. technology 
+              Be a part of the Zync community, where more than half of U.S. technology 
               professionals come to land their next job; as an analyst, designer, developer and 
               many more, regardless of your level.
             </p>
