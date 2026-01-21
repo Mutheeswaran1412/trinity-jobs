@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X, Search, User, Building, ChevronDown, Settings } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/env';
 
 interface HeaderProps {
   onNavigate?: (page: string) => void;
@@ -101,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
     const fetchProfileMetrics = async () => {
       if (user?.email) {
         try {
-          const response = await fetch(`http://localhost:5000/api/analytics/profile/${encodeURIComponent(user.email)}?userType=${user.type}`);
+          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/profile/${encodeURIComponent(user.email)}?userType=${user.type}`);
           if (response.ok) {
             const data = await response.json();
             setProfileMetrics(data);

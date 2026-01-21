@@ -1,3 +1,5 @@
+import { API_ENDPOINTS } from '../config/env';
+
 interface AIGenerationRequest {
   type: 'experience' | 'education' | 'summary';
   jobTitle: string;
@@ -8,11 +10,11 @@ interface AIGenerationRequest {
 }
 
 class AIService {
-  private baseUrl = 'http://localhost:5000/api';
+  private baseUrl = API_ENDPOINTS.BASE_URL || 'http://localhost:5000';
 
   async generateContent(request: AIGenerationRequest): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/generate-content`, {
+      const response = await fetch(`${this.baseUrl}/api/generate-content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

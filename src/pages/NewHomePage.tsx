@@ -6,6 +6,7 @@ import LatestJobs from '../components/LatestJobs';
 import HowItWorks from '../components/HowItWorks';
 import NewTestimonials from '../components/NewTestimonials';
 import CallToAction from '../components/CallToAction';
+import { API_ENDPOINTS } from '../config/env';
 
 interface NewHomePageProps {
   onNavigate?: (page: string, data?: any) => void;
@@ -18,7 +19,7 @@ const NewHomePage: React.FC<NewHomePageProps> = ({ onNavigate, user }) => {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/search/trending?limit=6');
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search/trending?limit=6`);
         if (response.ok) {
           const data = await response.json();
           setTrending(data);
