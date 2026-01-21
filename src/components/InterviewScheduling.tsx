@@ -79,6 +79,60 @@ const InterviewScheduling = () => {
     }
   };
 
+  const generateZoomLink = async () => {
+    try {
+      const response = await fetch('/api/meetings/zoom/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          scheduledDate: formData.scheduledDate,
+          duration: formData.duration,
+          topic: 'Interview Meeting'
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setFormData({ ...formData, meetingLink: result.meetingUrl });
+        alert('Zoom meeting created successfully!');
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error creating Zoom meeting: ' + error.message);
+    }
+  };
+
+  const generateGoogleMeetLink = async () => {
+    try {
+      const response = await fetch('/api/meetings/google-meet/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          scheduledDate: formData.scheduledDate,
+          duration: formData.duration,
+          summary: 'Interview Meeting'
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setFormData({ ...formData, meetingLink: result.meetingUrl });
+        alert('Google Meet created successfully!');
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error creating Google Meet: ' + error.message);
+    }
+  };
+
   const confirmInterview = async (interviewId) => {
     try {
       const token = localStorage.getItem('token');
@@ -291,13 +345,37 @@ const InterviewScheduling = () => {
               {formData.type === 'video' && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Meeting Link</label>
-                  <input
-                    type="url"
-                    value={formData.meetingLink}
-                    onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-                    placeholder="https://zoom.us/j/..."
-                    className="w-full p-2 border rounded-lg"
-                  />
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => generateZoomLink()}
+                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      >
+                        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 14.432c-.054.288-.288.432-.576.432H7.008c-.288 0-.522-.144-.576-.432L6.24 9.568c-.054-.288.09-.568.378-.568h10.764c.288 0 .432.28.378.568l-.192 4.864z"/>
+                        </svg>
+                        Open Zoom
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => generateGoogleMeetLink()}
+                        className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                      >
+                        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.4 16.2H6.6c-.33 0-.6-.27-.6-.6V8.4c0-.33.27-.6.6-.6h10.8c.33 0 .6.27.6.6v7.2c0 .33-.27.6-.6.6z"/>
+                        </svg>
+                        Create Meet
+                      </button>
+                    </div>
+                    <input
+                      type="url"
+                      value={formData.meetingLink}
+                      onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                      placeholder="Or paste meeting link here..."
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </div>
                 </div>
               )}
 

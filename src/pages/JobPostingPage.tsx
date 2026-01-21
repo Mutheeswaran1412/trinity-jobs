@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Notification from '../components/Notification';
 import mistralAIService from '../services/mistralAIService';
-import CompanyAutoSuggest from '../components/CompanyAutoSuggest';
 import { API_ENDPOINTS } from '../config/constants';
 
 
@@ -99,6 +98,35 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const [skillInput, setSkillInput] = useState('');
+  const [companySearchResults, setCompanySearchResults] = useState<any[]>([]);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [jobPostingCount, setJobPostingCount] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Check job posting limit on component mount
+  useEffect(() => {
+    const checkJobPostingLimit = async () => {
+      if (user && user.email) {
+        try {
+          const response = await fetch(`${API_ENDPOINTS.JOBS}`);
+          if (response.ok) {
+            const jobs = await response.json();
+            const userJobs = jobs.filter((job: any) => job.postedBy === user.email);
+            setJobPostingCount(userJobs.length);
+            
+            // Show upgrade modal if limit reached
+            if (userJobs.length >= 4) {
+              setShowUpgradeModal(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking job posting limit:', error);
+        }
+      }
+    };
+    
+    checkJobPostingLimit();
+  }, [user]);
 
   // Load countries on component mount
   useEffect(() => {
@@ -391,6 +419,41 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     setShowSkillSuggestions(false);
   };
 
+  const searchCompanies = (query: string) => {
+    if (query.length < 2) {
+      setCompanySearchResults([]);
+      setShowCompanyDropdown(false);
+      return;
+    }
+
+    const companies = [
+      { id: '1', name: 'Google', logo: 'https://logo.clearbit.com/google.com' },
+      { id: '2', name: 'Microsoft', logo: 'https://logo.clearbit.com/microsoft.com' },
+      { id: '3', name: 'Apple', logo: 'https://logo.clearbit.com/apple.com' },
+      { id: '4', name: 'Amazon', logo: 'https://logo.clearbit.com/amazon.com' },
+      { id: '5', name: 'Meta', logo: 'https://logo.clearbit.com/meta.com' },
+      { id: '6', name: 'Trinity Technology Solutions', logo: '/images/zync-logo.svg' },
+      { id: '7', name: 'TCS', logo: 'https://logo.clearbit.com/tcs.com' },
+      { id: '8', name: 'Infosys', logo: 'https://logo.clearbit.com/infosys.com' },
+      { id: '9', name: 'Wipro', logo: 'https://logo.clearbit.com/wipro.com' },
+      { id: '10', name: 'Zoho', logo: 'https://logo.clearbit.com/zoho.com' }
+    ];
+
+    const filtered = companies.filter(company => 
+      company.name.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setCompanySearchResults(filtered);
+    setShowCompanyDropdown(filtered.length > 0);
+  };
+
+  const selectCompany = (company: any) => {
+    updateJobData('companyName', company.name);
+    updateJobData('companyLogo', company.logo);
+    updateJobData('companyId', company.id);
+    setShowCompanyDropdown(false);
+  };
+
   const removeSkill = (skillToRemove: string) => {
     updateJobData('skills', jobData.skills.filter(skill => skill !== skillToRemove));
   };
@@ -413,8 +476,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       <div className="text-center mb-8">
         <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 p-2">
           <img 
-            src="/images/trinity-logo.svg" 
-            alt="Trinity Technology" 
+            src="/images/zync-logo.svg" 
+            alt="ZyncJobs" 
             className="w-full h-full object-contain"
           />
         </div>
@@ -471,19 +534,53 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           </select>
         </div>
         
-        <div>
+        <div className="relative">
           <label className="block text-gray-700 font-medium mb-3">Company for this job *</label>
           <p className="text-gray-500 text-sm mb-3">You can post jobs for any company, not just your registered company</p>
-          <CompanyAutoSuggest
-            placeholder="Search for company (e.g., Google, Microsoft, Apple)..."
-            value={jobData.companyName}
-            onSelect={(company) => {
-              console.log('Selected company:', company);
-              updateJobData('companyName', company.name);
-              updateJobData('companyLogo', company.logo || '');
-              updateJobData('companyId', company.id);
-            }}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={jobData.companyName}
+              onChange={(e) => {
+                updateJobData('companyName', e.target.value);
+                searchCompanies(e.target.value);
+              }}
+              onFocus={() => {
+                if (jobData.companyName.length >= 2) {
+                  searchCompanies(jobData.companyName);
+                }
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowCompanyDropdown(false), 200);
+              }}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search for company (e.g., Google, Microsoft, Trinity Technology Solutions)..."
+            />
+            {showCompanyDropdown && companySearchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {companySearchResults.map((company) => (
+                  <div
+                    key={company.id}
+                    onMouseDown={() => selectCompany(company)}
+                    className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors flex items-center space-x-3 border-b last:border-b-0"
+                  >
+                    <div className="w-8 h-8 flex-shrink-0">
+                      <img
+                        src={company.logo}
+                        alt={company.name}
+                        className="w-8 h-8 rounded object-contain bg-white border"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.src = '/images/zync-logo.svg';
+                        }}
+                      />
+                    </div>
+                    <span className="text-gray-900 font-medium">{company.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="relative">
@@ -1122,7 +1219,25 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-600">Pay</span>
               <div className="flex items-center space-x-2">
-                <span className="text-gray-800">${jobData.minSalary} - ${jobData.maxSalary} {jobData.payRate}</span>
+                <span className="text-gray-800">
+                  {jobData.currency === 'USD' && '$'}
+                  {jobData.currency === 'EUR' && '€'}
+                  {jobData.currency === 'GBP' && '£'}
+                  {jobData.currency === 'INR' && '₹'}
+                  {jobData.currency === 'CAD' && 'C$'}
+                  {jobData.currency === 'AUD' && 'A$'}
+                  {jobData.currency === 'JPY' && '¥'}
+                  {jobData.currency === 'SGD' && 'S$'}
+                  {jobData.minSalary} - {jobData.currency === 'USD' && '$'}
+                  {jobData.currency === 'EUR' && '€'}
+                  {jobData.currency === 'GBP' && '£'}
+                  {jobData.currency === 'INR' && '₹'}
+                  {jobData.currency === 'CAD' && 'C$'}
+                  {jobData.currency === 'AUD' && 'A$'}
+                  {jobData.currency === 'JPY' && '¥'}
+                  {jobData.currency === 'SGD' && 'S$'}
+                  {jobData.maxSalary} {jobData.payRate}
+                </span>
                 <button className="text-blue-600 hover:text-blue-700">✏️</button>
               </div>
             </div>
@@ -1184,8 +1299,14 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       return;
     }
 
+    // Check job posting limit
+    if (jobPostingCount >= 4) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     // Get proper company logo
-    const logoUrl = jobData.companyLogo || '/images/trinity-logo.svg';
+    const logoUrl = jobData.companyLogo || '/images/zync-logo.svg';
     
     const jobPostData = {
       jobTitle: jobData.jobTitle,
@@ -1305,7 +1426,62 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         isVisible={notification.isVisible}
         onClose={() => setNotification({ ...notification, isVisible: false })}
       />
+      
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-yellow-600 text-2xl">⚡</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Free Limit Reached</h3>
+              <p className="text-gray-600 mb-6">
+                You've used all 4 free job postings. Upgrade to Professional plan to post unlimited jobs.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    onNavigate('pricing');
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="min-h-screen bg-white">
+        {/* Job Posting Limit Warning */}
+        {jobPostingCount >= 3 && jobPostingCount < 4 && (
+          <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4">
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-yellow-600 mr-2">⚠️</span>
+                <span className="text-yellow-800">
+                  You have {4 - jobPostingCount} free job posting{4 - jobPostingCount !== 1 ? 's' : ''} remaining.
+                </span>
+              </div>
+              <button
+                onClick={() => onNavigate('pricing')}
+                className="text-yellow-800 underline hover:text-yellow-900"
+              >
+                View Plans
+              </button>
+            </div>
+          </div>
+        )}
+        
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}

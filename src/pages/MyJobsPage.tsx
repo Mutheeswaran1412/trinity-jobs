@@ -216,11 +216,114 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     setFilteredJobs(filtered);
   };
 
-
-
   const handleSaveJob = (job: any) => {
     console.log('Save job:', job);
   };
+
+  const renderJobCard = (job: any, showActions: boolean = true, actionType: string = 'default') => (
+    <div key={job._id || job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex-1">
+          <div className="flex items-start mb-4">
+            <div className="flex-shrink-0 w-12 h-12 mr-4">
+              <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center p-2">
+                <img 
+                  src={getCompanyLogo(job.company)}
+                  alt={`${job.company} logo`}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/images/zync-logo.svg';
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
+                  {job.jobTitle || job.title}
+                </h3>
+                <span className="text-sm text-gray-500 ml-4">
+                  {formatDate(job.createdAt)}
+                </span>
+              </div>
+              <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+            <div className="flex items-center space-x-1">
+              <MapPin className="w-4 h-4" />
+              <span>{job.location}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <DollarSign className="w-4 h-4" />
+              <span>{formatSalary(job.salary)}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Briefcase className="w-4 h-4" />
+              <span>{job.type}</span>
+            </div>
+          </div>
+
+          <p className="text-gray-600 mb-4">
+            {job.description && job.description.length > 150 
+              ? `${job.description.substring(0, 150)}...` 
+              : job.description || ''}
+          </p>
+        </div>
+
+        {showActions && (
+          <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
+            {actionType === 'posted' && (
+              <>
+                <button 
+                  onClick={() => onNavigate('job-detail', { jobId: job._id || job.id })}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
+                >
+                  View Job
+                </button>
+                <button 
+                  onClick={() => deleteJob(job._id || job.id)}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors min-w-[120px]"
+                >
+                  Delete Job
+                </button>
+              </>
+            )}
+            {actionType === 'saved' && (
+              <>
+                <button 
+                  onClick={() => handleRemoveSavedJob(job._id || job.id)}
+                  className="flex items-center justify-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors min-w-[100px]"
+                >
+                  <span>Remove</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    localStorage.setItem('selectedJob', JSON.stringify(job));
+                    onNavigate('job-application');
+                  }}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
+                >
+                  Apply Now
+                </button>
+              </>
+            )}
+            {actionType === 'default' && (
+              <button 
+                onClick={() => onNavigate('job-detail', { jobId: job._id || job.id })}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
+              >
+                View Job
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -380,323 +483,25 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
             </div>
           ) : (
             <>
-              {user?.type === 'employer' && activeTab === 'Posted Jobs' && postedJobs.length > 0 ? (
+              {user?.type === 'employer' && activeTab === 'Posted Jobs' && postedJobs.length > 0 && (
                 <div className="space-y-4">
-                  {postedJobs.map((job) => (
-                    <div key={job._id || job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-start mb-4">
-                            <div className="flex-shrink-0 w-12 h-12 mr-4">
-                              <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center p-2">
-                                <img 
-                                  src={getCompanyLogo(job.company)}
-                                  alt={`${job.company} logo`}
-                                  className="w-full h-full object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                                  {job.jobTitle || job.title}
-                                </h3>
-                                <span className="text-sm text-gray-500 ml-4">
-                                  {formatDate(job.createdAt)}
-                                </span>
-                              </div>
-                              <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{job.location}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="w-4 h-4" />
-                              <span>{formatSalary(job.salary)}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Briefcase className="w-4 h-4" />
-                              <span>{job.type}</span>
-                            </div>
-                          </div>
-
-                          <p className="text-gray-600 mb-4">
-                            {job.description && job.description.length > 150 
-                              ? `${job.description.substring(0, 150)}...` 
-                              : job.description || ''}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
-                          <button 
-                            onClick={() => onNavigate('job-detail', { jobId: job._id || job.id })}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
-                          >
-                            View Job
-                          </button>
-                          <button 
-                            onClick={() => deleteJob(job._id || job.id)}
-                            className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors min-w-[120px]"
-                          >
-                            Delete Job
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {postedJobs.map((job) => renderJobCard(job, true, 'posted'))}
                 </div>
-              ) : null}
+              )}
 
-              {user?.type === 'employer' && activeTab === 'Search Jobs' && filteredJobs.length > 0 ? (
+              {user?.type === 'employer' && activeTab === 'Search Jobs' && filteredJobs.length > 0 && (
                 <div className="space-y-4">
-                  {filteredJobs.map((job) => (
-                    <div key={job._id || job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-start mb-4">
-                            <div className="flex-shrink-0 w-12 h-12 mr-4">
-                              <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
-                                <img 
-                                  src={getCompanyLogo(job.company)}
-                                  alt={`${job.company} logo`}
-                                  className="w-10 h-10 object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                                  {job.jobTitle || job.title}
-                                </h3>
-                                <span className="text-sm text-gray-500 ml-4">
-                                  {formatDate(job.createdAt)}
-                                </span>
-                              </div>
-                              <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{job.location}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="w-4 h-4" />
-                              <span>{formatSalary(job.salary)}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Briefcase className="w-4 h-4" />
-                              <span>{job.type}</span>
-                            </div>
-                          </div>
-
-                          <p className="text-gray-600 mb-4">
-                            {job.description && job.description.length > 150 
-                              ? `${job.description.substring(0, 150)}...` 
-                              : job.description || ''}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
-                          <button 
-                            onClick={() => onNavigate('job-detail', { jobId: job._id || job.id })}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
-                          >
-                            View Job
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {filteredJobs.map((job) => renderJobCard(job, true, 'default'))}
                 </div>
-              ) : null}
+              )}
 
-              {user?.type === 'candidate' && activeTab === 'Saved' && savedJobs.length > 0 ? (
+              {user?.type === 'candidate' && activeTab === 'Saved' && savedJobs.length > 0 && (
                 <div className="space-y-4">
-                  {savedJobs.map((job) => (
-                    <div key={job._id || job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-start mb-4">
-                            <div className="flex-shrink-0 w-12 h-12 mr-4">
-                              <div className="w-12 h-12 rounded border border-gray-200 flex items-center justify-center bg-white">
-                                <img 
-                                  src={getCompanyLogo(job.company)}
-                                  alt={`${job.company} logo`}
-                                  className="w-10 h-10 object-contain"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <h3 className="text-xl font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
-                                  {job.jobTitle || job.title || 'Job Position'}
-                                </h3>
-                                <span className="text-sm text-gray-500 ml-4">
-                                  {formatDate(job.createdAt)}
-                                </span>
-                              </div>
-                              <p className="text-lg text-blue-600 font-medium mb-2">{job.company}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{job.location}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="w-4 h-4" />
-                              <span>{formatSalary(job.salary)}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Briefcase className="w-4 h-4" />
-                              <span>{job.type}</span>
-                            </div>
-                          </div>
-
-                          <p className="text-gray-600 mb-4">
-                            {job.description && job.description.length > 150 
-                              ? `${decodeHtmlEntities(job.description).substring(0, 150)}...` 
-                              : decodeHtmlEntities(job.description || '')}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
-                          <button 
-                            onClick={() => handleRemoveSavedJob(job._id || job.id)}
-                            className="flex items-center justify-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors min-w-[100px]"
-                          >
-                            <span>Remove</span>
-                          </button>
-                          <button 
-                            onClick={() => {
-                              localStorage.setItem('selectedJob', JSON.stringify(job));
-                              onNavigate('job-application');
-                            }}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
-                          >
-                            Apply Now
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {savedJobs.map((job) => renderJobCard(job, true, 'saved'))}
                 </div>
-              ) : null}
+              )}
 
-              {user?.type === 'employer' && activeTab === 'Applications' && employerApplications.length > 0 ? (
-                <div className="space-y-4">
-                  {employerApplications.map((application) => (
-                    <div key={application._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-start mb-4">
-                            <div className="flex-shrink-0 w-12 h-12 mr-4">
-                              <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center bg-blue-100">
-                                <span className="text-blue-600 font-semibold text-lg">
-                                  {(application.candidateName || application.name || 'U').charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <h3 className="text-xl font-semibold text-gray-900">
-                                  {application.candidateName || application.name || 'Candidate'}
-                                </h3>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                  application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  application.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                                  application.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {application.status || 'pending'}
-                                </span>
-                              </div>
-                              <p className="text-lg text-blue-600 font-medium mb-2">
-                                Applied for: {application.jobId?.jobTitle || application.jobId?.title || 'Job Position'}
-                              </p>
-                              <p className="text-sm text-gray-600 mb-2">
-                                Email: {application.candidateEmail || application.email || 'N/A'}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Applied on: {formatDate(application.createdAt || application.appliedAt)}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {application.coverLetter && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-900 mb-2">Cover Letter:</h4>
-                              <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded">
-                                {application.coverLetter.length > 200 
-                                  ? `${application.coverLetter.substring(0, 200)}...` 
-                                  : application.coverLetter}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col space-y-2 min-w-[150px]">
-                          {application.status === 'pending' && (
-                            <>
-                              <button 
-                                onClick={() => updateApplicationStatus(application._id, 'accepted')}
-                                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors text-sm"
-                              >
-                                Accept
-                              </button>
-                              <button 
-                                onClick={() => updateApplicationStatus(application._id, 'rejected')}
-                                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors text-sm"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {application.resumeUrl && (
-                            <button 
-                              onClick={() => window.open(application.resumeUrl, '_blank')}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
-                            >
-                              View Resume
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => onNavigate('job-detail', { jobId: application.jobId?._id || application.jobId })}
-                            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm"
-                          >
-                            View Job
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length > 0 ? (
+              {user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length > 0 && (
                 <div className="space-y-4">
                   {appliedJobs.map((application) => (
                     <div key={application._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
@@ -711,7 +516,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                                   className="w-10 h-10 object-contain"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
+                                    target.src = '/images/zync-logo.svg';
                                   }}
                                 />
                               </div>
@@ -777,7 +582,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                     </div>
                   ))}
                 </div>
-              ) : null}
+              )}
 
               {((user?.type === 'candidate' && activeTab === 'Saved' && savedJobs.length === 0) ||
                 (user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length === 0) ||

@@ -21,6 +21,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
     setError('');
 
     try {
+      console.log('🔐 Attempting login for:', email);
       const response = await authAPI.login({ email, password });
       
       if (response.user.userType === 'employer') {
@@ -55,7 +56,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
       }
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      console.error('❌ Login error:', err);
+      let errorMessage = 'Login failed';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('Account not found')) {
+          errorMessage = 'Account not found. Please register first or check your email.';
+        } else if (err.message.includes('Invalid password')) {
+          errorMessage = 'Incorrect password. Please try again or reset your password.';
+        } else if (err.message.includes('Account is inactive')) {
+          errorMessage = 'Account is inactive. Please contact support.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -161,6 +176,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
                 Sign up
               </button>
             </p>
+            
+            {/* Quick registration hint */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                💡 <strong>New user?</strong> Click "Sign up" to create your account with email: {email || 'your-email@example.com'}
+              </p>
+            </div>
           </div>
         </div>
       </div>

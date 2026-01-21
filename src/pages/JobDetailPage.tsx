@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
-import { getSafeCompanyLogo, getLetterAvatar } from '../utils/logoUtils';
+import { getCompanyLogo } from '../utils/logoUtils';
 import QuickApplyButton from '../components/QuickApplyButton';
 
 interface JobDetailPageProps {
@@ -310,18 +310,24 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               console.log('📊 User:', user);
               console.log('👤 User type:', user?.type, user?.userType);
               
-              // Always navigate to job-listings for simplicity and reliability
+              // Navigate based on user type and context
               try {
-                console.log('🏠 Navigating to job-listings');
-                onNavigate('job-listings');
+                if (user?.type === 'employer' || user?.userType === 'employer') {
+                  // For employers, go back to my-jobs (their posted jobs)
+                  console.log('🏢 Employer - navigating to my-jobs');
+                  onNavigate('my-jobs');
+                } else {
+                  // For candidates and non-logged users, go to job-listings
+                  console.log('👤 Candidate/Guest - navigating to job-listings');
+                  onNavigate('job-listings');
+                }
               } catch (error) {
                 console.error('❌ Navigation error:', error);
-                // Multiple fallback strategies
+                // Fallback to job-listings
                 try {
-                  // Try going to home page
-                  onNavigate('home');
-                } catch (homeError) {
-                  console.error('❌ Home navigation error:', homeError);
+                  onNavigate('job-listings');
+                } catch (fallbackError) {
+                  console.error('❌ Fallback navigation error:', fallbackError);
                   // Final fallback - reload to home
                   window.location.href = '/';
                 }
@@ -330,17 +336,21 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            <span>Back to Jobs</span>
+            <span>Back to {user?.type === 'employer' || user?.userType === 'employer' ? 'My Jobs' : 'Jobs'}</span>
           </button>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start space-x-4 flex-1">
               <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center p-2">
-                <div className="w-full h-full bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
-                    {(job.company || 'T').charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                <img
+                  src={getCompanyLogo(job.company || 'Trinity Technology Solutions')}
+                  alt={job.company}
+                  className="w-full h-full object-contain rounded"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/images/zync-logo.svg';
+                  }}
+                />
               </div>
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.jobTitle || job.title}</h1>
@@ -525,9 +535,13 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact the Job Poster</h3>
               <div className="flex items-center space-x-3 mb-4">
                 <img
-                  src={jobPoster?.companyLogo || getCompanyLogo(job)}
+                  src={getCompanyLogo(job.company || 'Trinity Technology Solutions')}
                   alt={jobPoster?.name || job.company}
-                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  className="w-12 h-12 rounded-full object-contain border border-gray-200 bg-white p-1"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = '/images/zync-logo.svg';
+                  }}
                 />
                 <div>
                   <p className="font-semibold text-gray-900">

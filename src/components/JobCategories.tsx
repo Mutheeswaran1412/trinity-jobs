@@ -1,56 +1,100 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { 
+  Mail, 
+  Headphones, 
+  User, 
+  CheckSquare, 
+  TrendingUp, 
+  MessageSquare, 
+  BookOpen, 
+  Palette 
+} from 'lucide-react';
 
 interface JobCategoriesProps {
   onNavigate?: (page: string, data?: any) => void;
 }
 
 const JobCategories: React.FC<JobCategoriesProps> = ({ onNavigate }) => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-fade-in-up');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const cards = sectionRef.current?.querySelectorAll('.category-card');
+    cards?.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, []);
+
   const categories = [
-    { name: "UI/UX Design", jobs: "100+ Posted New Jobs" },
-    { name: "Illustration", jobs: "200+ Posted New Jobs" },
-    { name: "Cool Art", jobs: "150+ Posted New Jobs" },
-    { name: "Web Design", jobs: "100+ Posted New Jobs" },
-    { name: "Product Design", jobs: "110+ Posted New Jobs" },
-    { name: "Developer", jobs: "250+ Posted New Jobs" },
-    { name: "Animation", jobs: "150+ Posted New Jobs" }
+    { name: "Marketing", jobs: "123 Vacancy", icon: Mail, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Customer Service", jobs: "123 Vacancy", icon: Headphones, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Human Resource", jobs: "123 Vacancy", icon: User, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Project Management", jobs: "123 Vacancy", icon: CheckSquare, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Business Development", jobs: "123 Vacancy", icon: TrendingUp, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Sales & Communication", jobs: "123 Vacancy", icon: MessageSquare, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Teaching & Education", jobs: "123 Vacancy", icon: BookOpen, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Design & Creative", jobs: "123 Vacancy", icon: Palette, color: "bg-blue-50", iconColor: "text-blue-600" }
   ];
 
   return (
-    <div className="bg-white py-16">
+    <div className="bg-white py-16" ref={sectionRef}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h6 className="text-blue-600 font-semibold text-lg mb-2">Jobs Category</h6>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Choose Your Desire Category</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            There are many variations of passages of available, but the majority have suffered
-            some form, by injected humour, or look even slightly believable.
-          </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category, index) => (
-            <div
-              key={index}
-              onClick={() => onNavigate && onNavigate('job-listings', { category: category.name })}
-              className="bg-gray-50 hover:bg-blue-50 p-6 rounded-xl cursor-pointer transition-colors group"
-            >
-              <div className="text-center">
-                <h5 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 mb-2">
-                  {category.name}
-                </h5>
-                <span className="text-gray-600 text-sm">{category.jobs}</span>
+          {categories.map((category, index) => {
+            const IconComponent = category.icon;
+            return (
+              <div
+                key={index}
+                onClick={() => onNavigate && onNavigate('job-listings', { category: category.name })}
+                className={`category-card ${category.color} hover:shadow-lg p-8 rounded-xl cursor-pointer transition-all duration-300 group opacity-0 translate-y-8`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="text-center">
+                  <div className={`w-16 h-16 ${category.color} rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <IconComponent className={`w-8 h-8 ${category.iconColor}`} />
+                  </div>
+                  <h5 className="text-lg font-semibold text-gray-900 mb-2">
+                    {category.name}
+                  </h5>
+                  <span className="text-blue-600 text-sm font-medium">{category.jobs}</span>
+                </div>
               </div>
-            </div>
-          ))}
-          
-          <div 
-            onClick={() => onNavigate && onNavigate('job-listings')}
-            className="bg-blue-600 hover:bg-blue-700 p-6 rounded-xl cursor-pointer transition-colors text-center text-white"
-          >
-            <span className="font-semibold">100+ More<br />Category</span>
-          </div>
+            );
+          })}
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,5 +1,10 @@
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return '';
+  if (!companyName) return '/images/zync-logo.svg';
+  
+  // Special handling for Trinity Technology Solutions
+  if (companyName.toLowerCase().includes('trinity')) {
+    return 'https://logo.clearbit.com/trinitytechsolutions.com';
+  }
   
   // Clean company name for URL
   const cleanName = companyName.toLowerCase()
@@ -13,7 +18,8 @@ export const getCompanyLogo = (companyName: string): string => {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  return '';
+  // Fallback to ZyncJobs logo
+  return '/images/zync-logo.svg';
 };
 
 const getCompanyDomain = (companyName: string): string => {
@@ -60,11 +66,7 @@ const getCompanyDomain = (companyName: string): string => {
     'kubernetes': 'kubernetes.io',
     'aws': 'aws.amazon.com',
     'azure': 'azure.microsoft.com',
-    'gcp': 'cloud.google.com',
-    'trinity technology solutions': 'trinitetech.com',
-    'trinity tech': 'trinitetech.com',
-    'trinitytech': 'trinitetech.com',
-    'trinity': 'trinitetech.com'
+    'gcp': 'cloud.google.com'
   };
   
   // Check for exact matches first
@@ -81,4 +83,25 @@ const getCompanyDomain = (companyName: string): string => {
   
   // Try to construct domain from company name (only for known patterns)
   return '';
+};
+
+export const getSafeCompanyLogo = (job: any): string => {
+  const companyName = job.company || job.companyName || 'ZyncJobs';
+  
+  // Special handling for Trinity Technology Solutions
+  if (companyName.toLowerCase().includes('trinity')) {
+    return 'https://logo.clearbit.com/trinitytechsolutions.com';
+  }
+  
+  return getCompanyLogo(companyName);
+};
+
+export const getLetterAvatar = (name: string): string => {
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+  return `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+      <rect width="40" height="40" fill="#3B82F6" rx="8"/>
+      <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial" font-size="16" font-weight="bold">${initials}</text>
+    </svg>
+  `)}`;
 };

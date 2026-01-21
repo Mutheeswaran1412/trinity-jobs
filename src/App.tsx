@@ -71,6 +71,7 @@ import MobileNavigation from './components/MobileNavigation';
 import SkillAssessment from './components/SkillAssessment';
 import InterviewScheduling from './components/InterviewScheduling';
 import FeaturesPage from './pages/FeaturesPage';
+import PricingPage from './pages/PricingPage';
 
 
 
@@ -649,6 +650,10 @@ function App() {
         <Footer onNavigate={handleNavigation} />
       </div>
     );
+  }
+
+  if (currentPage === 'pricing') {
+    return <PricingPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'features') {

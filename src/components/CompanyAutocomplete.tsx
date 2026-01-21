@@ -6,6 +6,7 @@ interface Company {
   name: string;
   domain?: string;
   logo?: string;
+  logoUrl?: string;
   website?: string;
 }
 
@@ -55,8 +56,10 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
         setShowSuggestions(data.length > 0);
       } catch (error) {
         console.error('Company search error:', error);
-        setSuggestions([]);
-        setShowSuggestions(false);
+        // Fallback to local company data when API fails
+        const localCompanies = getLocalCompanies(value);
+        setSuggestions(localCompanies);
+        setShowSuggestions(localCompanies.length > 0);
       } finally {
         setLoading(false);
       }
@@ -67,7 +70,11 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
   }, [value, isSelected]);
 
   const getCompanyLogo = (company: Company) => {
-    // Use Clearbit as primary (better quality logos)
+    // Use the logoUrl from the company data first
+    if (company.logoUrl || company.logo) {
+      return company.logoUrl || company.logo;
+    }
+    // Use Clearbit as fallback
     if (company.domain) {
       return `https://logo.clearbit.com/${company.domain}`;
     }
@@ -80,6 +87,38 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
       return `https://www.google.com/s2/favicons?domain=${company.domain}&sz=64`;
     }
     return null;
+  };
+
+  const getLocalCompanies = (searchTerm: string): Company[] => {
+    const companies = [
+      { name: 'Google', domain: 'google.com', logoUrl: 'https://logo.clearbit.com/google.com' },
+      { name: 'Microsoft', domain: 'microsoft.com', logoUrl: 'https://logo.clearbit.com/microsoft.com' },
+      { name: 'Apple', domain: 'apple.com', logoUrl: 'https://logo.clearbit.com/apple.com' },
+      { name: 'Amazon', domain: 'amazon.com', logoUrl: 'https://logo.clearbit.com/amazon.com' },
+      { name: 'Meta', domain: 'meta.com', logoUrl: 'https://logo.clearbit.com/meta.com' },
+      { name: 'Netflix', domain: 'netflix.com', logoUrl: 'https://logo.clearbit.com/netflix.com' },
+      { name: 'Tesla', domain: 'tesla.com', logoUrl: 'https://logo.clearbit.com/tesla.com' },
+      { name: 'Uber', domain: 'uber.com', logoUrl: 'https://logo.clearbit.com/uber.com' },
+      { name: 'Airbnb', domain: 'airbnb.com', logoUrl: 'https://logo.clearbit.com/airbnb.com' },
+      { name: 'Spotify', domain: 'spotify.com', logoUrl: 'https://logo.clearbit.com/spotify.com' },
+      { name: 'TCS', domain: 'tcs.com', logoUrl: 'https://logo.clearbit.com/tcs.com' },
+      { name: 'Infosys', domain: 'infosys.com', logoUrl: 'https://logo.clearbit.com/infosys.com' },
+      { name: 'Wipro', domain: 'wipro.com', logoUrl: 'https://logo.clearbit.com/wipro.com' },
+      { name: 'Accenture', domain: 'accenture.com', logoUrl: 'https://logo.clearbit.com/accenture.com' },
+      { name: 'IBM', domain: 'ibm.com', logoUrl: 'https://logo.clearbit.com/ibm.com' },
+      { name: 'Oracle', domain: 'oracle.com', logoUrl: 'https://logo.clearbit.com/oracle.com' },
+      { name: 'Salesforce', domain: 'salesforce.com', logoUrl: 'https://logo.clearbit.com/salesforce.com' },
+      { name: 'Adobe', domain: 'adobe.com', logoUrl: 'https://logo.clearbit.com/adobe.com' },
+      { name: 'Zoho', domain: 'zoho.com', logoUrl: 'https://logo.clearbit.com/zoho.com' },
+      { name: 'Flipkart', domain: 'flipkart.com', logoUrl: 'https://logo.clearbit.com/flipkart.com' },
+      { name: 'Paytm', domain: 'paytm.com', logoUrl: 'https://logo.clearbit.com/paytm.com' },
+      { name: 'Swiggy', domain: 'swiggy.com', logoUrl: 'https://logo.clearbit.com/swiggy.com' },
+      { name: 'Zomato', domain: 'zomato.com', logoUrl: 'https://logo.clearbit.com/zomato.com' }
+    ];
+    
+    return companies.filter(company => 
+      company.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 10);
   };
 
   const handleSelect = (company: Company, e: React.MouseEvent) => {
@@ -114,22 +153,20 @@ const CompanyAutocomplete: React.FC<CompanyAutocompleteProps> = ({
               className="px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-colors flex items-center space-x-3"
             >
               <div className="w-8 h-8 flex-shrink-0">
-                {getCompanyLogo(company) && (
-                  <img
-                    src={getCompanyLogo(company)!}
-                    alt={company.name}
-                    className="w-8 h-8 rounded object-contain bg-white border"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      const fallbackUrl = getFallbackLogo(company);
-                      if (fallbackUrl && img.src !== fallbackUrl) {
-                        img.src = fallbackUrl;
-                      } else {
-                        img.style.display = 'none';
-                      }
-                    }}
-                  />
-                )}
+                <img
+                  src={getCompanyLogo(company) || '/images/zync-logo.svg'}
+                  alt={company.name}
+                  className="w-8 h-8 rounded object-contain bg-white border"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    const fallbackUrl = getFallbackLogo(company);
+                    if (fallbackUrl && img.src !== fallbackUrl) {
+                      img.src = fallbackUrl;
+                    } else if (img.src !== '/images/zync-logo.svg') {
+                      img.src = '/images/zync-logo.svg';
+                    }
+                  }}
+                />
               </div>
               <span className="text-gray-900 font-medium">{company.name}</span>
               {company.domain && (

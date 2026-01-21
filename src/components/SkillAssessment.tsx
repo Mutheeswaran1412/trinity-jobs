@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Search } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/constants';
 
 const SkillAssessment = () => {
   const [skills, setSkills] = useState([]);
+  const [filteredSkills, setFilteredSkills] = useState([]);
+  const [skillSearch, setSkillSearch] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [showSkillDropdown, setShowSkillDropdown] = useState(false);
   const [assessment, setAssessment] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -25,11 +29,30 @@ const SkillAssessment = () => {
 
   const fetchSkills = async () => {
     try {
-      const response = await fetch('/api/skill-assessments/skills');
-      const data = await response.json();
-      setSkills(data);
+      // First try to fetch from skills.json
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/backend/data/skills.json`);
+      if (response.ok) {
+        const data = await response.json();
+        setSkills(data.skills || []);
+        setFilteredSkills(data.skills || []);
+      } else {
+        // Fallback to API endpoint
+        const apiResponse = await fetch('/api/skill-assessments/skills');
+        const apiData = await apiResponse.json();
+        setSkills(apiData);
+        setFilteredSkills(apiData);
+      }
     } catch (error) {
       console.error('Error fetching skills:', error);
+      // Fallback skills if both fail
+      const fallbackSkills = [
+        'JavaScript', 'Python', 'React', 'Node.js', 'Java', 'C++', 'SQL', 'AWS', 'Docker', 'Git',
+        'HTML', 'CSS', 'TypeScript', 'Angular', 'Vue.js', 'PHP', 'C#', 'Ruby', 'Go', 'Kotlin',
+        'Swift', 'Flutter', 'React Native', 'MongoDB', 'PostgreSQL', 'Redis', 'Kubernetes',
+        'Machine Learning', 'Data Science', 'Cybersecurity', 'DevOps', 'UI/UX Design'
+      ];
+      setSkills(fallbackSkills);
+      setFilteredSkills(fallbackSkills);
     }
   };
 
@@ -90,6 +113,29 @@ const SkillAssessment = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleSkillSearch = (e) => {
+    const value = e.target.value;
+    setSkillSearch(value);
+    setSelectedSkill(value);
+    
+    if (value.length >= 1) {
+      const filtered = skills.filter(skill => 
+        skill.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 10);
+      setFilteredSkills(filtered);
+      setShowSkillDropdown(true);
+    } else {
+      setFilteredSkills(skills.slice(0, 10));
+      setShowSkillDropdown(false);
+    }
+  };
+
+  const selectSkill = (skill) => {
+    setSelectedSkill(skill);
+    setSkillSearch(skill);
+    setShowSkillDropdown(false);
   };
 
   if (result) {
@@ -203,16 +249,34 @@ const SkillAssessment = () => {
           <h2 className="text-xl font-bold mb-4">Take New Assessment</h2>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">Select Skill</label>
-            <select
-              value={selectedSkill}
-              onChange={(e) => setSelectedSkill(e.target.value)}
-              className="w-full p-3 border rounded-lg"
-            >
-              <option value="">Choose a skill...</option>
-              {skills.map(skill => (
-                <option key={skill} value={skill}>{skill}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={skillSearch}
+                  onChange={handleSkillSearch}
+                  onFocus={() => setShowSkillDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowSkillDropdown(false), 200)}
+                  placeholder="Search skills (e.g., JavaScript, Python, React)..."
+                  className="w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              </div>
+              {showSkillDropdown && filteredSkills.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredSkills.map((skill, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onMouseDown={() => selectSkill(skill)}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                    >
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <button
             onClick={startAssessment}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Users, Star, Building, Globe } from 'lucide-react';
+import { Search, MapPin, Users, Star, Building, Globe, ChevronDown } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { API_ENDPOINTS } from '../config/env';
@@ -25,6 +25,47 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
   const [searchTerm, setSearchTerm] = useState('');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [industryInput, setIndustryInput] = useState('');
+  const [sizeInput, setSizeInput] = useState('');
+  const [workSettingInput, setWorkSettingInput] = useState('');
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+  const [showSizeDropdown, setShowSizeDropdown] = useState(false);
+  const [showWorkSettingDropdown, setShowWorkSettingDropdown] = useState(false);
+  
+  // Data arrays
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [companySizes, setCompanySizes] = useState<string[]>([]);
+  const [workSettings, setWorkSettings] = useState<string[]>([]);
+
+  // Load filter data
+  const loadFilterData = async () => {
+    try {
+      const [industriesRes, sizesRes, workSettingsRes] = await Promise.all([
+        fetch('/backend/data/industries.json'),
+        fetch('/backend/data/company-sizes.json'),
+        fetch('/backend/data/work-settings.json')
+      ]);
+      
+      if (industriesRes.ok) {
+        const industriesData = await industriesRes.json();
+        setIndustries(industriesData);
+      }
+      
+      if (sizesRes.ok) {
+        const sizesData = await sizesRes.json();
+        setCompanySizes(sizesData);
+      }
+      
+      if (workSettingsRes.ok) {
+        const workSettingsData = await workSettingsRes.json();
+        setWorkSettings(workSettingsData);
+      }
+    } catch (error) {
+      console.error('Error loading filter data:', error);
+    }
+  };
 
   // Fetch companies from API
   const fetchCompanies = async () => {
@@ -49,8 +90,49 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
   };
 
   useEffect(() => {
+    loadFilterData();
     fetchCompanies();
   }, [searchTerm]);
+
+  // Filter functions
+  const getFilteredIndustries = () => {
+    return industries.filter(industry => 
+      industry.toLowerCase().includes(industryInput.toLowerCase())
+    ).slice(0, 10);
+  };
+
+  const getFilteredSizes = () => {
+    return companySizes.filter(size => 
+      size.toLowerCase().includes(sizeInput.toLowerCase())
+    ).slice(0, 10);
+  };
+
+  const getFilteredWorkSettings = () => {
+    return workSettings.filter(setting => 
+      setting.toLowerCase().includes(workSettingInput.toLowerCase())
+    ).slice(0, 10);
+  };
+
+  const handleIndustrySelect = (industry: string) => {
+    setIndustryInput(industry);
+    setShowIndustryDropdown(false);
+  };
+
+  const handleSizeSelect = (size: string) => {
+    setSizeInput(size);
+    setShowSizeDropdown(false);
+  };
+
+  const handleWorkSettingSelect = (setting: string) => {
+    setWorkSettingInput(setting);
+    setShowWorkSettingDropdown(false);
+  };
+
+  const clearFilters = () => {
+    setIndustryInput('');
+    setSizeInput('');
+    setWorkSettingInput('');
+  };
 
   // Get company logo - use Google favicons like employer registration
   const getCompanyLogo = (company: Company) => {
@@ -102,35 +184,96 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
             </div>
           </div>
 
-          {/* Filter Dropdowns */}
+          {/* Filter Inputs */}
           <div className="flex flex-wrap justify-center gap-4 mb-4">
-            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
-              <option>Industry</option>
-              <option>Technology</option>
-              <option>Healthcare</option>
-              <option>Finance</option>
-              <option>Education</option>
-            </select>
-            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
-              <option>Size</option>
-              <option>1-50 employees</option>
-              <option>51-200 employees</option>
-              <option>201-1000 employees</option>
-              <option>1000+ employees</option>
-            </select>
-            <select className="px-6 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500">
-              <option>Work Setting</option>
-              <option>Remote</option>
-              <option>Hybrid</option>
-              <option>On-site</option>
-            </select>
-            <button className="px-6 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg font-medium flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              <span>Hiring</span>
+            {/* Industry Filter */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Industry"
+                value={industryInput}
+                onChange={(e) => setIndustryInput(e.target.value)}
+                onFocus={() => setShowIndustryDropdown(true)}
+                onBlur={() => setTimeout(() => setShowIndustryDropdown(false), 200)}
+                className="px-6 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 w-48"
+              />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {showIndustryDropdown && getFilteredIndustries().length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {getFilteredIndustries().map((industry, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleIndustrySelect(industry)}
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    >
+                      {industry}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Size Filter */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Size"
+                value={sizeInput}
+                onChange={(e) => setSizeInput(e.target.value)}
+                onFocus={() => setShowSizeDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSizeDropdown(false), 200)}
+                className="px-6 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 w-48"
+              />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {showSizeDropdown && getFilteredSizes().length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {getFilteredSizes().map((size, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSizeSelect(size)}
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    >
+                      {size}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Work Setting Filter */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Work Setting"
+                value={workSettingInput}
+                onChange={(e) => setWorkSettingInput(e.target.value)}
+                onFocus={() => setShowWorkSettingDropdown(true)}
+                onBlur={() => setTimeout(() => setShowWorkSettingDropdown(false), 200)}
+                className="px-6 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 w-48"
+              />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {showWorkSettingDropdown && getFilteredWorkSettings().length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {getFilteredWorkSettings().map((setting, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleWorkSettingSelect(setting)}
+                      className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+                    >
+                      {setting}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button className="px-6 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg font-medium">
+              Hiring
             </button>
-            <button className="px-4 py-3 text-blue-600 font-medium hover:text-blue-800">
+            <button 
+              onClick={clearFilters}
+              className="px-4 py-3 text-blue-600 font-medium hover:text-blue-800"
+            >
               Clear filters
             </button>
           </div>

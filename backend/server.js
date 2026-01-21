@@ -1,10 +1,3 @@
-// DOM Polyfills for PDF processing
-import { JSDOM } from 'jsdom';
-const dom = new JSDOM();
-global.DOMMatrix = dom.window.DOMMatrix;
-global.ImageData = dom.window.ImageData;
-global.Path2D = dom.window.Path2D;
-
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -62,6 +55,7 @@ import reminderRoutes from './routes/reminders.js';
 import headlineAnalyticsRoutes from './routes/headlineAnalytics.js';
 import skillAssessmentRoutes from './routes/skillAssessments.js';
 import interviewRoutes from './routes/interviews.js';
+import meetingRoutes from './routes/meetings.js';
 import advancedSearchRoutes from './routes/advancedSearch.js';
 import reminderScheduler from './services/reminderScheduler.js';
 import Notification from './models/Notification.js';
@@ -259,6 +253,7 @@ app.use('/api/search', advancedSearchRoutes);
 app.use('/api/headline', headlineAnalyticsRoutes);
 app.use('/api/skill-assessments', skillAssessmentRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/meetings', meetingRoutes);
 
 // Resume parser with AI
 app.post('/api/resume-parser/parse', async (req, res) => {

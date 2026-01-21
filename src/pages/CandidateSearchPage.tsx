@@ -44,19 +44,18 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
   useEffect(() => {
     const loadSkillsAndLocations = async () => {
       try {
-        const [skillsResponse, locationsResponse] = await Promise.all([
-          fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/skills?q=`),
-          fetch(`${API_ENDPOINTS.BASE_URL}/api/autocomplete/locations?q=`)
-        ]);
-        
+        // Load skills from skills.json
+        const skillsResponse = await fetch('/backend/data/skills.json');
         if (skillsResponse.ok) {
-          const skills = await skillsResponse.json();
-          setAllSkills(skills.slice(0, 50)); // Limit to first 50 for dropdown
+          const skillsData = await skillsResponse.json();
+          setAllSkills(skillsData.skills || []);
         }
         
+        // Load locations from locations.json
+        const locationsResponse = await fetch('/backend/data/locations.json');
         if (locationsResponse.ok) {
-          const locations = await locationsResponse.json();
-          setAllLocations(locations.slice(0, 50)); // Limit to first 50 for dropdown
+          const locationsData = await locationsResponse.json();
+          setAllLocations(locationsData.locations || []);
         }
       } catch (error) {
         console.error('Error loading skills and locations:', error);
@@ -218,28 +217,98 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
               />
             </div>
             <div className="relative">
-              <select
+              <input
+                type="text"
+                placeholder="Search skills (e.g., Python, React, AWS)..."
                 value={selectedSkill}
-                onChange={(e) => setSelectedSkill(e.target.value)}
-                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium bg-white"
-              >
-                <option value="">All Skills</option>
-                {allSkills.map(skill => (
-                  <option key={skill} value={skill}>{skill}</option>
-                ))}
-              </select>
+                onChange={(e) => {
+                  setSelectedSkill(e.target.value);
+                  if (e.target.value.length >= 1) {
+                    const filtered = allSkills.filter(skill => 
+                      skill.toLowerCase().includes(e.target.value.toLowerCase())
+                    ).slice(0, 10);
+                    setSkillSuggestions(filtered);
+                    setShowSkillSuggestions(true);
+                  } else {
+                    setShowSkillSuggestions(false);
+                  }
+                }}
+                onFocus={() => {
+                  if (selectedSkill.length >= 1) {
+                    const filtered = allSkills.filter(skill => 
+                      skill.toLowerCase().includes(selectedSkill.toLowerCase())
+                    ).slice(0, 10);
+                    setSkillSuggestions(filtered);
+                    setShowSkillSuggestions(true);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowSkillSuggestions(false), 200)}
+                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
+              />
+              {showSkillSuggestions && skillSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {skillSuggestions.map((skill, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onMouseDown={() => {
+                        setSelectedSkill(skill);
+                        setShowSkillSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                    >
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="relative">
-              <select
+              <input
+                type="text"
+                placeholder="Search locations (e.g., Mumbai, Remote, Bangalore)..."
                 value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium bg-white"
-              >
-                <option value="">All Locations</option>
-                {allLocations.map(location => (
-                  <option key={location} value={location}>{location}</option>
-                ))}
-              </select>
+                onChange={(e) => {
+                  setSelectedLocation(e.target.value);
+                  if (e.target.value.length >= 1) {
+                    const filtered = allLocations.filter(location => 
+                      location.toLowerCase().includes(e.target.value.toLowerCase())
+                    ).slice(0, 10);
+                    setLocationSuggestions(filtered);
+                    setShowLocationSuggestions(true);
+                  } else {
+                    setShowLocationSuggestions(false);
+                  }
+                }}
+                onFocus={() => {
+                  if (selectedLocation.length >= 1) {
+                    const filtered = allLocations.filter(location => 
+                      location.toLowerCase().includes(selectedLocation.toLowerCase())
+                    ).slice(0, 10);
+                    setLocationSuggestions(filtered);
+                    setShowLocationSuggestions(true);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
+              />
+              {showLocationSuggestions && locationSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {locationSuggestions.map((location, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onMouseDown={() => {
+                        setSelectedLocation(location);
+                        setShowLocationSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                    >
+                      {location}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl">
               <Filter className="w-5 h-5" />

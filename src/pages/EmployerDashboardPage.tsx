@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, User, Briefcase, MessageSquare, FileText, Bookmark, CreditCard, Settings, Trash2, LogOut, Search, Bell, Plus, MoreVertical, Users, Eye, Edit, UserPlus, FileSearch, Folder } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import AutoRejectionSettings from '../components/AutoRejectionSettings';
 
 interface EmployerDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -16,6 +17,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [companyWebsite, setCompanyWebsite] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [interviews, setInterviews] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,9 +72,10 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         console.log('DEBUG - Database contents:', debugData);
       }
       
-      const [jobsRes, appsRes, statsRes, activityRes] = await Promise.all([
+      const [jobsRes, appsRes, interviewsRes, statsRes, activityRes] = await Promise.all([
         fetch(API_ENDPOINTS.JOBS),
         fetch(API_ENDPOINTS.APPLICATIONS),
+        fetch(`${API_ENDPOINTS.BASE_URL}/api/interviews?employerId=${userId || ''}&employerEmail=${userEmail || ''}`),
         fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/stats?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`),
         fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/recent-activity?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`)
       ]);
@@ -116,6 +119,19 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       } else {
         console.log('Applications API not available or returned error');
         setApplications([]);
+      }
+
+      // Fetch interviews
+      if (interviewsRes.ok) {
+        try {
+          const interviewsData = await interviewsRes.json();
+          setInterviews(Array.isArray(interviewsData) ? interviewsData : []);
+        } catch (e) {
+          console.log('Interviews API failed');
+          setInterviews([]);
+        }
+      } else {
+        setInterviews([]);
       }
 
       // Fetch dashboard stats - use local job count if API fails
@@ -301,6 +317,21 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           </button>
 
           <button
+            onClick={() => setActiveMenu('interviews')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              activeMenu === 'interviews' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="font-medium">Interviews</span>
+            {interviews.length > 0 && (
+              <span className="ml-auto bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                {interviews.length}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => onNavigate('my-jobs')}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
@@ -317,6 +348,16 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           </button>
 
           <button
+            onClick={() => setActiveMenu('auto-rejection')}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              activeMenu === 'auto-rejection' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span className="font-medium">AI Rejection</span>
+          </button>
+
+          <button
             onClick={() => onNavigate('candidate-search')}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
@@ -325,11 +366,11 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           </button>
 
           <button
-            onClick={() => console.log('Membership feature coming soon')}
+            onClick={() => onNavigate('pricing')}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <CreditCard className="w-5 h-5" />
-            <span className="font-medium">Membership</span>
+            <span className="font-medium">Pricing Plans</span>
           </button>
 
           <button
@@ -440,6 +481,36 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   </div>
                 ))}
               </div>
+
+              {/* Job Posting Limit Warning */}
+              {jobs.length >= 3 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-yellow-600 font-bold">!</span>
+                      </div>
+                      <div>
+                        <h3 className="text-yellow-800 font-semibold">
+                          {jobs.length >= 4 ? 'Free limit reached' : 'Approaching free limit'}
+                        </h3>
+                        <p className="text-yellow-700 text-sm">
+                          {jobs.length >= 4 
+                            ? 'You\'ve used all 4 free job postings. Upgrade to post more jobs.' 
+                            : `You\'ve used ${jobs.length}/4 free job postings.`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('pricing')}
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
+                    >
+                      {jobs.length >= 4 ? 'Upgrade Now' : 'View Plans'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Quick Actions */}
@@ -673,6 +744,126 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   ))}
                 </div>
               )}
+            </>
+          ) : activeMenu === 'interviews' ? (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 mb-8">Scheduled Interviews</h1>
+              
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                </div>
+              ) : interviews.length === 0 ? (
+                <div className="text-center py-16">
+                  <MessageSquare className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Interviews Scheduled</h3>
+                  <p className="text-gray-600 mb-6">Interview schedules will appear here when candidates book interviews.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {interviews.map((interview) => (
+                    <div key={interview._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-4 flex-1">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">
+                              {interview.candidateName?.charAt(0).toUpperCase() || 'C'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {interview.candidateName || 'Candidate'}
+                                </h3>
+                                <p className="text-lg text-blue-600 font-medium">
+                                  {interview.jobTitle || 'Interview'}
+                                </p>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                interview.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                interview.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                interview.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {interview.status?.charAt(0).toUpperCase() + interview.status?.slice(1) || 'Scheduled'}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                              <span>📅 {new Date(interview.date).toLocaleDateString()}</span>
+                              <span>🕒 {interview.time}</span>
+                              <span>📧 {interview.candidateEmail}</span>
+                            </div>
+
+                            {interview.meetingLink && (
+                              <div className="mb-3">
+                                <a
+                                  href={interview.meetingLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center space-x-1 bg-blue-50 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                  <span>🔗</span>
+                                  <span>Join Meeting</span>
+                                </a>
+                              </div>
+                            )}
+
+                            {interview.notes && (
+                              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                <strong>Notes:</strong> {interview.notes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="ml-6 flex flex-col space-y-2">
+                          <select
+                            value={interview.status || 'scheduled'}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              try {
+                                const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/interviews/${interview._id}/status`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ status: newStatus }),
+                                });
+                                
+                                if (response.ok) {
+                                  setInterviews(prev => 
+                                    prev.map(int => 
+                                      int._id === interview._id ? { ...int, status: newStatus } : int
+                                    )
+                                  );
+                                  alert('Interview status updated successfully!');
+                                } else {
+                                  throw new Error('Failed to update status');
+                                }
+                              } catch (error) {
+                                console.error('Error updating interview status:', error);
+                                alert('Failed to update interview status. Please try again.');
+                                e.target.value = interview.status || 'scheduled';
+                              }
+                            }}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="scheduled">Scheduled</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : activeMenu === 'auto-rejection' ? (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900 mb-8">AI Auto-Rejection Settings</h1>
+              <AutoRejectionSettings onSave={(settings) => console.log('Settings saved:', settings)} />
             </>
           ) : null}
         </div>

@@ -48,30 +48,41 @@ const CompanyAutoSuggest: React.FC<CompanyAutoSuggestProps> = ({
 
   const searchCompanies = async (searchQuery: string) => {
     setLoading(true);
+    
+    // Always show fallback companies for now since API might fail
+    const fallbackCompanies = [
+      { id: '1', name: 'Google', logo: 'https://logo.clearbit.com/google.com', followers: 1000000 },
+      { id: '2', name: 'Amazon', logo: 'https://logo.clearbit.com/amazon.com', followers: 800000 },
+      { id: '3', name: 'Microsoft', logo: 'https://logo.clearbit.com/microsoft.com', followers: 900000 },
+      { id: '4', name: 'Apple', logo: 'https://logo.clearbit.com/apple.com', followers: 1200000 },
+      { id: '5', name: 'Meta', logo: 'https://logo.clearbit.com/meta.com', followers: 700000 },
+      { id: '6', name: 'Trinity Technology Solutions', logo: '/images/zync-logo.svg', followers: 5000 },
+      { id: '7', name: 'TCS', logo: 'https://logo.clearbit.com/tcs.com', followers: 600000 },
+      { id: '8', name: 'Infosys', logo: 'https://logo.clearbit.com/infosys.com', followers: 550000 },
+      { id: '9', name: 'Wipro', logo: 'https://logo.clearbit.com/wipro.com', followers: 400000 },
+      { id: '10', name: 'Zoho', logo: 'https://logo.clearbit.com/zoho.com', followers: 300000 }
+    ];
+    
     try {
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies?search=${encodeURIComponent(searchQuery)}`);
-      const data = await response.json();
-      setResults(data);
-      setIsOpen(true);
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data);
+        setIsOpen(true);
+        setLoading(false);
+        return;
+      }
     } catch (error) {
       console.error('Company search error:', error);
-      // Fallback companies if API fails
-      const fallbackCompanies = [
-        { id: '1', name: 'Google', logo: 'https://img.logo.dev/google.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 1000000 },
-        { id: '2', name: 'Amazon', logo: 'https://img.logo.dev/amazon.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 800000 },
-        { id: '3', name: 'Microsoft', logo: 'https://img.logo.dev/microsoft.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 900000 },
-        { id: '4', name: 'Apple', logo: 'https://img.logo.dev/apple.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 1200000 },
-        { id: '5', name: 'Meta', logo: 'https://img.logo.dev/meta.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 700000 },
-        { id: '6', name: 'Trinity Technology Solutions', logo: 'https://img.logo.dev/trinitetech.com?token=pk_X-NzP5XzTfCUQXerf-1rvQ&size=200', followers: 5000 }
-      ];
-      const filtered = fallbackCompanies.filter(c => 
-        c.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setResults(filtered);
-      setIsOpen(filtered.length > 0);
-    } finally {
-      setLoading(false);
     }
+    
+    // Use fallback companies
+    const filtered = fallbackCompanies.filter(c => 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setResults(filtered);
+    setIsOpen(filtered.length > 0);
+    setLoading(false);
   };
 
   const handleSelect = (company: Company) => {

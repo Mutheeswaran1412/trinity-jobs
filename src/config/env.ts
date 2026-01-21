@@ -3,7 +3,7 @@
 
 export const config = {
   // API Configuration
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  API_URL: import.meta.env.VITE_API_URL || 'https://trinity-jobs-backend.vercel.app',
   
   // App Configuration
   APP_NAME: import.meta.env.VITE_APP_NAME || 'ZyncJobs',
