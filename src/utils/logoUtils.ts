@@ -1,19 +1,28 @@
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return '';
+  if (!companyName) return '/images/trinity-logo.svg';
   
-  // Clean company name for URL
-  const cleanName = companyName.toLowerCase()
-    .replace(/\s+/g, '')
-    .replace(/[^a-z0-9]/g, '');
-  
-  // Try to get domain from company name
+  // Get domain from company name
   const domain = getCompanyDomain(companyName);
   
-  if (domain) {
+  if (domain && isValidDomain(domain)) {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  return '';
+  // Return default logo for unknown companies
+  return '/images/trinity-logo.svg';
+};
+
+const isValidDomain = (domain: string): boolean => {
+  // List of known working domains
+  const validDomains = [
+    'google.com', 'microsoft.com', 'apple.com', 'amazon.com',
+    'facebook.com', 'meta.com', 'netflix.com', 'tesla.com',
+    'uber.com', 'airbnb.com', 'spotify.com', 'twitter.com',
+    'linkedin.com', 'adobe.com', 'salesforce.com', 'oracle.com',
+    'ibm.com', 'intel.com', 'nvidia.com', 'paypal.com'
+  ];
+  
+  return validDomains.includes(domain);
 };
 
 const getCompanyDomain = (companyName: string): string => {
@@ -61,9 +70,10 @@ const getCompanyDomain = (companyName: string): string => {
     'aws': 'aws.amazon.com',
     'azure': 'azure.microsoft.com',
     'gcp': 'cloud.google.com',
-    'trinity technology solutions': 'trinity-tech.com',
-    'trinity tech': 'trinity-tech.com',
-    'trinity': 'trinity-tech.com'
+    'trinity technology solutions': 'trinitetech.com',
+    'trinity tech': 'trinitetech.com',
+    'trinitytech': 'trinitetech.com',
+    'trinity': 'trinitetech.com'
   };
   
   // Check for exact matches first
@@ -78,11 +88,6 @@ const getCompanyDomain = (companyName: string): string => {
     }
   }
   
-  // Try to construct domain from company name
-  const cleanName = name.replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-  if (cleanName.length > 2) {
-    return `${cleanName}.com`;
-  }
-  
+  // Try to construct domain from company name (only for well-known patterns)
   return '';
 };
