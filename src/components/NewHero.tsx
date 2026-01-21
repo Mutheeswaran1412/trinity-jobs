@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, MapPin } from "lucide-react";
+import womenImage from '/images/women.png';
 
 interface NewHeroProps {
   onNavigate?: (page: string, data?: any) => void;
@@ -132,9 +133,13 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
               </div>
               
               <img
-                src="/images/women.png"
+                src={womenImage}
                 alt="Professional woman"
                 className="w-[30rem] h-[36rem] mx-auto object-contain relative z-10"
+                onError={(e) => {
+                  console.error('Image failed to load:', e);
+                  e.currentTarget.style.display = 'none';
+                }}
               />
               
 
