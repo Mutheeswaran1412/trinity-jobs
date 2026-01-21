@@ -9,3 +9,8 @@ images/
 docker-compose.yml
 .bolt/
 resume-builder-module.tar.gz
+
+# Ignore problematic service worker files
+public/sw.js
+public/unregister-sw.js
+public/manifest.json
