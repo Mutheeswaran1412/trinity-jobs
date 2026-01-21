@@ -651,6 +651,11 @@ app.get('/', (req, res) => {
   res.json({ message: 'Trinity Jobs API is running!', status: 'OK' });
 });
 
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow:');
+});
+
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.get('/api/health', (req, res) => {
