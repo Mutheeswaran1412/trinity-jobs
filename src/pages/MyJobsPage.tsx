@@ -107,33 +107,42 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     try {
       console.log('Fetching applications for employer:', user?.email);
       
-      const response = await fetch(API_ENDPOINTS.APPLICATIONS);
-      
-      if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const responseData = await response.json();
-          console.log('Applications response:', responseData);
-          
-          const allApplications = Array.isArray(responseData) ? responseData : (responseData.applications || []);
-          console.log('All applications:', allApplications.length);
-          
-          const employerApps = allApplications.filter((app: any) => {
-            const match = app.employerEmail === user?.email;
-            console.log('Application match:', match, app.employerEmail);
-            return match;
-          });
-          
-          console.log('Filtered employer applications:', employerApps.length);
-          setEmployerApplications(employerApps);
-        } else {
-          console.warn('Applications API returned non-JSON response');
-          setEmployerApplications([]);
-        }
-      } else {
-        console.error('Failed to fetch applications:', response.status, response.statusText);
-        setEmployerApplications([]);
+      // First get all jobs posted by this employer
+      const jobsResponse = await fetch(API_ENDPOINTS.JOBS);
+      if (!jobsResponse.ok) {
+        console.error('Failed to fetch jobs');
+        return;
       }
+      
+      const allJobs = await jobsResponse.json();
+      const employerJobs = allJobs.filter((job: any) => job.postedBy === user?.email);
+      const employerJobIds = employerJobs.map((job: any) => job._id);
+      
+      console.log('Employer jobs:', employerJobIds.length);
+      
+      if (employerJobIds.length === 0) {
+        setEmployerApplications([]);
+        return;
+      }
+      
+      // Then get applications for those jobs
+      const applicationsPromises = employerJobIds.map(jobId => 
+        fetch(`${API_ENDPOINTS.APPLICATIONS}/job/${jobId}`)
+      );
+      
+      const applicationsResponses = await Promise.all(applicationsPromises);
+      const allApplications = [];
+      
+      for (const response of applicationsResponses) {
+        if (response.ok) {
+          const jobApplications = await response.json();
+          allApplications.push(...jobApplications);
+        }
+      }
+      
+      console.log('Total applications found:', allApplications.length);
+      setEmployerApplications(allApplications);
+      
     } catch (error) {
       console.error('Error fetching employer applications:', error);
       setEmployerApplications([]);
