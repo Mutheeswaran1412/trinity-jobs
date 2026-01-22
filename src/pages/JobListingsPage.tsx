@@ -890,7 +890,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                             className="w-8 h-8 object-contain"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
-                              img.style.display = 'none';
+                              img.src = '/images/zync-logo.svg';
                             }}
                           />
                         ) : (

@@ -81,7 +81,16 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   // Step 1: Resume & Cover Letter
   const renderResumeStep = () => {
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const existingResume = userData?.resume || userData?.profile?.resume;
+    const existingResume = userData?.resume;
+    
+    // Check if user has any resume data
+    const hasResume = existingResume && (
+      existingResume.name || 
+      existingResume.filename || 
+      existingResume.url || 
+      existingResume.path ||
+      typeof existingResume === 'string'
+    );
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -116,7 +125,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                 Resume <span className="text-red-500">*</span>
               </label>
               
-              {existingResume || applicationData.resumeFile ? (
+              {hasResume || applicationData.resumeFile ? (
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -125,7 +134,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                       </svg>
                       <div>
                         <p className="font-medium text-blue-600">
-                          {applicationData.resumeFileName || 'Resume.pdf'}
+                          {applicationData.resumeFileName || existingResume?.name || 'Resume.pdf'}
                         </p>
                         <p className="text-sm text-gray-500">
                           {applicationData.resumeFile ? 'Just uploaded' : 'Uploaded to application'}
@@ -253,9 +262,9 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
               </button>
               <button
                 onClick={nextStep}
-                disabled={!existingResume && !applicationData.resumeFile}
+                disabled={!hasResume && !applicationData.resumeFile}
                 className={`px-6 py-2 rounded-lg font-medium ${
-                  existingResume || applicationData.resumeFile
+                  hasResume || applicationData.resumeFile
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
@@ -356,6 +365,15 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
   // Step 3: Review Application
   const renderReviewStep = () => {
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const existingResume = userData?.resume;
+    
+    // Get resume name from various sources
+    const getResumeName = () => {
+      if (applicationData.resumeFileName) return applicationData.resumeFileName;
+      if (existingResume?.name) return existingResume.name;
+      if (existingResume?.filename) return existingResume.filename;
+      return 'Resume.pdf';
+    };
     
     return (
       <div className="min-h-screen bg-gray-50">
@@ -398,7 +416,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                 </button>
               </div>
               <p className="text-gray-700">
-                {applicationData.resumeFileName || userData?.resume?.name || 'Resume.pdf'}
+                {getResumeName()}
               </p>
             </div>
 
@@ -439,7 +457,28 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                   try {
                     const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
                     const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                    const resumeUrl = applicationData.resumeUrl || userData?.profile?.resume || userData?.resume || '';
+                    
+                    // Get resume URL from various possible sources
+                    let resumeUrl = '';
+                    if (applicationData.resumeUrl) {
+                      resumeUrl = applicationData.resumeUrl;
+                    } else if (userData?.resume) {
+                      const resume = userData.resume;
+                      if (resume.filename) {
+                        resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/${resume.filename}`;
+                      } else if (resume.url) {
+                        resumeUrl = resume.url;
+                      } else if (resume.path) {
+                        resumeUrl = resume.path;
+                      } else if (typeof resume === 'string') {
+                        resumeUrl = resume;
+                      }
+                    }
+                    
+                    if (!resumeUrl) {
+                      alert('❌ No resume found. Please upload a resume first.');
+                      return;
+                    }
                     
                     const response = await fetch(API_ENDPOINTS.APPLICATIONS, {
                       method: 'POST',

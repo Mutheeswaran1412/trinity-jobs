@@ -202,7 +202,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredIndustries().map((industry, index) => (
                     <div
-                      key={index}
+                      key={`industry-${index}-${industry}`}
                       onClick={() => handleIndustrySelect(industry)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -229,7 +229,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredSizes().map((size, index) => (
                     <div
-                      key={index}
+                      key={`size-${index}-${size}`}
                       onClick={() => handleSizeSelect(size)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -256,7 +256,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredWorkSettings().map((setting, index) => (
                     <div
-                      key={index}
+                      key={`setting-${index}-${setting}`}
                       onClick={() => handleWorkSettingSelect(setting)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >

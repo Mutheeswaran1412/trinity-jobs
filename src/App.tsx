@@ -52,6 +52,9 @@ import JobRolePage from './pages/JobRolePage';
 import HireTalentPage from './pages/HireTalentPage';
 import JobManagementPage from './pages/JobManagementPage';
 import ApplicationManagementPage from './pages/ApplicationManagementPage';
+import CandidateResponseDetailPage from './pages/CandidateResponseDetailPage';
+import RecruiterActionsPage from './pages/RecruiterActionsPage';
+import SearchAppearancesPage from './pages/SearchAppearancesPage';
 
 import SettingsPage from './pages/SettingsPage';
 import MyJobsPage from './pages/MyJobsPage';
@@ -502,6 +505,30 @@ function App() {
 
   if (currentPage === 'application-management') {
     return <ApplicationManagementPage onNavigate={handleNavigation} />;
+  }
+
+  if (currentPage === 'candidate-response-detail') {
+    return <CandidateResponseDetailPage onNavigate={handleNavigation} applicationId={currentData?.applicationId} />;
+  }
+
+  if (currentPage === 'recruiter-actions') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <RecruiterActionsPage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'search-appearances') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <SearchAppearancesPage onNavigate={handleNavigation} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
   }
 
 

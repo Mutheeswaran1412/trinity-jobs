@@ -1003,6 +1003,50 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         />
           </div>
           
+          {/* Profile Performance Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Your profile performance</h2>
+            <p className="text-sm text-gray-600 mb-4">Last 90 days</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Recruiter Actions */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-medium text-gray-900">Recruiter Actions</h3>
+                  <button 
+                    onClick={() => onNavigate('recruiter-actions')}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
+                <p className="text-sm text-gray-500">Profile views, messages, and contact attempts from recruiters</p>
+              </div>
+              
+              {/* Search Appearances */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-medium text-gray-900">Search Appearances</h3>
+                  <button 
+                    onClick={() => onNavigate('search-appearances')}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
+                <p className="text-sm text-gray-500">Times your profile appeared in recruiter searches</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Tip:</strong> Complete your profile to increase visibility and get more recruiter attention. Add skills, work experience, and keep your profile updated.
+              </p>
+            </div>
+          </div>
+          
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Trending Jobs */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Mail, Phone, Download, MessageSquare, Share, Trash2, WhatsApp, FileText, MapPin, Calendar, Briefcase, GraduationCap, DollarSign, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Download, MessageSquare, Share, Trash2, MessageCircle, FileText, MapPin, Calendar, Briefcase, GraduationCap, DollarSign, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 
 interface CandidateResponseDetailPageProps {
@@ -12,6 +12,7 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [status, setStatus] = useState('');
+  const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
     if (applicationId) {
@@ -54,6 +55,29 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleEmailContact = () => {
+    const subject = `Regarding your application for ${application.jobId?.jobTitle || 'Position'}`;
+    const body = `Hi ${application.candidateName},\n\nThank you for your interest in the ${application.jobId?.jobTitle || 'position'} role.\n\nBest regards`;
+    window.open(`mailto:${application.candidateEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const handlePhoneContact = () => {
+    if (application.candidatePhone) {
+      window.open(`tel:${application.candidatePhone}`);
+    } else {
+      alert('Phone number not available');
+    }
+  };
+
+  const handleWhatsAppContact = () => {
+    if (application.candidatePhone) {
+      const message = `Hi ${application.candidateName}, regarding your application for ${application.jobId?.jobTitle || 'position'}`;
+      window.open(`https://wa.me/${application.candidatePhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`);
+    } else {
+      alert('Phone number not available for WhatsApp');
+    }
   };
 
   if (loading) {
@@ -141,7 +165,11 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
             </div>
 
             <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
+              <button 
+                onClick={handleEmailContact}
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="Send Email"
+              >
                 <Mail className="w-4 h-4" />
               </button>
               <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
@@ -153,8 +181,12 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
               <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
                 <Trash2 className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
-                <WhatsApp className="w-4 h-4" />
+              <button 
+                onClick={handleWhatsAppContact}
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
               </button>
               <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
                 <FileText className="w-4 h-4" />
@@ -199,7 +231,10 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
                     Looking for Role Automation Test Engineer. I am skilled in Core Java, Selenium, WebDriver, JUnit, TestNG, Page Object Model, BDD Cucumber, Data Driven Framework, Hybrid Framework, Git, GitLab, Jira, Appium, Rest assured, Swagger
                   </p>
                   <div className="flex items-center space-x-4">
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <button 
+                      onClick={() => setShowContactModal(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                       Contact
                     </button>
                     <select
@@ -229,10 +264,16 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
               )}
 
               <div className="mt-4 pt-4 border-t flex items-center space-x-4">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <button 
+                  onClick={() => setShowContactModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
                   Contact
                 </button>
-                <button className="text-blue-600 hover:text-blue-700 font-medium">
+                <button 
+                  onClick={handlePhoneContact}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
                   Call from app →
                 </button>
               </div>
@@ -360,6 +401,62 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Contact {application.candidateName}</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => { handleEmailContact(); setShowContactModal(false); }}
+                className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                <Mail className="w-5 h-5 text-blue-600" />
+                <div className="text-left">
+                  <div className="font-medium">Send Email</div>
+                  <div className="text-sm text-gray-600">{application.candidateEmail}</div>
+                </div>
+              </button>
+              
+              {application.candidatePhone && (
+                <>
+                  <button
+                    onClick={() => { handlePhoneContact(); setShowContactModal(false); }}
+                    className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    <Phone className="w-5 h-5 text-green-600" />
+                    <div className="text-left">
+                      <div className="font-medium">Call</div>
+                      <div className="text-sm text-gray-600">{application.candidatePhone}</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => { handleWhatsAppContact(); setShowContactModal(false); }}
+                    className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    <MessageCircle className="w-5 h-5 text-green-600" />
+                    <div className="text-left">
+                      <div className="font-medium">WhatsApp</div>
+                      <div className="text-sm text-gray-600">{application.candidatePhone}</div>
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

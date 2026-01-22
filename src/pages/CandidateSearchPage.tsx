@@ -340,26 +340,26 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
         {/* Results Count */}
         <div className="mb-8">
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
-            <p className="text-gray-700 font-medium text-lg">
-              {loading ? (
-                <span className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span>Searching candidates...</span>
-                </span>
-              ) : (
-                <span>
-                  <span className="text-blue-600 font-bold">{candidates.length}</span> 
-                  <span className="text-gray-600">candidate{candidates.length !== 1 ? 's' : ''} found</span>
-                  {(searchTerm || selectedSkill || selectedLocation) && (
-                    <span className="ml-2 text-gray-500">
-                      {searchTerm && ` matching "${searchTerm}"`}
-                      {selectedSkill && ` with ${selectedSkill} skills`}
-                      {selectedLocation && ` in ${selectedLocation}`}
-                    </span>
-                  )}
-                </span>
-              )}
-            </p>
+              <div className="text-gray-700 font-medium text-lg">
+                {loading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span>Searching candidates...</span>
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-blue-600 font-bold">{candidates.length}</span> 
+                    <span className="text-gray-600">candidate{candidates.length !== 1 ? 's' : ''} found</span>
+                    {(searchTerm || selectedSkill || selectedLocation) && (
+                      <span className="ml-2 text-gray-500">
+                        {searchTerm && ` matching "${searchTerm}"`}
+                        {selectedSkill && ` with ${selectedSkill} skills`}
+                        {selectedLocation && ` in ${selectedLocation}`}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
           </div>
         </div>
 
