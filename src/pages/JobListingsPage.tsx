@@ -458,7 +458,15 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const handleLoadMoreJobs = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
-    fetchJobs(nextPage, true);
+    fetchJobs(nextPage, false); // false = replace instead of append
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      const prevPage = currentPage - 1;
+      setCurrentPage(prevPage);
+      fetchJobs(prevPage, false);
+    }
   };
 
   return (
@@ -958,12 +966,20 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
             ))}
             
             {hasMoreJobs && (
-              <div className="text-center py-6">
+              <div className="flex justify-center items-center space-x-4 py-6">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-gray-600">Page {currentPage}</span>
                 <button
                   onClick={handleLoadMoreJobs}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Load More Jobs
+                  Next
                 </button>
               </div>
             )}
