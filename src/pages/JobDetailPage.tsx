@@ -24,6 +24,11 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
   const getCompanyLogo = (job: any) => {
     const company = job.company || job.companyName || 'Company';
     
+    // For Trinity companies, use local logo
+    if (company.toLowerCase().includes('trinity')) {
+      return '/images/trinity-logo.webp';
+    }
+    
     // For Google, use a working Google logo URL
     if (company.toLowerCase().includes('google')) {
       return 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png';
@@ -34,8 +39,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
       return 'https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31';
     }
     
-    // Always fallback to Trinity logo (same as registration form)
-    return '/images/trinity-tech-logo.svg';
+    // Always fallback to ZyncJobs logo
+    return '/images/zync-logo.svg';
   };
 
   const getJobSpecificContent = (jobTitle: string) => {
@@ -343,7 +348,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="flex items-start space-x-4 flex-1">
               <div className="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center p-2">
                 <img
-                  src={getCompanyLogo(job.company || 'Trinity Technology Solutions')}
+                  src={getCompanyLogo(job)}
                   alt={job.company}
                   className="w-full h-full object-contain rounded"
                   onError={(e) => {
@@ -535,7 +540,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact the Job Poster</h3>
               <div className="flex items-center space-x-3 mb-4">
                 <img
-                  src={getCompanyLogo(job.company || 'Trinity Technology Solutions')}
+                  src={getCompanyLogo(job)}
                   alt={jobPoster?.name || job.company}
                   className="w-12 h-12 rounded-full object-contain border border-gray-200 bg-white p-1"
                   onError={(e) => {

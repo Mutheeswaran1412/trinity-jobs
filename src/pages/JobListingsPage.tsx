@@ -39,6 +39,9 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
   const [filterOptions, setFilterOptions] = useState<any>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreJobs, setHasMoreJobs] = useState(true);
+  const jobsPerPage = 10;
 
   // Load saved jobs from localStorage
   useEffect(() => {
@@ -52,8 +55,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
   }, [user]);
 
   // Fetch jobs from MongoDB with advanced search
-  const fetchJobs = async () => {
-    setLoading(true);
+  const fetchJobs = async (page = 1, append = false) => {
+    if (!append) setLoading(true);
     try {
       let url = API_ENDPOINTS.JOBS;
       
@@ -68,8 +71,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           industry: filters.industry,
           companySize: filters.companySize,
           freshness: filters.freshness,
-          page: 1,
-          limit: 50
+          page: page,
+          limit: jobsPerPage
         };
         
         console.log('🔍 Using advanced search with params:', searchParams);
@@ -84,12 +87,22 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           const data = await response.json();
           const jobsArray = Array.isArray(data.jobs) ? data.jobs : [];
           console.log('✅ Advanced search jobs received:', jobsArray.length);
-          setJobs(jobsArray);
-          setFilteredJobs(jobsArray);
+          
+          if (append) {
+            setJobs(prev => [...prev, ...jobsArray]);
+            setFilteredJobs(prev => [...prev, ...jobsArray]);
+          } else {
+            setJobs(jobsArray);
+            setFilteredJobs(jobsArray);
+          }
+          
+          setHasMoreJobs(jobsArray.length === jobsPerPage);
         } else {
           console.error('❌ Advanced search failed:', response.status, response.statusText);
-          setJobs([]);
-          setFilteredJobs([]);
+          if (!append) {
+            setJobs([]);
+            setFilteredJobs([]);
+          }
         }
       } else {
         // Regular search
@@ -97,7 +110,11 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
           const params = new URLSearchParams();
           if (searchTerm) params.append('q', searchTerm);
           if (location) params.append('location', location);
+          params.append('page', page.toString());
+          params.append('limit', jobsPerPage.toString());
           url = `${API_ENDPOINTS.JOBS}/search/query?${params}`;
+        } else {
+          url = `${API_ENDPOINTS.JOBS}?page=${page}&limit=${jobsPerPage}`;
         }
         
         console.log('🔍 Fetching jobs from:', url);
@@ -110,25 +127,39 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
             console.log('✅ Jobs received:', jobsData.length);
             const jobsArray = Array.isArray(jobsData) ? jobsData : [];
             const sortedJobs = jobsArray.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setJobs(sortedJobs);
-            setFilteredJobs(sortedJobs);
+            
+            if (append) {
+              setJobs(prev => [...prev, ...sortedJobs]);
+              setFilteredJobs(prev => [...prev, ...sortedJobs]);
+            } else {
+              setJobs(sortedJobs);
+              setFilteredJobs(sortedJobs);
+            }
+            
+            setHasMoreJobs(sortedJobs.length === jobsPerPage);
           } else {
             console.error('❌ Non-JSON response received');
-            setJobs([]);
-            setFilteredJobs([]);
+            if (!append) {
+              setJobs([]);
+              setFilteredJobs([]);
+            }
           }
         } else {
           console.error('❌ Jobs API failed:', response.status, response.statusText);
-          setJobs([]);
-          setFilteredJobs([]);
+          if (!append) {
+            setJobs([]);
+            setFilteredJobs([]);
+          }
         }
       }
     } catch (error) {
       console.error('❌ Error fetching jobs:', error);
-      setJobs([]);
-      setFilteredJobs([]);
+      if (!append) {
+        setJobs([]);
+        setFilteredJobs([]);
+      }
     } finally {
-      setLoading(false);
+      if (!append) setLoading(false);
     }
   };
 
@@ -422,6 +453,12 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
     
     setSavedJobs(updatedSavedJobs);
     localStorage.setItem(userKey, JSON.stringify(updatedSavedJobs));
+  };
+
+  const handleLoadMoreJobs = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchJobs(nextPage, true);
   };
 
   return (
@@ -919,6 +956,17 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
               </div>
             </div>
             ))}
+            
+            {hasMoreJobs && (
+              <div className="text-center py-6">
+                <button
+                  onClick={handleLoadMoreJobs}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Load More Jobs
+                </button>
+              </div>
+            )}
           </div>
         )}
           </div>

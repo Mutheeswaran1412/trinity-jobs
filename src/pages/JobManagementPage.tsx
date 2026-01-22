@@ -47,10 +47,9 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
-          job.employerId === userData.id || 
+          job.postedBy === userData.email ||
           job.employerEmail === userData.email ||
-          job.company?.toLowerCase() === userData.companyName?.toLowerCase() ||
-          (userData.email === 'muthees@trinitetech.com' && job.company?.toLowerCase().includes('zyncjobs'))
+          (userData.email === 'muthees@trinitetech.com' && job.company?.toLowerCase().includes('trinity'))
         );
         
         // Fetch application counts for each job
@@ -108,10 +107,11 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
   };
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const jobTitle = job.jobTitle || job.title || '';
+    const matchesSearch = jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || 
-                         (filter === 'active' && job.status === 'active') ||
+                         (filter === 'active' && (job.status === 'active' || !job.status)) ||
                          (filter === 'closed' && job.status === 'closed') ||
                          (filter === 'expired' && job.status === 'expired');
     return matchesSearch && matchesFilter;
@@ -239,27 +239,6 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
           </div>
         </div>
 
-        {/* Response Breakdown */}
-        <div className="bg-white rounded-lg shadow-sm border mb-6 p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900">nVite responses breakdown (last 90 days):</h3>
-            <div className="flex items-center space-x-6 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-orange-400 rounded"></div>
-                <span>Naukri inbox 100%</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <UserCheck className="w-4 h-4 text-blue-500" />
-                <span>App notification 0%</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-green-500" />
-                <span>Emails 0%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -314,7 +293,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-1">
                           <h3 className="font-medium text-blue-600 hover:text-blue-700 cursor-pointer">
-                            {job.title}
+                            {job.jobTitle || job.title || 'Job Position'}
                           </h3>
                           {job.applicationCount > 0 && (
                             <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
@@ -323,10 +302,10 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
                           )}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {job.location} +{Math.floor(Math.random() * 3) + 1}
+                          {job.location} {job.company && `• ${job.company}`}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {job.status === 'active' ? 'nVite' : job.status}
+                          {job.status === 'active' ? 'Active' : job.status || 'Active'}
                         </div>
                       </div>
                     </div>
@@ -352,7 +331,7 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
                       <div className="text-right">
                         <div className="text-sm text-gray-600">sent by Me</div>
                         <div className="text-xs text-gray-500">
-                          {new Date(job.created_at).toLocaleDateString('en-GB')}
+                          {new Date(job.createdAt || job.created_at).toLocaleDateString('en-GB')}
                         </div>
                       </div>
                       

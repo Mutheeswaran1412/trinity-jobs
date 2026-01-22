@@ -39,6 +39,9 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
   const [allLocations, setAllLocations] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreCandidates, setHasMoreCandidates] = useState(true);
+  const candidatesPerPage = 10;
 
   // Load all skills and locations on component mount
   useEffect(() => {
@@ -66,30 +69,41 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
   }, []);
 
   // Fetch candidates from API
-  const fetchCandidates = async () => {
+  const fetchCandidates = async (page = 1, append = false) => {
     try {
+      if (!append) setLoading(true);
+      
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (selectedSkill) params.append('skill', selectedSkill);
       if (selectedLocation) params.append('location', selectedLocation);
+      params.append('page', page.toString());
+      params.append('limit', candidatesPerPage.toString());
       
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidates?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setCandidates(data);
-        // If no filters applied, this represents total candidates
-        if (!searchTerm && !selectedSkill && !selectedLocation) {
-          setTotalCandidates(data.length);
+        
+        if (append) {
+          setCandidates(prev => [...prev, ...data]);
+        } else {
+          setCandidates(data);
+          // If no filters applied, this represents total candidates
+          if (!searchTerm && !selectedSkill && !selectedLocation) {
+            setTotalCandidates(data.length);
+          }
         }
+        
+        setHasMoreCandidates(data.length === candidatesPerPage);
       } else {
         console.error('Failed to fetch candidates');
-        setCandidates([]);
+        if (!append) setCandidates([]);
       }
     } catch (error) {
       console.error('Error fetching candidates:', error);
-      setCandidates([]);
+      if (!append) setCandidates([]);
     } finally {
-      setLoading(false);
+      if (!append) setLoading(false);
     }
   };
 
@@ -170,6 +184,12 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCandidate(null);
+  };
+
+  const handleLoadMoreCandidates = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchCandidates(nextPage, true);
   };
 
   return (
@@ -470,11 +490,14 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
           </div>
         )}
 
-        {candidates.length > 0 && totalCandidates > candidates.length && (
+        {candidates.length > 0 && hasMoreCandidates && (
           <div className="text-center mt-12">
             <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200 inline-block">
-              <p className="text-gray-600 mb-4">Showing {candidates.length} of {totalCandidates} candidate{totalCandidates !== 1 ? 's' : ''}</p>
-              <button className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-8 py-4 rounded-xl font-semibold hover:from-gray-900 hover:to-black transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-3 mx-auto">
+              <p className="text-gray-600 mb-4">Showing {candidates.length} candidate{candidates.length !== 1 ? 's' : ''}</p>
+              <button 
+                onClick={handleLoadMoreCandidates}
+                className="bg-gradient-to-r from-gray-800 to-gray-900 text-white px-8 py-4 rounded-xl font-semibold hover:from-gray-900 hover:to-black transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-3 mx-auto"
+              >
                 <Users className="w-5 h-5" />
                 <span>Load More Candidates</span>
               </button>

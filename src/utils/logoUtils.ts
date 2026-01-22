@@ -1,9 +1,9 @@
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return './images/zync-logo.svg';
+  if (!companyName) return '/images/zync-logo.svg';
   
   // Check if company name contains 'trinity' (case insensitive) - use local logo only
   if (companyName.toLowerCase().includes('trinity')) {
-    return './images/trinity-logo.webp';
+    return '/images/trinity-logo.webp';
   }
   
   // Clean company name for file lookup
@@ -13,8 +13,8 @@ export const getCompanyLogo = (companyName: string): string => {
   
   // For Trinity and other specific companies, use local logos
   const localLogos: { [key: string]: string } = {
-    'zyncjobs': './images/zync-logo.svg',
-    'zync-jobs': './images/zync-logo.svg'
+    'zyncjobs': '/images/zync-logo.svg',
+    'zync-jobs': '/images/zync-logo.svg'
   };
   
   // Check if we have a local logo
@@ -30,7 +30,7 @@ export const getCompanyLogo = (companyName: string): string => {
   }
   
   // Try local logo path
-  const localLogoPath = `./images/company-logos/${cleanName}.png`;
+  const localLogoPath = `/images/company-logos/${cleanName}.png`;
   return localLogoPath;
 };
 

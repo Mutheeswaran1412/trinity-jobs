@@ -23,6 +23,9 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreJobs, setHasMoreJobs] = useState(true);
+  const jobsPerPage = 6;
 
   useEffect(() => {
     if (user?.type === 'candidate') {
@@ -58,19 +61,31 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     };
   }, [activeTab, user]);
 
-  const fetchPostedJobs = async () => {
+  const fetchPostedJobs = async (page = 1, append = false) => {
     try {
-      const response = await fetch(API_ENDPOINTS.JOBS);
+      if (!append) setLoading(true);
+      
+      const response = await fetch(`${API_ENDPOINTS.JOBS}?page=${page}&limit=${jobsPerPage}`);
       if (response.ok) {
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
           job.postedBy === user?.email
-        );
+        ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
         console.log('Filtering jobs for user:', user?.email, 'Found:', employerJobs.length);
-        setPostedJobs(employerJobs);
+        
+        if (append) {
+          setPostedJobs(prev => [...prev, ...employerJobs]);
+        } else {
+          setPostedJobs(employerJobs);
+        }
+        
+        setHasMoreJobs(employerJobs.length === jobsPerPage);
       }
     } catch (error) {
       console.error('Error fetching posted jobs:', error);
+    } finally {
+      if (!append) setLoading(false);
     }
   };
 
@@ -227,6 +242,12 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
   const handleSaveJob = (job: any) => {
     console.log('Save job:', job);
+  };
+
+  const handleLoadMorePostedJobs = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchPostedJobs(nextPage, true);
   };
 
   const renderJobCard = (job: any, showActions: boolean = true, actionType: string = 'default') => (
@@ -493,20 +514,38 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
           ) : (
             <>
               {user?.type === 'employer' && activeTab === 'Posted Jobs' && (
-                <div className="text-center py-16">
-                  <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Manage Your Job Postings</h3>
-                  <p className="text-gray-500 mb-6">
-                    View your posted jobs with response counts and manage applications.
-                  </p>
-                  <button
-                    onClick={() => onNavigate('job-management')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2 mx-auto transition-colors"
-                  >
-                    <span>Go to Job Management</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <>
+                  {postedJobs.length > 0 ? (
+                    <div className="space-y-4">
+                      {postedJobs.map((job) => renderJobCard(job, true, 'posted'))}
+                      {hasMoreJobs && (
+                        <div className="text-center py-6">
+                          <button
+                            onClick={handleLoadMorePostedJobs}
+                            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                          >
+                            Load More Jobs
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16">
+                      <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Posted Jobs Yet</h3>
+                      <p className="text-gray-500 mb-6">
+                        Start posting jobs to attract top talent to your company.
+                      </p>
+                      <button
+                        onClick={() => onNavigate('job-posting')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2 mx-auto transition-colors"
+                      >
+                        <span>Post Your First Job</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {user?.type === 'employer' && activeTab === 'Search Jobs' && filteredJobs.length > 0 && (
