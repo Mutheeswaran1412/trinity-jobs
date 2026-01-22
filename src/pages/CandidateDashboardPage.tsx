@@ -8,6 +8,7 @@ import JobAlertsManager from '../components/JobAlertsManager';
 import LinksPortfolio from '../components/LinksPortfolio';
 import HeadlineOptimizer from '../components/HeadlineOptimizer';
 import ProfileHeadline from '../components/ProfileHeadline';
+import MistralJobRecommendations from '../components/MistralJobRecommendations';
 import { API_ENDPOINTS } from '../config/env';
 
 interface CandidateDashboardPageProps {
@@ -33,6 +34,15 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [showWelcomeParser, setShowWelcomeParser] = useState(false);
   const [showVisibilityModal, setShowVisibilityModal] = useState(false);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+
+  // Handle tab parameter from navigation
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab && ['Profile', 'Alerts'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -129,9 +139,26 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       if (response.ok) {
         const data = await response.json();
         setRecommendations(data.slice(0, 5));
+      } else {
+        // Fallback: fetch recent jobs as recommendations
+        const jobsResponse = await fetch(`${API_ENDPOINTS.JOBS}?limit=5`);
+        if (jobsResponse.ok) {
+          const jobs = await jobsResponse.json();
+          setRecommendations(jobs.slice(0, 3));
+        }
       }
     } catch (error) {
       console.error('Error fetching recommendations:', error);
+      // Fallback: fetch recent jobs as recommendations
+      try {
+        const jobsResponse = await fetch(`${API_ENDPOINTS.JOBS}?limit=5`);
+        if (jobsResponse.ok) {
+          const jobs = await jobsResponse.json();
+          setRecommendations(jobs.slice(0, 3));
+        }
+      } catch (fallbackError) {
+        console.error('Fallback recommendations failed:', fallbackError);
+      }
     }
   };
 
@@ -271,20 +298,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Job Alerts Tab */}
         {activeTab === 'Alerts' && (
-          <JobAlertsManager user={user} />
+          <div className="max-w-4xl">
+            <JobAlertsManager user={user} />
+          </div>
         )}
         
         {activeTab === 'Profile' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Profile Content */}
           <div className="lg:col-span-3">
-            {/* Recommendations Section */}
+            {/* Basic Recommendations Section */}
             {recommendations.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                 <div className="p-6 border-b">
                   <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    <Star className="h-5 w-5 text-yellow-500" />
-                    Recommended for You
+                    <Star className="h-5 w-5 text-blue-500" />
+                    Latest Job Opportunities
                   </h2>
                 </div>
                 <div className="divide-y">
@@ -293,12 +322,12 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-blue-600 hover:text-blue-800">
-                            {job.jobTitle}
+                            {job.jobTitle || job.title}
                           </h3>
                           <p className="text-gray-600">{job.company}</p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                             <span>{job.location}</span>
-                            <span>{job.jobType}</span>
+                            <span>{job.jobType || job.type}</span>
                             <span>{job.locationType}</span>
                           </div>
                           <p className="mt-2 text-gray-700 line-clamp-2">{job.description}</p>
@@ -311,9 +340,12 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           </div>
                         </div>
                         <div className="text-right">
-                          {job.salary?.max > 0 && (
+                          {job.salary && (
                             <p className="text-green-600 font-semibold">
-                              ${job.salary.min?.toLocaleString()} - ${job.salary.max?.toLocaleString()}
+                              {typeof job.salary === 'object' && job.salary.min 
+                                ? `${job.salary.currency === 'INR' ? '₹' : '$'}${job.salary.min?.toLocaleString()} - ${job.salary.currency === 'INR' ? '₹' : '$'}${job.salary.max?.toLocaleString()}`
+                                : job.salary
+                              }
                             </p>
                           )}
                           <p className="text-sm text-gray-500 mt-1">
@@ -672,9 +704,11 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           {/* Work Experience Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-6">Work Experience</h2>
-            {user?.experience ? (
+            {user?.experience || user?.workExperience ? (
               <div className="p-4">
-                <p className="text-gray-900 whitespace-pre-line">{user.experience}</p>
+                <div className="text-gray-900 whitespace-pre-line">
+                  {user?.experience || user?.workExperience}
+                </div>
                 <button 
                   onClick={() => onNavigate('candidate-profile')}
                   className="mt-4 text-blue-600 hover:text-blue-800 hover:underline text-sm transition-colors cursor-pointer"
@@ -1003,52 +1037,25 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         />
           </div>
           
-          {/* Profile Performance Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Your profile performance</h2>
-            <p className="text-sm text-gray-600 mb-4">Last 90 days</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Recruiter Actions */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium text-gray-900">Recruiter Actions</h3>
-                  <button 
-                    onClick={() => onNavigate('recruiter-actions')}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  >
-                    View all
-                  </button>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
-                <p className="text-sm text-gray-500">Profile views, messages, and contact attempts from recruiters</p>
-              </div>
-              
-              {/* Search Appearances */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium text-gray-900">Search Appearances</h3>
-                  <button 
-                    onClick={() => onNavigate('search-appearances')}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  >
-                    View all
-                  </button>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
-                <p className="text-sm text-gray-500">Times your profile appeared in recruiter searches</p>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Tip:</strong> Complete your profile to increase visibility and get more recruiter attention. Add skills, work experience, and keep your profile updated.
-              </p>
-            </div>
-          </div>
-          
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* AI Job Recommendations */}
+            {user?.skills && user.skills.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  AI Job Recommendations
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">Personalized matches based on your profile</p>
+                <MistralJobRecommendations
+                  resumeSkills={user.skills.map((skill: string) => ({ skill }))}
+                  location={user.location || 'Remote'}
+                  experience={user.yearsExperience || '2-3 years'}
+                  onNavigate={onNavigate}
+                />
+              </div>
+            )}
+            
             {/* Trending Jobs */}
             {trending.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

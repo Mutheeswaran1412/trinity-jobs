@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Briefcase, MapPin, DollarSign, Bookmark, Clock, Search, Filter } from 'lucide-react';
-import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import { decodeHtmlEntities, formatDate, formatSalary, formatJobDescription } from '../utils/textUtils';
 import { getCompanyLogo } from '../utils/logoUtils';
 import { API_ENDPOINTS } from '../config/env';
 
@@ -70,7 +70,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
         const allJobs = await response.json();
         const employerJobs = allJobs.filter((job: any) => 
           job.postedBy === user?.email
-        ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        ).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
         console.log('Filtering jobs for user:', user?.email, 'Found:', employerJobs.length);
         
@@ -141,7 +141,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
       }
       
       // Then get applications for those jobs
-      const applicationsPromises = employerJobIds.map(jobId => 
+      const applicationsPromises = employerJobIds.map((jobId: any) => 
         fetch(`${API_ENDPOINTS.APPLICATIONS}/job/${jobId}`)
       );
       
@@ -299,8 +299,8 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
 
           <p className="text-gray-600 mb-4">
             {job.description && job.description.length > 150 
-              ? `${job.description.substring(0, 150)}...` 
-              : job.description || ''}
+              ? `${formatJobDescription(job.description.substring(0, 150), typeof job.salary === 'object' ? job.salary.currency : undefined)}...` 
+              : formatJobDescription(job.description || '', typeof job.salary === 'object' ? job.salary.currency : undefined)}
           </p>
         </div>
 
@@ -372,16 +372,6 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                     }`}
                   >
                     Posted Jobs
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('Search Jobs')}
-                    className={`px-6 py-2 rounded-full font-medium transition-colors ${
-                      activeTab === 'Search Jobs'
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Search Jobs
                   </button>
                   <button
                     onClick={() => setActiveTab('Applications')}
@@ -548,9 +538,55 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                 </>
               )}
 
-              {user?.type === 'employer' && activeTab === 'Search Jobs' && filteredJobs.length > 0 && (
+              {user?.type === 'employer' && activeTab === 'Applications' && (
                 <div className="space-y-4">
-                  {filteredJobs.map((job) => renderJobCard(job, true, 'default'))}
+                  {employerApplications.length > 0 ? (
+                    employerApplications.map((application) => (
+                      <div key={application._id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-start mb-4">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2">
+                                  <h3 className="text-xl font-semibold text-gray-900">
+                                    {application.candidateName || application.candidateEmail || 'Candidate'}
+                                  </h3>
+                                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                    application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    application.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                    application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {application.status || 'pending'}
+                                  </span>
+                                </div>
+                                <p className="text-lg text-blue-600 font-medium mb-2">{application.jobTitle || 'Job Position'}</p>
+                                <p className="text-sm text-gray-500">
+                                  Applied on: {formatDate(application.createdAt || application.appliedAt)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-4 lg:mt-0 lg:ml-6">
+                            <button 
+                              onClick={() => onNavigate('candidate-response-detail', { application })}
+                              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-16">
+                      <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Applications Yet</h3>
+                      <p className="text-gray-500 mb-6">
+                        Applications will appear here when candidates apply to your jobs.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -646,7 +682,6 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
               {((user?.type === 'candidate' && activeTab === 'Saved' && savedJobs.length === 0) ||
                 (user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length === 0) ||
                 (user?.type === 'employer' && activeTab === 'Posted Jobs' && postedJobs.length === 0) ||
-                (user?.type === 'employer' && activeTab === 'Search Jobs' && filteredJobs.length === 0) ||
                 (user?.type === 'employer' && activeTab === 'Applications' && employerApplications.length === 0)) && (
                 <div className="text-center py-16">
                   <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />

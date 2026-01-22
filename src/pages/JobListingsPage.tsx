@@ -6,7 +6,7 @@ import BackButton from '../components/BackButton';
 import LocationRadiusSearch from '../components/LocationRadiusSearch';
 import { aiSuggestions } from '../utils/aiSuggestions';
 import { JobCardSkeleton, SearchLoading } from '../components/LoadingStates';
-import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import { decodeHtmlEntities, formatDate, formatSalary, formatJobDescription } from '../utils/textUtils';
 import { API_ENDPOINTS } from '../config/env';
 
 const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: { 
@@ -929,8 +929,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
 
                       <p className="text-gray-600 text-sm">
                         {job.description && job.description.length > 100 
-                          ? `${decodeHtmlEntities(job.description).substring(0, 100)}...` 
-                          : decodeHtmlEntities(job.description || '')}
+                          ? `${formatJobDescription(decodeHtmlEntities(job.description).substring(0, 100), typeof job.salary === 'object' ? job.salary.currency : undefined)}...` 
+                          : formatJobDescription(decodeHtmlEntities(job.description || ''), typeof job.salary === 'object' ? job.salary.currency : undefined)}
                       </p>
                     </div>
                   </div>

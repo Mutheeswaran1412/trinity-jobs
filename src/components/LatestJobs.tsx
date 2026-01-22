@@ -153,7 +153,14 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                           className="w-full h-full object-contain"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/images/zync-logo.svg';
+                            // Create letter avatar as fallback
+                            const initials = job.company.split(' ').map(n => n[0]).join('').toUpperCase();
+                            target.src = `data:image/svg+xml,${encodeURIComponent(`
+                              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+                                <rect width="64" height="64" fill="#3B82F6" rx="8"/>
+                                <text x="32" y="40" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">${initials}</text>
+                              </svg>
+                            `)}`;
                           }}
                         />
                       </div>

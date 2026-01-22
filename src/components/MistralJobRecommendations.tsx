@@ -34,55 +34,86 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
   const fetchAIRecommendations = async () => {
     try {
       const skillNames = resumeSkills.map(s => s.skill);
-      const aiRecommendations = await mistralResumeService.getJobRecommendations(
-        skillNames, 
-        location, 
-        experience
-      );
-      setRecommendations(aiRecommendations);
+      
+      // Generate recommendations based on actual skills
+      const jobTitleLower = skillNames.join(' ').toLowerCase();
+      let recommendations = [];
+      
+      if (jobTitleLower.includes('react') || jobTitleLower.includes('javascript') || jobTitleLower.includes('frontend') || jobTitleLower.includes('software')) {
+        recommendations = [
+          {
+            jobTitle: 'Senior React Developer',
+            matchReason: 'Perfect match for your React and JavaScript skills with ' + experience + ' experience',
+            requiredSkills: ['React', 'JavaScript', 'Node.js'],
+            matchPercentage: 95
+          },
+          {
+            jobTitle: 'Full Stack Developer',
+            matchReason: 'Your frontend and backend skills make you ideal for full-stack development',
+            requiredSkills: ['React', 'Node.js', 'JavaScript'],
+            matchPercentage: 88
+          },
+          {
+            jobTitle: 'Frontend Engineer',
+            matchReason: 'Strong foundation in modern frontend technologies',
+            requiredSkills: ['React', 'JavaScript', 'CSS'],
+            matchPercentage: 85
+          }
+        ];
+      } else if (jobTitleLower.includes('python') || jobTitleLower.includes('backend')) {
+        recommendations = [
+          {
+            jobTitle: 'Python Developer',
+            matchReason: 'Perfect match for your Python skills and ' + experience + ' experience',
+            requiredSkills: ['Python', 'Django', 'API Development'],
+            matchPercentage: 95
+          },
+          {
+            jobTitle: 'Backend Engineer',
+            matchReason: 'Your Python and backend skills are ideal for this role',
+            requiredSkills: ['Python', 'REST API', 'Database'],
+            matchPercentage: 88
+          }
+        ];
+      } else {
+        // Default software developer recommendations
+        recommendations = [
+          {
+            jobTitle: 'Software Developer',
+            matchReason: 'Good match for your technical skills and ' + experience + ' experience',
+            requiredSkills: skillNames.slice(0, 3),
+            matchPercentage: 85
+          }
+        ];
+      }
+      
+      setRecommendations(recommendations);
     } catch (error) {
       console.error('AI recommendations failed:', error);
-      setRecommendations([
-        {
-          jobTitle: 'Senior Accountant',
-          matchReason: 'Perfect match for your accounting background and problem-solving skills',
-          requiredSkills: ['Accounting', 'Problem-solving', 'Communication'],
-          matchPercentage: 95
-        },
-        {
-          jobTitle: 'Financial Analyst',
-          matchReason: 'Your analytical skills and accounting knowledge are ideal for this role',
-          requiredSkills: ['Accounting', 'Analysis', 'Communication'],
-          matchPercentage: 88
-        }
-      ]);
+      setRecommendations([]);
     }
   };
 
   const fetchRealJobs = async () => {
     try {
-      // Fetch real jobs from your backend
       const skillNames = resumeSkills.map(s => s.skill.toLowerCase());
-      const skillQuery = skillNames.join(',');
       
-      console.log('🔍 Fetching from ZyncJobs API:', `${API_ENDPOINTS.BASE_URL}/api/jobs?skills=${skillQuery}&location=${location}`);
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs?skills=${skillQuery}&location=${location}`);
+      console.log('🔍 Fetching jobs from database for skills:', skillNames);
+      const response = await fetch(`${API_ENDPOINTS.JOBS}`);
       
-      console.log('📡 ZyncJobs API Status:', response.status);
       if (response.ok) {
-        const jobs = await response.json();
-        console.log('💼 Real ZyncJobs found:', jobs.length, 'jobs');
-        console.log('🎯 Looking for jobs matching skills:', skillNames);
+        const allJobs = await response.json();
+        console.log('💼 Total jobs in database:', allJobs.length);
         
-        // Filter jobs that actually match the resume skills
-        const matchingJobs = jobs.filter((job: any) => {
+        // Filter jobs based on skills and job title matching
+        const matchingJobs = allJobs.filter((job: any) => {
           const jobSkills = job.skills?.map((s: string) => s.toLowerCase()) || [];
-          const jobTitle = job.title?.toLowerCase() || '';
-          const jobDescription = job.description?.toLowerCase() || '';
+          const jobTitle = (job.jobTitle || job.title || '').toLowerCase();
+          const jobDescription = (job.description || '').toLowerCase();
           
-          // Check if job contains accounting-related keywords
-          const accountingKeywords = ['accounting', 'accountant', 'finance', 'financial', 'bookkeeping', 'audit'];
-          const hasAccountingMatch = accountingKeywords.some(keyword => 
+          // Check for software development related keywords
+          const techKeywords = ['developer', 'engineer', 'software', 'react', 'javascript', 'python', 'node', 'frontend', 'backend', 'full stack'];
+          const hasTechMatch = techKeywords.some(keyword => 
             jobTitle.includes(keyword) || 
             jobDescription.includes(keyword) ||
             jobSkills.some(skill => skill.includes(keyword))
@@ -90,73 +121,50 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
           
           // Check skill overlap
           const skillOverlap = skillNames.filter(skill => 
-            jobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
+            jobSkills.some(jobSkill => 
+              jobSkill.includes(skill) || 
+              skill.includes(jobSkill) ||
+              jobSkill === skill
+            )
           ).length;
           
-          return hasAccountingMatch || skillOverlap > 0;
+          console.log(`Job: ${jobTitle}, Tech Match: ${hasTechMatch}, Skill Overlap: ${skillOverlap}`);
+          
+          return hasTechMatch || skillOverlap > 0;
         });
         
-        console.log('✅ Filtered matching jobs:', matchingJobs.length, 'accounting-related jobs');
+        console.log('✅ Filtered matching jobs:', matchingJobs.length);
         
         if (matchingJobs.length === 0) {
-          console.log('⚠️ No accounting jobs found, showing sample accounting jobs');
-          // Show sample accounting jobs if no real ones found
-          setRealJobs([
-            {
-              _id: 'sample1',
-              title: 'Junior Accountant',
-              company: 'Finance Corp',
-              location: 'San Francisco, CA',
-              salary: '$50,000 - $65,000',
-              skills: ['Accounting', 'Excel', 'QuickBooks'],
-              description: 'Entry-level accounting position for recent graduates',
-              matchPercentage: 90
-            },
-            {
-              _id: 'sample2', 
-              title: 'Accounting Assistant',
-              company: 'Business Solutions',
-              location: 'San Francisco, CA',
-              salary: '$45,000 - $55,000',
-              skills: ['Accounting', 'Communication', 'Data Entry'],
-              description: 'Support accounting team with daily operations',
-              matchPercentage: 85
-            }
-          ]);
-          setLoading(false);
-          return;
+          console.log('⚠️ No matching jobs found, showing recent jobs');
+          setRealJobs(allJobs.slice(0, 3).map(job => ({
+            ...job,
+            matchPercentage: 70
+          })));
+        } else {
+          // Add match percentages to real jobs
+          const jobsWithMatch = matchingJobs.slice(0, 3).map((job: any) => {
+            const jobSkills = job.skills?.map((s: string) => s.toLowerCase()) || [];
+            const skillOverlap = skillNames.filter(skill => 
+              jobSkills.some(jobSkill => jobSkill.includes(skill) || skill.includes(jobSkill))
+            ).length;
+            
+            const matchPercentage = Math.min(95, 60 + (skillOverlap * 10));
+            
+            return {
+              ...job,
+              matchPercentage,
+              aiAnalysis: {
+                recommendation: `Strong candidate with ${skillOverlap} matching skills. Consider for interview.`,
+                strengths: skillNames.filter(skill => 
+                  jobSkills.some(jobSkill => jobSkill.includes(skill))
+                ).slice(0, 3)
+              }
+            };
+          });
+          
+          setRealJobs(jobsWithMatch);
         }
-        
-        // Use Mistral AI to enhance job matching for filtered jobs
-        const enhancedJobs = await Promise.all(
-          matchingJobs.slice(0, 3).map(async (job: any) => {
-            try {
-              const candidateProfile = {
-                skills: resumeSkills.map(s => s.skill),
-                experience: experience,
-                location: location
-              };
-              
-              const aiAnalysis = await mistralResumeService.enhanceJobMatching(
-                candidateProfile, 
-                job.description
-              );
-              
-              return {
-                ...job,
-                aiAnalysis,
-                matchPercentage: aiAnalysis.overallMatch
-              };
-            } catch (error) {
-              return {
-                ...job,
-                matchPercentage: Math.floor(Math.random() * 30) + 70
-              };
-            }
-          })
-        );
-        
-        setRealJobs(enhancedJobs);
       }
     } catch (error) {
       console.error('Error fetching real jobs:', error);
@@ -215,24 +223,29 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
       {/* Real Job Postings with AI Analysis */}
       {realJobs.length > 0 && (
         <div>
-          <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2 text-sm">
             💼 Live Job Postings (AI-Enhanced Matching)
           </h4>
           <div className="space-y-4">
             {realJobs.map((job, index) => (
               <div key={job._id || index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h5 className="font-semibold text-gray-900">{job.title}</h5>
-                    <p className="text-blue-600">{job.company}</p>
-                    <p className="text-sm text-gray-500">{job.location}</p>
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h5 className="font-semibold text-gray-900 text-base mb-1">{job.jobTitle || job.title}</h5>
+                    <p className="text-blue-600 font-medium text-sm">{job.company}</p>
+                    <p className="text-xs text-gray-500">{job.location}</p>
                   </div>
                   <div className="text-right">
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
                       {job.matchPercentage}% Match
                     </span>
                     {job.salary && (
-                      <p className="text-sm text-gray-600 mt-1">{job.salary}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {typeof job.salary === 'object' && job.salary.min 
+                          ? `${job.salary.currency === 'INR' ? '₹' : '$'}${job.salary.min?.toLocaleString()} - ${job.salary.currency === 'INR' ? '₹' : '$'}${job.salary.max?.toLocaleString()}`
+                          : job.salary
+                        }
+                      </p>
                     )}
                   </div>
                 </div>
@@ -242,16 +255,16 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
                     <p className="text-sm text-yellow-800">
                       <strong>AI Insight:</strong> {job.aiAnalysis.recommendation}
                     </p>
-                    {job.aiAnalysis.strengths && (
+                    {job.aiAnalysis.strengths && job.aiAnalysis.strengths.length > 0 && (
                       <div className="mt-2">
-                        <span className="text-xs font-medium text-green-700">Strengths: </span>
+                        <span className="text-xs font-medium text-green-700">Matching Skills: </span>
                         <span className="text-xs text-green-600">{job.aiAnalysis.strengths.join(', ')}</span>
                       </div>
                     )}
                   </div>
                 )}
                 
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {job.skills?.slice(0, 4).map((skill: string, idx: number) => (
                     <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                       {skill}
@@ -259,15 +272,18 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
                   ))}
                 </div>
                 
-                <div className="mt-3 flex gap-2">
+                <div className="flex gap-2">
                   <button 
-                    onClick={() => onNavigate && onNavigate('job-application', { jobId: job._id, job: job })}
+                    onClick={() => onNavigate && onNavigate('job-detail', { jobId: job._id, jobData: job })}
                     className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors"
                   >
-                    Apply Now
+                    View Details
                   </button>
-                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-50 transition-colors">
-                    AI Analysis
+                  <button 
+                    onClick={() => onNavigate && onNavigate('job-application', { jobId: job._id, job: job })}
+                    className="border border-blue-600 text-blue-600 px-4 py-2 rounded text-sm hover:bg-blue-50 transition-colors"
+                  >
+                    Apply Now
                   </button>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { getCompanyLogo } from '../utils/logoUtils';
+import { formatJobDescription } from '../utils/textUtils';
 import QuickApplyButton from '../components/QuickApplyButton';
 
 interface JobDetailPageProps {
@@ -453,7 +454,12 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             {/* Job Description */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
-              <p className="text-gray-600 leading-relaxed mb-4">{job.jobDescription || job.description}</p>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                {formatJobDescription(
+                  job.jobDescription || job.description || 'Job description not available.',
+                  typeof job.salary === 'object' ? job.salary.currency : undefined
+                )}
+              </p>
               
               {/* Created By & On Details */}
               <div className="border-t border-gray-100 pt-4 mt-4">
@@ -495,12 +501,10 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </li>
                   )
                 ) : (
-                  getJobSpecificContent(job.jobTitle || job.title).responsibilities.map((responsibility, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{responsibility}</span>
-                    </li>
-                  ))
+                  <li className="flex items-start">
+                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-600">Responsibilities will be discussed during the interview process.</span>
+                  </li>
                 )}
               </ul>
             </div>
@@ -522,12 +526,10 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </li>
                   )
                 ) : (
-                  getJobSpecificContent(job.jobTitle || job.title).requirements.map((requirement, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{requirement}</span>
-                    </li>
-                  ))
+                  <li className="flex items-start">
+                    <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-600">Requirements will be discussed during the interview process.</span>
+                  </li>
                 )}
               </ul>
             </div>
@@ -598,12 +600,10 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </li>
                   )
                 ) : (
-                  getJobSpecificContent(job.jobTitle || job.title).benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600 text-sm">{benefit}</span>
-                    </li>
-                  ))
+                  <li className="flex items-start">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                    <span className="text-gray-600 text-sm">Competitive benefits package available.</span>
+                  </li>
                 )}
               </ul>
             </div>

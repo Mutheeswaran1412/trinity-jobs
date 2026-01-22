@@ -12,13 +12,10 @@ export const getCompanyLogo = (companyName: string): string => {
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
   
-  // For Trinity and other specific companies, use local logos
-  const localLogos: { [key: string]: string } = {
-    'zyncjobs': '/images/zync-logo.svg',
-    'zync-jobs': '/images/zync-logo.svg'
-  };
+  // For specific companies, use letter avatars as fallback
+  const localLogos: { [key: string]: string } = {};
   
-  // Check if we have a local logo
+  // Check if we have a local logo (currently none defined)
   if (localLogos[cleanName]) {
     return localLogos[cleanName];
   }
@@ -30,8 +27,14 @@ export const getCompanyLogo = (companyName: string): string => {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  // Always return ZyncJobs logo as fallback
-  return '/images/zync-logo.svg';
+  // Always return letter avatar as fallback instead of missing zync-logo.svg
+  const initials = companyName.split(' ').map(n => n[0]).join('').toUpperCase();
+  return `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <rect width="64" height="64" fill="#3B82F6" rx="8"/>
+      <text x="32" y="40" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">${initials}</text>
+    </svg>
+  `)}`;
 };
 
 const getCompanyDomain = (companyName: string): string => {

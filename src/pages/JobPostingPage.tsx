@@ -292,6 +292,15 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     
     setIsGeneratingDescription(true);
     try {
+      const currencySymbol = jobData.currency === 'INR' ? '₹' : 
+                            jobData.currency === 'USD' ? '$' : 
+                            jobData.currency === 'EUR' ? '€' : 
+                            jobData.currency === 'GBP' ? '£' : 
+                            jobData.currency === 'CAD' ? 'C$' : 
+                            jobData.currency === 'AUD' ? 'A$' : 
+                            jobData.currency === 'JPY' ? '¥' : 
+                            jobData.currency === 'SGD' ? 'S$' : '$';
+      
       const description = await mistralAIService.generateJobDescription(
         jobTitle,
         jobData.companyName || 'ZyncJobs',
@@ -299,7 +308,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         {
           jobType: jobData.jobType.join(', '),
           skills: jobData.skills,
-          salary: `$${jobData.minSalary} - $${jobData.maxSalary} ${jobData.payRate}`,
+          salary: `${currencySymbol}${jobData.minSalary} - ${currencySymbol}${jobData.maxSalary} ${jobData.payRate}`,
           benefits: jobData.benefits,
           educationLevel: jobData.educationLevel
         }
@@ -1472,7 +1481,10 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
               </p>
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setShowUpgradeModal(false)}
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    onNavigate('employer-dashboard');
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   Cancel

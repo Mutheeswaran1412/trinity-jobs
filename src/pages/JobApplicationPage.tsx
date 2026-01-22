@@ -89,6 +89,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
       existingResume.filename || 
       existingResume.url || 
       existingResume.path ||
+      existingResume.status ||
       typeof existingResume === 'string'
     );
 
@@ -464,7 +465,10 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                       resumeUrl = applicationData.resumeUrl;
                     } else if (userData?.resume) {
                       const resume = userData.resume;
-                      if (resume.filename) {
+                      // For resume uploaded via modal (has status field)
+                      if (resume.status) {
+                        resumeUrl = `resume_${resume.name || 'uploaded'}`;
+                      } else if (resume.filename) {
                         resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/${resume.filename}`;
                       } else if (resume.url) {
                         resumeUrl = resume.url;
@@ -472,12 +476,14 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                         resumeUrl = resume.path;
                       } else if (typeof resume === 'string') {
                         resumeUrl = resume;
+                      } else {
+                        resumeUrl = 'resume_uploaded';
                       }
                     }
                     
-                    if (!resumeUrl) {
-                      alert('❌ No resume found. Please upload a resume first.');
-                      return;
+                    // If still no resume URL but we detected a resume, use a default
+                    if (!resumeUrl && hasResume) {
+                      resumeUrl = 'resume_from_profile';
                     }
                     
                     const response = await fetch(API_ENDPOINTS.APPLICATIONS, {

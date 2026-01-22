@@ -482,6 +482,44 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                 ))}
               </div>
 
+              {/* Profile Performance Section */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Your profile performance</h2>
+                <p className="text-sm text-gray-600 mb-4">Last 90 days</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Jobs Posted */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-medium text-gray-900">Jobs Posted</h3>
+                      <button 
+                        onClick={() => onNavigate('my-jobs')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{jobs.length}</div>
+                    <p className="text-sm text-gray-500">Active job postings on the platform</p>
+                  </div>
+                  
+                  {/* Applications Received */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-medium text-gray-900">Applications Received</h3>
+                      <button 
+                        onClick={() => setActiveMenu('applications')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">{applications.length}</div>
+                    <p className="text-sm text-gray-500">Total applications from candidates</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Job Posting Limit Warning */}
               {jobs.length >= 3 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">

@@ -54,16 +54,48 @@ export const formatDate = (dateString: string | Date): string => {
 export const formatSalary = (salary: any): string => {
   if (!salary) return 'Competitive';
   
-  if (typeof salary === 'object') {
+  // Handle new object format with currency
+  if (typeof salary === 'object' && salary.min !== undefined && salary.max !== undefined) {
     const { min, max, currency = 'USD', period = 'yearly' } = salary;
-    if (min && max) {
-      const currencySymbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
-      const periodText = period === 'yearly' ? 'per year' : 
-                        period === 'monthly' ? 'per month' : 
-                        period === 'hourly' ? 'per hour' : period;
-      return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()} ${periodText}`;
+    const currencySymbol = currency === 'INR' ? '₹' : 
+                          currency === 'USD' ? '$' : 
+                          currency === 'EUR' ? '€' : 
+                          currency === 'GBP' ? '£' : 
+                          currency === 'CAD' ? 'C$' : 
+                          currency === 'AUD' ? 'A$' : 
+                          currency === 'JPY' ? '¥' : 
+                          currency === 'SGD' ? 'S$' : '$';
+    const periodText = period === 'yearly' ? 'per year' : 
+                      period === 'monthly' ? 'per month' : 
+                      period === 'hourly' ? 'per hour' : period;
+    return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()} ${periodText}`;
+  }
+  
+  // Handle old string format - detect INR amounts and replace $ with ₹
+  if (typeof salary === 'string') {
+    // Check if salary contains large numbers (likely INR)
+    const salaryStr = salary.toString();
+    const numbers = salaryStr.match(/\d+,?\d*/g);
+    if (numbers && numbers.length > 0) {
+      const firstNumber = parseInt(numbers[0].replace(/,/g, ''));
+      // If number is >= 30000, treat as INR
+      if (firstNumber >= 30000) {
+        return salaryStr.replace(/\$/g, '₹');
+      }
     }
+    return salaryStr;
   }
   
   return salary.toString();
+};
+
+export const formatJobDescription = (description: string, jobCurrency?: string): string => {
+  if (!description || typeof description !== 'string') return description || '';
+  
+  // If job has INR currency, replace $ with ₹ in the description
+  if (jobCurrency === 'INR') {
+    return description.replace(/\$([0-9,]+)/g, '₹$1');
+  }
+  
+  return description;
 };

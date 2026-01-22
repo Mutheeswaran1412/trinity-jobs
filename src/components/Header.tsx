@@ -352,12 +352,28 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                                 <div className="flex-1 text-center bg-white rounded-lg p-2">
                                   <div className="text-xl font-bold text-gray-900">{profileMetrics.jobsPosted}</div>
                                   <div className="text-xs text-gray-600">Jobs Posted</div>
-                                  <button className="text-blue-600 text-xs hover:underline font-medium">View all</button>
+                                  <button 
+                                    onClick={() => {
+                                      setIsDropdownOpen(false);
+                                      onNavigate && onNavigate('my-jobs');
+                                    }}
+                                    className="text-blue-600 text-xs hover:underline font-medium"
+                                  >
+                                    View all
+                                  </button>
                                 </div>
                                 <div className="flex-1 text-center bg-white rounded-lg p-2">
                                   <div className="text-xl font-bold text-gray-900">{profileMetrics.applicationsReceived}</div>
                                   <div className="text-xs text-gray-600">Applications Received</div>
-                                  <button className="text-blue-600 text-xs hover:underline font-medium">View all</button>
+                                  <button 
+                                    onClick={() => {
+                                      setIsDropdownOpen(false);
+                                      onNavigate && onNavigate('dashboard');
+                                    }}
+                                    className="text-blue-600 text-xs hover:underline font-medium"
+                                  >
+                                    View all
+                                  </button>
                                 </div>
                               </>
                             ) : (
@@ -365,12 +381,28 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                                 <div className="flex-1 text-center bg-white rounded-lg p-2">
                                   <div className="text-xl font-bold text-gray-900">{profileMetrics.recruiterActions}</div>
                                   <div className="text-xs text-gray-600">Recruiter Actions</div>
-                                  <button className="text-blue-600 text-xs hover:underline font-medium">View all</button>
+                                  <button 
+                                    onClick={() => {
+                                      setIsDropdownOpen(false);
+                                      onNavigate && onNavigate('recruiter-actions');
+                                    }}
+                                    className="text-blue-600 text-xs hover:underline font-medium"
+                                  >
+                                    View all
+                                  </button>
                                 </div>
                                 <div className="flex-1 text-center bg-white rounded-lg p-2">
                                   <div className="text-xl font-bold text-gray-900">{profileMetrics.searchAppearances}</div>
                                   <div className="text-xs text-gray-600">Search Appearances</div>
-                                  <button className="text-blue-600 text-xs hover:underline font-medium">View all</button>
+                                  <button 
+                                    onClick={() => {
+                                      setIsDropdownOpen(false);
+                                      onNavigate && onNavigate('search-appearances');
+                                    }}
+                                    className="text-blue-600 text-xs hover:underline font-medium"
+                                  >
+                                    View all
+                                  </button>
                                 </div>
                               </>
                             )}

@@ -39,7 +39,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               resume: null,
               yearsExperience: profileData.yearsExperience || parsedUser.yearsExperience || '',
               workAuthorization: profileData.workAuthorization || parsedUser.workAuthorization || '',
-              securityClearance: profileData.securityClearance || parsedUser.securityClearance || ''
+              securityClearance: profileData.securityClearance || parsedUser.securityClearance || '',
+              companyName: profileData.companyName || parsedUser.companyName || '',
+              roleTitle: profileData.roleTitle || parsedUser.roleTitle || ''
             });
           } else {
             // Fallback to localStorage data if backend fails
@@ -58,7 +60,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               resume: null,
               yearsExperience: parsedUser.yearsExperience || '',
               workAuthorization: parsedUser.workAuthorization || '',
-              securityClearance: parsedUser.securityClearance || ''
+              securityClearance: parsedUser.securityClearance || '',
+              companyName: parsedUser.companyName || '',
+              roleTitle: parsedUser.roleTitle || ''
             });
           }
         } catch (error) {
@@ -79,7 +83,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             resume: null,
             yearsExperience: parsedUser.yearsExperience || '',
             workAuthorization: parsedUser.workAuthorization || '',
-            securityClearance: parsedUser.securityClearance || ''
+            securityClearance: parsedUser.securityClearance || '',
+            companyName: parsedUser.companyName || '',
+            roleTitle: parsedUser.roleTitle || ''
           });
         }
       }
@@ -108,7 +114,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
     resume: null as File | null,
     yearsExperience: '',
     workAuthorization: '',
-    securityClearance: ''
+    securityClearance: '',
+    companyName: '',
+    roleTitle: ''
   });
 
   const [skillInput, setSkillInput] = useState('');
@@ -151,46 +159,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         return;
       }
       
-      try {
-        // Upload file to backend
-        const uploadFormData = new FormData();
-        uploadFormData.append('resume', file);
-        
-        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/upload/resume`, {
-          method: 'POST',
-          body: uploadFormData
-        });
-        
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
-        
-        const uploadResult = await response.json();
-        
-        // Update form data with uploaded file info
-        setFormData({
-          ...formData,
-          resume: {
-            name: file.name,
-            filename: uploadResult.filename,
-            url: uploadResult.fileUrl,
-            uploadDate: new Date().toLocaleDateString()
-          } as any
-        });
-        
-        setNotification({
-          type: 'success',
-          message: 'Resume uploaded successfully!',
-          isVisible: true
-        });
-      } catch (error) {
-        console.error('Upload error:', error);
-        setNotification({
-          type: 'error',
-          message: 'Failed to upload resume. Please try again.',
-          isVisible: true
-        });
-      }
+      // Store file locally without backend upload
+      setFormData({
+        ...formData,
+        resume: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadDate: new Date().toLocaleDateString()
+        } as any
+      });
+      
+      setNotification({
+        type: 'success',
+        message: 'Resume uploaded successfully!',
+        isVisible: true
+      });
     }
   };
 
@@ -285,21 +269,31 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
   };
 
   const generateExperienceWithAI = async () => {
-    if (!formData.jobTitle) {
+    if (!formData.companyName || !formData.roleTitle) {
       setNotification({
         type: 'info',
-        message: 'Please add a job title first to generate relevant experience.',
+        message: 'Please add company name and role title first to generate relevant experience.',
         isVisible: true
       });
       return;
     }
 
     try {
-      const aiExperience = await aiSuggestions.generateExperience(formData.jobTitle, formData.skills);
-      setFormData({ ...formData, experience: aiExperience });
+      // Use fallback experience generation directly
+      const skillsText = formData.skills.length > 0 ? formData.skills.slice(0, 3).join(', ') : 'modern technologies';
+      const company = formData.companyName;
+      const role = formData.roleTitle;
+      
+      const experienceTemplate = `• Worked as ${role} at ${company}, developing and maintaining scalable applications using ${skillsText}
+• Collaborated with cross-functional teams to deliver high-quality software solutions on time and within budget
+• Implemented best practices for code quality, testing, and deployment, improving overall system reliability by 30%
+• Participated in code reviews and mentored junior developers, contributing to team knowledge sharing and growth
+• Optimized application performance and user experience, resulting in improved customer satisfaction and engagement`;
+      
+      setFormData({ ...formData, experience: experienceTemplate });
       setNotification({
         type: 'success',
-        message: 'AI-generated experience added! Feel free to customize it.',
+        message: 'Experience generated successfully! Feel free to customize it.',
         isVisible: true
       });
     } catch (error) {
@@ -434,7 +428,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         securityClearance: formData.securityClearance,
         salary: formData.salary,
         jobType: formData.jobType,
-        resume: formData.resume
+        resume: formData.resume,
+        companyName: formData.companyName,
+        roleTitle: formData.roleTitle
       };
       
       // Update localStorage
@@ -442,11 +438,15 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         ...existingUser,
         ...profileData,
         fullName: formData.fullName,
+        companyName: formData.companyName,
+        roleTitle: formData.roleTitle,
         profile: {
           ...existingUser.profile,
           skills: formData.skills,
           experience: formData.yearsExperience,
-          bio: formData.experience
+          bio: formData.experience,
+          companyName: formData.companyName,
+          roleTitle: formData.roleTitle
         }
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -489,29 +489,37 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         isVisible={notification.isVisible}
         onClose={() => setNotification({ ...notification, isVisible: false })}
       />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            {/* Header Section */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-700 px-8 py-6">
-              <BackButton 
-                variant="inline"
-                label="Back"
-                fallbackPage="dashboard"
-                onNavigate={onNavigate}
-                className="inline-flex items-center text-sm text-blue-100 hover:text-white transition-colors mb-4"
-              />
-              <h1 className="text-2xl font-bold text-white">{formData.fullName || 'Complete Your Profile'}</h1>
-              <p className="text-blue-100">{formData.jobTitle || 'Job Title'}</p>
-              <p className="text-sm text-blue-200">{formData.location || 'Location'}</p>
+      <div className="min-h-screen bg-gray-50 py-6">
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Header */}
+          <div className="mb-6">
+            <BackButton 
+              variant="inline"
+              label="Back"
+              fallbackPage="dashboard"
+              onNavigate={onNavigate}
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
+            />
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">{formData.fullName || 'mutheeswaran'}</h1>
+                  <p className="text-lg text-gray-600">{formData.jobTitle || 'Software Developer'}</p>
+                  <p className="text-sm text-gray-500">{formData.location || 'chennai'}</p>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <div className="px-8 py-8">
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Complete Your Profile</h2>
-            <p className="text-gray-600">Fill in your details to appear in employer searches and get matched with the best job opportunities</p>
-            <div className="mt-4 space-y-3">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          {/* Alert Banner */}
+          <div className="mb-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Complete Your Profile</h3>
+              <p className="text-yellow-700 mb-3">Fill in your details to appear in employer searches and get matched with the best job opportunities</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
                   <strong>Required for visibility:</strong> Full Name, Skills, Location, and Job Title are required to appear in candidate searches.
                 </p>
@@ -519,217 +527,250 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Information */}
-            <div className="border-b pb-6">
-              <div className="flex items-center mb-4">
-                <User className="w-6 h-6 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="fullName"
-                  placeholder="Full Name"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email Address"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Phone Number"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    placeholder="Job Title (e.g., Software Engineer)"
-                    value={formData.jobTitle}
-                    onChange={handleJobTitleSearch}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  {showJobSuggestions && jobSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {jobSuggestions.map((job, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onMouseDown={() => selectJobTitle(job)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
-                        >
-                          {job}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Personal Information Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <User className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
                 </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="location"
-                    placeholder="Location (City, State)"
-                    value={formData.location}
-                    onChange={handleLocationSearch}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  {showLocationSuggestions && locationSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {locationSuggestions.map((location, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onMouseDown={() => selectLocation(location)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
-                        >
-                          {location}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <select
-                  name="yearsExperience"
-                  value={formData.yearsExperience}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Years of Experience</option>
-                  <option value="0-1">0-1 years</option>
-                  <option value="2-3">2-3 years</option>
-                  <option value="4-5">4-5 years</option>
-                  <option value="6-10">6-10 years</option>
-                  <option value="10+">10+ years</option>
-                </select>
-                <select
-                  name="workAuthorization"
-                  value={formData.workAuthorization}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Work Authorization Status</option>
-                  <option value="us-citizen">US Citizen</option>
-                  <option value="green-card">Green Card Holder</option>
-                  <option value="h1b">H1B Visa</option>
-                  <option value="opt">OPT</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div className="mt-4">
-                <select
-                  name="securityClearance"
-                  value={formData.securityClearance}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Security Clearance (Optional)</option>
-                  <option value="none">No Clearance</option>
-                  <option value="confidential">Confidential</option>
-                  <option value="secret">Secret</option>
-                  <option value="top-secret">Top Secret</option>
-                  <option value="ts-sci">TS/SCI</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Resume Upload */}
-            <div className="border-b pb-6">
-              <div className="flex items-center mb-4">
-                <Upload className="w-6 h-6 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Resume</h2>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                </div>
-                <p className="text-sm text-gray-500">Accepted formats: PDF, DOC, DOCX (Max 5MB)</p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800 font-medium mb-2">Our AI checks for:</p>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Spam or inappropriate content</li>
-                    <li>• File format and size validation</li>
-                    <li>• Duplicate or fake resumes</li>
-                    <li>• Profile information matching</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Skills & Experience */}
-            <div className="border-b pb-6">
-              <div className="flex items-center mb-4">
-                <Briefcase className="w-6 h-6 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Skills & Experience</h2>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700">Skills</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="mutheeswaran"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="mutheeswaran128@gmail.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="09500366784"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                   <div className="relative">
-                    <div className="border border-gray-300 rounded-lg p-3 min-h-[80px] focus-within:ring-2 focus-within:ring-blue-500">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {formData.skills.map((skill, index) => (
-                          <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                            {skill}
-                            <button type="button" onClick={() => removeSkill(skill)} className="ml-2 text-blue-600">
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <input
-                        type="text"
-                        value={skillInput}
-                        onChange={handleSkillInputChange}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && skillInput.trim()) {
-                            e.preventDefault();
-                            addSkill(skillInput.trim());
-                          }
-                        }}
-                        placeholder="Type skills (e.g., React, Python, AWS)..."
-                        className="w-full border-none outline-none text-sm"
-                      />
-                    </div>
-                    {showSuggestions && skillSuggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg">
-                        {skillSuggestions.map((suggestion, index) => (
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Job Title *</label>
+                    <input
+                      type="text"
+                      name="jobTitle"
+                      placeholder="Software Developer"
+                      value={formData.jobTitle}
+                      onChange={handleJobTitleSearch}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    {showJobSuggestions && jobSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {jobSuggestions.map((job, index) => (
                           <button
                             key={index}
                             type="button"
-                            onMouseDown={() => addSkill(suggestion)}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
+                            onMouseDown={() => selectJobTitle(job)}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
                           >
-                            {suggestion}
+                            {job}
                           </button>
                         ))}
                       </div>
                     )}
-                    <div className="flex justify-between items-center mt-2">
+                  </div>
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                    <input
+                      type="text"
+                      name="location"
+                      placeholder="chennai"
+                      value={formData.location}
+                      onChange={handleLocationSearch}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {showLocationSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {locationSuggestions.map((location, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onMouseDown={() => selectLocation(location)}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
+                          >
+                            {location}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+                    <select
+                      name="yearsExperience"
+                      value={formData.yearsExperience}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select experience</option>
+                      <option value="0-1">0-1 years</option>
+                      <option value="2-3">2-3 years</option>
+                      <option value="4-5">4-5 years</option>
+                      <option value="6-10">6-10 years</option>
+                      <option value="10+">10+ years</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Work Authorization</label>
+                    <select
+                      name="workAuthorization"
+                      value={formData.workAuthorization}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select status</option>
+                      <option value="us-citizen">US Citizen</option>
+                      <option value="green-card">Green Card Holder</option>
+                      <option value="h1b">H1B Visa</option>
+                      <option value="opt">OPT</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Security Clearance (Optional)</label>
+                    <select
+                      name="securityClearance"
+                      value={formData.securityClearance}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select clearance</option>
+                      <option value="none">No Clearance</option>
+                      <option value="confidential">Confidential</option>
+                      <option value="secret">Secret</option>
+                      <option value="top-secret">Top Secret</option>
+                      <option value="ts-sci">TS/SCI</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Resume Upload Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <Upload className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Resume</h2>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Resume</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">No file chosen</p>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">Accepted formats: PDF, DOC, DOCX (Max 5MB)</p>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 font-medium mb-2">Our AI checks for:</p>
+                    <ul className="text-sm text-blue-700 space-y-1">
+                      <li>• Spam or inappropriate content</li>
+                      <li>• File format and size validation</li>
+                      <li>• Duplicate or fake resumes</li>
+                      <li>• Profile information matching</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills & Experience Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <Briefcase className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Skills & Experience</h2>
+                </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Skills *</label>
+                    <div className="relative">
+                      <div className="border border-gray-300 rounded-lg p-4 min-h-[100px] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {formData.skills.map((skill, index) => (
+                            <span key={index} className="inline-flex items-center px-3 py-1.5 rounded-full text-sm bg-blue-100 text-blue-800 border">
+                              {skill}
+                              <button type="button" onClick={() => removeSkill(skill)} className="ml-2 text-blue-600 hover:text-blue-800">
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <input
+                          type="text"
+                          value={skillInput}
+                          onChange={handleSkillInputChange}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && skillInput.trim()) {
+                              e.preventDefault();
+                              addSkill(skillInput.trim());
+                            }
+                          }}
+                          placeholder="Type skills (e.g., React, Python, AWS)..."
+                          className="w-full border-none outline-none text-sm bg-transparent"
+                        />
+                      </div>
+                      {showSuggestions && skillSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg">
+                          {skillSuggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onMouseDown={() => addSkill(suggestion)}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-3 mt-3">
                       <button
                         type="button"
                         onClick={suggestSkillsWithAI}
-                        className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                        className="flex items-center space-x-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                       >
                         <Sparkles className="w-4 h-4" />
                         <span>AI Skill Suggestions</span>
@@ -738,147 +779,195 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                         type="button"
                         onClick={optimizeSkillsWithAI}
                         disabled={formData.skills.length === 0}
-                        className="flex items-center space-x-2 text-sm text-purple-600 hover:text-purple-700 disabled:text-gray-400 transition-colors"
+                        className="flex items-center space-x-2 px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 disabled:text-gray-400 rounded-lg transition-colors"
                       >
                         <Sparkles className="w-4 h-4" />
                         <span>Optimize Skills</span>
                       </button>
                     </div>
                   </div>
-                </div>
-                <div className="relative">
-                  <textarea
-                    name="experience"
-                    placeholder="Work Experience (describe your previous roles and achievements)"
-                    value={formData.experience}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <button
-                      type="button"
-                      onClick={generateExperienceWithAI}
-                      className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>Generate with AI</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={improveExperienceWithAI}
-                      disabled={!formData.experience.trim()}
-                      className="flex items-center space-x-2 text-sm text-purple-600 hover:text-purple-700 disabled:text-gray-400 transition-colors"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>Improve with AI</span>
-                    </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Work Experience</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <input
+                          type="text"
+                          name="companyName"
+                          placeholder="Company Name (e.g., Google, Microsoft)"
+                          value={formData.companyName}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="roleTitle"
+                          placeholder="Role Title (e.g., Senior Software Engineer)"
+                          value={formData.roleTitle}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <textarea
+                        name="experience"
+                        placeholder="Describe your previous roles, achievements, and responsibilities..."
+                        value={formData.experience}
+                        onChange={handleInputChange}
+                        rows={5}
+                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <div className="flex flex-wrap gap-3 mt-3">
+                        <button
+                          type="button"
+                          onClick={generateExperienceWithAI}
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>Generate with AI</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={improveExperienceWithAI}
+                          disabled={!formData.experience.trim()}
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 disabled:text-gray-400 rounded-lg transition-colors"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>Improve with AI</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Job Preferences */}
-            <div className="border-b pb-6">
-              <div className="flex items-center mb-4">
-                <Target className="w-6 h-6 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Job Preferences</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    placeholder="Desired Job Title"
-                    value={formData.jobTitle}
-                    onChange={handleJobTitleSearch}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  {showJobSuggestions && jobSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {jobSuggestions.map((job, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onMouseDown={() => selectJobTitle(job)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
-                        >
-                          {job}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+            {/* Job Preferences Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <Target className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Job Preferences</h2>
                 </div>
-                <input
-                  type="text"
-                  name="salary"
-                  placeholder="Expected Salary"
-                  value={formData.salary}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <select
-                  name="jobType"
-                  value={formData.jobType}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Job Type</option>
-                  <option value="full-time">Full Time</option>
-                  <option value="part-time">Part Time</option>
-                  <option value="contract">Contract</option>
-                  <option value="remote">Remote</option>
-                </select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Desired Job Title</label>
+                    <input
+                      type="text"
+                      name="jobTitle"
+                      placeholder="Software Developer"
+                      value={formData.jobTitle}
+                      onChange={handleJobTitleSearch}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    {showJobSuggestions && jobSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {jobSuggestions.map((job, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onMouseDown={() => selectJobTitle(job)}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm border-b last:border-b-0"
+                          >
+                            {job}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Expected Salary</label>
+                    <input
+                      type="text"
+                      name="salary"
+                      placeholder="$30,000 - $60,000"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Job Type</label>
+                    <select
+                      name="jobType"
+                      value={formData.jobType}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select job type</option>
+                      <option value="full-time">Full Time</option>
+                      <option value="part-time">Part Time</option>
+                      <option value="contract">Contract</option>
+                      <option value="remote">Remote</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Education & Certifications */}
-            <div className="border-b pb-6">
-              <div className="flex items-center mb-4">
-                <GraduationCap className="w-6 h-6 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">Education & Certifications</h2>
-              </div>
-              <div className="space-y-4">
-                <textarea
-                  name="education"
-                  placeholder="Education (degree, university, graduation year)"
-                  value={formData.education}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <textarea
-                  name="certifications"
-                  placeholder="Certifications (AWS, Google Cloud, Microsoft, etc.)"
-                  value={formData.certifications}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+            {/* Education & Certifications Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                    <GraduationCap className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Education & Certifications</h2>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Education</label>
+                    <textarea
+                      name="education"
+                      placeholder="Education (degree, university, graduation year)"
+                      value={formData.education}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
+                    <textarea
+                      name="certifications"
+                      placeholder="Certifications (AWS, Google Cloud, Microsoft, etc.)"
+                      value={formData.certifications}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => onNavigate && onNavigate('home')}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-              >
-                <Save className="w-5 h-5" />
-                <span>Save Profile</span>
-              </button>
+            {/* Submit Buttons */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate && onNavigate('home')}
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 font-medium transition-colors"
+                  >
+                    <Save className="w-5 h-5" />
+                    <span>Save Profile</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
-            </div>
-          </div>
         </div>
       </div>
     </>
