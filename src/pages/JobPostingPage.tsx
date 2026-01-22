@@ -1353,7 +1353,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       salary: {
         min: parseFloat(jobData.minSalary.replace(/,/g, '')) || 0,
         max: parseFloat(jobData.maxSalary.replace(/,/g, '')) || 0,
-        currency: 'USD',
+        currency: jobData.currency,
         period: jobData.payRate === 'per year' ? 'yearly' : jobData.payRate === 'per month' ? 'monthly' : 'hourly'
       },
       benefits: jobData.benefits,

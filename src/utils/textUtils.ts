@@ -55,12 +55,13 @@ export const formatSalary = (salary: any): string => {
   if (!salary) return 'Competitive';
   
   if (typeof salary === 'object') {
-    const { min, max, currency = '$', period = 'yearly' } = salary;
+    const { min, max, currency = 'USD', period = 'yearly' } = salary;
     if (min && max) {
+      const currencySymbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency;
       const periodText = period === 'yearly' ? 'per year' : 
                         period === 'monthly' ? 'per month' : 
                         period === 'hourly' ? 'per hour' : period;
-      return `${currency}${min.toLocaleString()} - ${currency}${max.toLocaleString()} ${periodText}`;
+      return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()} ${periodText}`;
     }
   }
   

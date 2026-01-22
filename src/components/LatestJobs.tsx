@@ -89,7 +89,8 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
 
   const formatSalary = (salary: Job['salary']) => {
     if (salary?.min && salary?.max) {
-      return `$${salary.min.toLocaleString()} - $${salary.max.toLocaleString()}`;
+      const currencySymbol = salary.currency === 'INR' ? '₹' : salary.currency === 'USD' ? '$' : salary.currency || '$';
+      return `${currencySymbol}${salary.min.toLocaleString()} - ${currencySymbol}${salary.max.toLocaleString()}`;
     }
     return 'Salary not specified';
   };
