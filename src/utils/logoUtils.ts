@@ -1,36 +1,28 @@
 export const getCompanyLogo = (companyName: string): string => {
   if (!companyName) return './images/zync-logo.svg';
   
+  // Check if company name contains 'trinity' (case insensitive) - use local logo only
+  if (companyName.toLowerCase().includes('trinity')) {
+    return './images/trinity-logo.webp';
+  }
+  
   // Clean company name for file lookup
   const cleanName = companyName.toLowerCase()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
   
-  // Check for local logo first
-  const localLogoPath = `./images/company-logos/${cleanName}.png`;
-  
   // For Trinity and other specific companies, use local logos
   const localLogos: { [key: string]: string } = {
-    'trinity': './images/trinity-logo.webp',
-    'trinity-technology': './images/trinity-logo.webp',
-    'trinity-technology-solutions': './images/trinity-logo.webp',
-    'trinity-tech': './images/trinity-logo.webp',
-    'trinity-solutions': './images/trinity-logo.webp',
     'zyncjobs': './images/zync-logo.svg',
     'zync-jobs': './images/zync-logo.svg'
   };
-  
-  // Check if company name contains 'trinity' (case insensitive)
-  if (companyName.toLowerCase().includes('trinity')) {
-    return './images/trinity-logo.webp';
-  }
   
   // Check if we have a local logo
   if (localLogos[cleanName]) {
     return localLogos[cleanName];
   }
   
-  // Try to get domain from company name for Clearbit
+  // Try to get domain from company name for Clearbit (for non-Trinity companies)
   const domain = getCompanyDomain(companyName);
   
   if (domain) {
@@ -38,6 +30,7 @@ export const getCompanyLogo = (companyName: string): string => {
   }
   
   // Try local logo path
+  const localLogoPath = `./images/company-logos/${cleanName}.png`;
   return localLogoPath;
 };
 
