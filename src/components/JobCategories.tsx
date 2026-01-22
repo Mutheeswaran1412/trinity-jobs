@@ -79,7 +79,7 @@ const JobCategories: React.FC<JobCategoriesProps> = ({ onNavigate }) => {
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

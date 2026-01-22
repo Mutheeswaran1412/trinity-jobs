@@ -527,6 +527,14 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                     </button>
                     
                     <button
+                      onClick={() => onNavigate('job-management')}
+                      className="w-full flex items-center space-x-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left"
+                    >
+                      <Briefcase className="w-5 h-5 text-purple-600" />
+                      <span className="font-medium text-gray-900">Job Management</span>
+                    </button>
+                    
+                    <button
                       onClick={() => onNavigate('candidate-search')}
                       className="w-full flex items-center space-x-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left"
                     >

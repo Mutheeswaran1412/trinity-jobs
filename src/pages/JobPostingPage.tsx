@@ -663,21 +663,38 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         </div>
         
         <div>
-          <label className="block text-gray-700 font-medium mb-3">Language *</label>
-          <select
-            value={jobData.language}
-            onChange={(e) => updateJobData('language', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select language</option>
-            <option value="English">English</option>
-            <option value="Tamil">Tamil</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Spanish">Spanish</option>
-            <option value="French">French</option>
-            <option value="German">German</option>
-            <option value="Mandarin">Mandarin</option>
-          </select>
+          <label className="block text-gray-700 font-medium mb-3">Languages *</label>
+          <p className="text-gray-500 text-sm mb-3">Select all languages required for this position</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              'English', 'Tamil', 'Hindi', 'Spanish', 'French', 'German', 
+              'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Portuguese', 'Russian'
+            ].map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => {
+                  const currentLanguages = Array.isArray(jobData.language) ? jobData.language : jobData.language ? [jobData.language] : [];
+                  const newLanguages = currentLanguages.includes(lang)
+                    ? currentLanguages.filter(l => l !== lang)
+                    : [...currentLanguages, lang];
+                  updateJobData('language', newLanguages);
+                }}
+                className={`px-4 py-2 border rounded-lg text-sm transition-colors ${
+                  (Array.isArray(jobData.language) ? jobData.language : jobData.language ? [jobData.language] : []).includes(lang)
+                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                + {lang}
+              </button>
+            ))}
+          </div>
+          {Array.isArray(jobData.language) && jobData.language.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600">Selected: {jobData.language.join(', ')}</p>
+            </div>
+          )}
         </div>
         
         <div>
@@ -1035,6 +1052,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         
         <div>
           <h3 className="text-gray-700 font-medium mb-4">What education level should candidates have?</h3>
+          <p className="text-gray-500 text-sm mb-4">Select all acceptable education levels</p>
           <div className="space-y-2">
             {[
               "High School Diploma",
@@ -1045,21 +1063,34 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
               "Professional Certification",
               "Trade School Certificate",
               "No formal education required"
-            ].map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => updateJobData('educationLevel', level)}
-                className={`w-full text-left px-4 py-2 border rounded-lg transition-colors ${
-                  jobData.educationLevel === level
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
-                    : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
-              >
-                {jobData.educationLevel === level ? '✓' : ''} {level}
-              </button>
-            ))}
+            ].map((level) => {
+              const currentEducation = Array.isArray(jobData.educationLevel) ? jobData.educationLevel : jobData.educationLevel ? [jobData.educationLevel] : [];
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => {
+                    const newEducation = currentEducation.includes(level)
+                      ? currentEducation.filter(e => e !== level)
+                      : [...currentEducation, level];
+                    updateJobData('educationLevel', newEducation);
+                  }}
+                  className={`w-full text-left px-4 py-2 border rounded-lg transition-colors ${
+                    currentEducation.includes(level)
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  {currentEducation.includes(level) ? '✓' : '+'} {level}
+                </button>
+              );
+            })}
           </div>
+          {Array.isArray(jobData.educationLevel) && jobData.educationLevel.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600">Selected: {jobData.educationLevel.join(', ')}</p>
+            </div>
+          )}
         </div>
         
       </div>

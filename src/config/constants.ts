@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'https://trinity-jobs-backend.vercel.app',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3
 };

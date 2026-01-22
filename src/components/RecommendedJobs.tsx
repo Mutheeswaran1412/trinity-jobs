@@ -64,39 +64,12 @@ const RecommendedJobs: React.FC<RecommendedJobsProps> = ({ resumeSkills, locatio
         
         setJobs(sortedJobs);
       } else {
-        // Fallback to sample jobs if API fails
-        setJobs([
-          {
-            _id: '1',
-            title: 'Senior Accountant',
-            company: 'Tech Solutions Inc',
-            location: 'San Francisco, CA',
-            salary: '$75,000 - $90,000',
-            skills: ['Accounting', 'Problem-solving', 'Communication'],
-            description: 'Looking for experienced accountant',
-            requirements: ['3+ years experience', 'CPA preferred'],
-            matchPercentage: 95,
-            matchingSkills: ['Accounting', 'Problem-solving']
-          } as any
-        ]);
+        console.error('Failed to fetch jobs');
+        setJobs([]);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      // Show sample jobs on error
-      setJobs([
-        {
-          _id: '1',
-          title: 'Accountant Position',
-          company: 'Local Company',
-          location: 'San Francisco, CA',
-          salary: '$60,000 - $75,000',
-          skills: ['Accounting', 'Communication'],
-          description: 'Entry level accounting position',
-          requirements: ['Bachelor degree', 'Basic accounting knowledge'],
-          matchPercentage: 85,
-          matchingSkills: ['Accounting']
-        } as any
-      ]);
+      setJobs([]);
     } finally {
       setLoading(false);
     }

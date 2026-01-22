@@ -483,9 +483,20 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
             </div>
           ) : (
             <>
-              {user?.type === 'employer' && activeTab === 'Posted Jobs' && postedJobs.length > 0 && (
-                <div className="space-y-4">
-                  {postedJobs.map((job) => renderJobCard(job, true, 'posted'))}
+              {user?.type === 'employer' && activeTab === 'Posted Jobs' && (
+                <div className="text-center py-16">
+                  <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Manage Your Job Postings</h3>
+                  <p className="text-gray-500 mb-6">
+                    View your posted jobs with response counts and manage applications.
+                  </p>
+                  <button
+                    onClick={() => onNavigate('job-management')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2 mx-auto transition-colors"
+                  >
+                    <span>Go to Job Management</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 

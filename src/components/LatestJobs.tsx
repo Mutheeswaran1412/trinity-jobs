@@ -76,13 +76,12 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
         const sortedJobs = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setJobs(sortedJobs);
       } else {
-        throw new Error('API response not ok');
+        console.error('Failed to fetch jobs');
+        setJobs([]);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      // Fallback to sample jobs when API fails
-      const sampleJobs = getSampleJobs();
-      setJobs(sampleJobs);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -112,76 +111,7 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
     return 'Recently';
   };
 
-  const getSampleJobs = (): Job[] => {
-    return [
-      {
-        _id: 'sample-1',
-        jobTitle: 'Senior Frontend Developer',
-        company: 'Google',
-        location: 'Bangalore, India',
-        jobType: 'Full-time',
-        description: 'Join our team to build next-generation web applications using React and TypeScript.',
-        salary: { min: 1200000, max: 2000000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'hr@google.com'
-      },
-      {
-        _id: 'sample-2',
-        jobTitle: 'Full Stack Developer',
-        company: 'Microsoft',
-        location: 'Hyderabad, India',
-        jobType: 'Full-time',
-        description: 'Work on cloud-native applications using .NET, React, and Azure services.',
-        salary: { min: 1000000, max: 1800000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'careers@microsoft.com'
-      },
-      {
-        _id: 'sample-3',
-        jobTitle: 'DevOps Engineer',
-        company: 'Amazon',
-        location: 'Chennai, India',
-        jobType: 'Full-time',
-        description: 'Manage AWS infrastructure and implement CI/CD pipelines for scalable applications.',
-        salary: { min: 1100000, max: 1900000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'jobs@amazon.com'
-      },
-      {
-        _id: 'sample-4',
-        jobTitle: 'Data Scientist',
-        company: 'Flipkart',
-        location: 'Bangalore, India',
-        jobType: 'Full-time',
-        description: 'Analyze large datasets and build ML models to improve customer experience.',
-        salary: { min: 900000, max: 1600000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'talent@flipkart.com'
-      },
-      {
-        _id: 'sample-5',
-        jobTitle: 'Mobile App Developer',
-        company: 'Paytm',
-        location: 'Noida, India',
-        jobType: 'Full-time',
-        description: 'Develop and maintain mobile applications for Android and iOS platforms.',
-        salary: { min: 800000, max: 1400000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'hr@paytm.com'
-      },
-      {
-        _id: 'sample-6',
-        jobTitle: 'Product Manager',
-        company: 'Zomato',
-        location: 'Gurgaon, India',
-        jobType: 'Full-time',
-        description: 'Lead product strategy and work with engineering teams to deliver innovative features.',
-        salary: { min: 1500000, max: 2500000, currency: 'INR', period: 'per year' },
-        createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-        postedBy: 'careers@zomato.com'
-      }
-    ];
-  };
+
 
   if (loading) {
     return (
@@ -215,7 +145,7 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                 return (
                   <div key={job._id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center mb-4">
-                      <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center p-2 mr-4">
+                      <div className="bg-blue-100 w-16 h-16 rounded-lg flex items-center justify-center p-2 mr-4">
                         <img 
                           src={getCompanyLogo(job.company)} 
                           alt={`${job.company} logo`}

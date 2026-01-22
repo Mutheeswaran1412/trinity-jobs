@@ -1,25 +1,44 @@
 export const getCompanyLogo = (companyName: string): string => {
   if (!companyName) return '/images/zync-logo.svg';
   
-  // Special handling for Trinity Technology Solutions
+  // Clean company name for file lookup
+  const cleanName = companyName.toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+  
+  // Check for local logo first
+  const localLogoPath = `/images/company-logos/${cleanName}.png`;
+  
+  // For Trinity and other specific companies, use local logos
+  const localLogos: { [key: string]: string } = {
+    'trinity': '/images/company-logos/trinity-logo.webp',
+    'trinity-technology': '/images/company-logos/trinity-logo.webp',
+    'trinity-technology-solutions': '/images/company-logos/trinity-logo.webp',
+    'trinity-tech': '/images/company-logos/trinity-logo.webp',
+    'trinity-solutions': '/images/company-logos/trinity-logo.webp',
+    'zyncjobs': '/images/zync-logo.svg',
+    'zync-jobs': '/images/zync-logo.svg'
+  };
+  
+  // Check if company name contains 'trinity' (case insensitive)
   if (companyName.toLowerCase().includes('trinity')) {
-    return 'https://logo.clearbit.com/trinitytechsolutions.com';
+    return '/images/company-logos/trinity-logo.webp';
   }
   
-  // Clean company name for URL
-  const cleanName = companyName.toLowerCase()
-    .replace(/\s+/g, '')
-    .replace(/[^a-z0-9]/g, '');
+  // Check if we have a local logo
+  if (localLogos[cleanName]) {
+    return localLogos[cleanName];
+  }
   
-  // Try to get domain from company name
+  // Try to get domain from company name for Clearbit
   const domain = getCompanyDomain(companyName);
   
   if (domain) {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  // Fallback to ZyncJobs logo
-  return '/images/zync-logo.svg';
+  // Try local logo path
+  return localLogoPath;
 };
 
 const getCompanyDomain = (companyName: string): string => {
@@ -88,11 +107,7 @@ const getCompanyDomain = (companyName: string): string => {
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
   
-  // Special handling for Trinity Technology Solutions
-  if (companyName.toLowerCase().includes('trinity')) {
-    return 'https://logo.clearbit.com/trinitytechsolutions.com';
-  }
-  
+  // Use the updated getCompanyLogo function
   return getCompanyLogo(companyName);
 };
 

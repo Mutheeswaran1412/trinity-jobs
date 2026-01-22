@@ -316,159 +316,215 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
           </div>
 
           {/* Applications List */}
-          <div className="divide-y divide-gray-200">
-            {filteredApplications.length === 0 ? (
-              <div className="p-8 text-center">
-                <Briefcase className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {filter === 'all' ? 'No applications yet' : `No ${filter} applications`}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {filter === 'all' 
-                    ? 'Start applying to jobs to see your applications here'
-                    : `You don't have any ${filter} applications at the moment`
-                  }
-                </p>
-                <button
-                  onClick={() => onNavigate('job-listings')}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Browse Jobs
-                </button>
-              </div>
-            ) : (
-              filteredApplications.map((application) => (
-                application && application.jobId ? (
-                <div key={application._id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {application.jobId?.jobTitle || 'Job Title Not Available'}
-                          </h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <span className="font-medium">{application.jobId?.company || 'Company Not Available'}</span>
+          <div className="p-6">
+            <div className="mb-4 text-sm text-gray-600">
+              Showing {filteredApplications.length} applications
+            </div>
+            
+            <div className="space-y-4">
+              {filteredApplications.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {filter === 'all' ? 'No applications yet' : `No ${filter} applications`}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {filter === 'all' 
+                      ? 'Start applying to jobs to see your applications here'
+                      : `You don't have any ${filter} applications at the moment`
+                    }
+                  </p>
+                  <button
+                    onClick={() => onNavigate('job-listings')}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Browse Jobs
+                  </button>
+                </div>
+              ) : (
+                filteredApplications.map((application) => (
+                  application && application.jobId ? (
+                  <div key={application._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      {/* Left side - Job info */}
+                      <div className="flex items-start space-x-4 flex-1">
+                        {/* Company Avatar */}
+                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                          {application.jobId?.company ? application.jobId.company.charAt(0).toUpperCase() : 'C'}
+                        </div>
+                        
+                        {/* Job details */}
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="font-semibold text-lg text-gray-900">
+                              {application.jobId?.jobTitle || 'Job Title Not Available'}
+                            </h3>
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
+                              {getStatusIcon(application.status)}
+                              <span className="ml-2">{application.status.charAt(0).toUpperCase() + application.status.slice(1)}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                            <div className="flex items-center space-x-2">
+                              <Briefcase className="w-4 h-4" />
+                              <span className="font-medium">{application.jobId?.company || 'Company Not Available'}</span>
+                            </div>
                             {application.jobId?.location && (
-                              <>
-                                <span>•</span>
-                                <div className="flex items-center">
-                                  <MapPin className="w-4 h-4 mr-1" />
-                                  {application.jobId.location}
-                                </div>
-                              </>
+                              <div className="flex items-center space-x-2">
+                                <MapPin className="w-4 h-4" />
+                                <span>{application.jobId.location}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4" />
+                              <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            {application.isQuickApply && (
+                              <div className="flex items-center space-x-2">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                  Quick Apply
+                                </span>
+                              </div>
                             )}
                           </div>
-                        </div>
-                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
-                          {getStatusIcon(application.status)}
-                          <span className="ml-2">{application.status.charAt(0).toUpperCase() + application.status.slice(1)}</span>
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <p className="text-sm text-gray-700">{getStatusMessage(application.status)}</p>
-                      </div>
-
-                      {application.coverLetter && (
-                        <div className="mb-3">
-                          {editingApp === application._id ? (
-                            <div className="bg-gray-50 p-3 rounded-lg">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Edit Cover Letter:</label>
-                              <textarea
-                                value={editCoverLetter}
-                                onChange={(e) => setEditCoverLetter(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                rows={4}
-                                maxLength={1000}
-                              />
-                              <div className="flex justify-end space-x-2 mt-2">
-                                <button
-                                  onClick={handleCancelEdit}
-                                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={() => handleSaveApplication(application._id)}
-                                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                                >
-                                  Save
-                                </button>
-                              </div>
+                          
+                          {/* Status message */}
+                          <div className="mb-3">
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium">Status:</span> {getStatusMessage(application.status)}
                             </div>
-                          ) : (
-                            <div className="bg-gray-50 p-3 rounded-lg">
-                              <div className="flex justify-between items-start">
-                                <p className="text-sm text-gray-600 flex-1">
-                                  <span className="font-medium">Cover Letter:</span> {application.coverLetter.length > 150 
-                                    ? `${application.coverLetter.substring(0, 150)}...`
-                                    : application.coverLetter
-                                  }
-                                </p>
-                                {application.status === 'applied' && (
-                                  <button
-                                    onClick={() => handleEditApplication(application._id, application.coverLetter || '')}
-                                    className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                                  >
-                                    Edit
-                                  </button>
-                                )}
-                              </div>
+                          </div>
+                          
+                          {/* Cover Letter */}
+                          {application.coverLetter && (
+                            <div className="mb-4">
+                              {editingApp === application._id ? (
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Edit Cover Letter:</label>
+                                  <textarea
+                                    value={editCoverLetter}
+                                    onChange={(e) => setEditCoverLetter(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                                    rows={4}
+                                    maxLength={1000}
+                                  />
+                                  <div className="flex justify-end space-x-2 mt-2">
+                                    <button
+                                      onClick={handleCancelEdit}
+                                      className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={() => handleSaveApplication(application._id)}
+                                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <div className="text-sm text-gray-600 mb-2">
+                                        <span className="font-medium">Cover Letter:</span>
+                                      </div>
+                                      <p className="text-sm text-gray-700">
+                                        {application.coverLetter.length > 150 
+                                          ? `${application.coverLetter.substring(0, 150)}...`
+                                          : application.coverLetter
+                                        }
+                                      </p>
+                                    </div>
+                                    {application.status === 'applied' && (
+                                      <button
+                                        onClick={() => handleEditApplication(application._id, application.coverLetter || '')}
+                                        className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          Applied {new Date(application.createdAt).toLocaleDateString()}
-                          {application.isQuickApply && (
-                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                              Quick Apply
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => onNavigate(`candidate-profile-view/${application.candidateEmail}`)}
-                            className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 font-medium"
-                          >
-                            View Profile
-                          </button>
-                          {application.status === 'applied' && (
-                            <button
-                              onClick={() => setWithdrawingApp(application._id)}
-                              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 font-medium"
-                            >
-                              Withdraw
-                            </button>
-                          )}
-                          <button
-                            onClick={() => onNavigate(`job-detail/${application.jobId?._id}`)}
-                            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-medium"
-                          >
-                            View Job
-                          </button>
                         </div>
                       </div>
                       
-                      {/* Timeline */}
-                      {showTimeline === application._id && (
-                        <div className="mt-4 border-t pt-4">
-                          <ApplicationTimeline 
-                            applicationId={application._id}
-                            currentStatus={application.status}
-                          />
+                      {/* Right side - Actions */}
+                      <div className="flex flex-col items-end space-y-3">
+                        {/* Action buttons */}
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex space-x-2">
+                            <button 
+                              onClick={() => onNavigate(`job-detail/${application.jobId?._id}`)}
+                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                            >
+                              View Job
+                            </button>
+                            <button 
+                              onClick={() => onNavigate(`candidate-profile-view/${application.candidateEmail}`)}
+                              className="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 transition-colors"
+                            >
+                              Profile
+                            </button>
+                          </div>
+                          
+                          {application.status === 'applied' && (
+                            <button
+                              onClick={() => setWithdrawingApp(application._id)}
+                              className="flex items-center justify-center space-x-1 px-3 py-2 border border-red-300 text-red-600 text-sm rounded hover:bg-red-50 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                              <span>Withdraw</span>
+                            </button>
+                          )}
                         </div>
-                      )}
+                        
+                        {/* Timeline button */}
+                        <button
+                          onClick={() => setShowTimeline(showTimeline === application._id ? null : application._id)}
+                          className="flex items-center space-x-1 px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>Timeline</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Timeline */}
+                    {showTimeline === application._id && (
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <ApplicationTimeline 
+                          applicationId={application._id}
+                          currentStatus={application.status}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Bottom section with additional info */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div>
+                          {application.withdrawnAt && application.withdrawalReason && (
+                            <span className="text-red-600">
+                              Withdrawn: {application.withdrawalReason}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs">
+                          Last updated {new Date(application.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                ) : null
-              ))
-            )}
+                  ) : null
+                ))
+              )}
+            </div>
           </div>
         </div>
 

@@ -84,7 +84,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
