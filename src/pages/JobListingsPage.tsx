@@ -905,7 +905,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     <div className="flex-1">
                       <h3 
                         className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer mb-1"
-                        onClick={() => onNavigate && onNavigate(`job-detail/${job._id || job.id}`)}
+                        onClick={() => onNavigate && onNavigate('job-detail', { jobId: job._id || job.id, jobData: job })}
                       >
                         {decodeHtmlEntities(job.title || job.jobTitle)}
                       </h3>
@@ -955,7 +955,7 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     </button>
                   )}
                   <button 
-                    onClick={() => onNavigate && onNavigate(`job-detail/${job._id || job.id}`)}
+                    onClick={() => onNavigate && onNavigate('job-detail', { jobId: job._id || job.id, jobData: job })}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     View Details
