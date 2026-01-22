@@ -1,9 +1,9 @@
 export const getCompanyLogo = (companyName: string): string => {
   if (!companyName) return '/images/zync-logo.svg';
   
-  // Check if company name contains 'trinity' (case insensitive) - use local logo only
+  // Check if company name contains 'trinity' (case insensitive) - use Trinity logo
   if (companyName.toLowerCase().includes('trinity')) {
-    return '/images/trinity-logo.webp';
+    return '/images/company-logos/trinity-logo.webp';
   }
   
   // Clean company name for file lookup
@@ -29,9 +29,8 @@ export const getCompanyLogo = (companyName: string): string => {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  // Try local logo path
-  const localLogoPath = `/images/company-logos/${cleanName}.png`;
-  return localLogoPath;
+  // Always return ZyncJobs logo as fallback
+  return '/images/zync-logo.svg';
 };
 
 const getCompanyDomain = (companyName: string): string => {
