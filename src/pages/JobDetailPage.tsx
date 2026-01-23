@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
+import { MapPin, Briefcase, Clock, DollarSign, Building, Share2, X, CheckCircle } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { getCompanyLogo } from '../utils/logoUtils';
 import { formatJobDescription } from '../utils/textUtils';
@@ -22,6 +22,8 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
   const [similarJobs, setSimilarJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string>('');
 
   const getCompanyLogo = (job: any) => {
     const company = job.company || job.companyName || 'Company';
@@ -175,6 +177,11 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
         if (jobData) {
           setJob(jobData);
           
+          // Check if user has applied to this job
+          if (user?.email && jobData._id) {
+            await checkApplicationStatus(jobData._id, user.email);
+          }
+          
           // Fetch job poster info based on employerEmail
           if (jobData.employerEmail || jobData.postedBy) {
             const usersResponse = await fetch(API_ENDPOINTS.USERS);
@@ -202,6 +209,11 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
           if (jobResponse.ok) {
             const jobData = await jobResponse.json();
             setJob(jobData);
+            
+            // Check if user has applied to this job
+            if (user?.email && jobData._id) {
+              await checkApplicationStatus(jobData._id, user.email);
+            }
             
             // Fetch job poster (employer who posted this job)
             const usersResponse = await fetch(API_ENDPOINTS.USERS);
@@ -262,6 +274,25 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
 
     fetchJobDetails();
   }, [jobId, jobTitle, companyName, jobData]);
+
+  const checkApplicationStatus = async (jobId: string, userEmail: string) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}?candidateEmail=${userEmail}&jobId=${jobId}`);
+      if (response.ok) {
+        const applications = await response.json();
+        const userApplication = applications.applications?.find((app: any) => 
+          app.jobId?._id === jobId && app.candidateEmail === userEmail
+        );
+        
+        if (userApplication) {
+          setHasApplied(true);
+          setApplicationStatus(userApplication.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking application status:', error);
+    }
+  };
 
   const fetchSimilarJobs = async (currentJob: any) => {
     try {
@@ -399,46 +430,59 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               {/* Apply buttons - Hide for employers */}
               {user?.type !== 'employer' && user?.userType !== 'employer' && (
                 <div className="flex items-center space-x-3">
-                  {/* Quick Apply Button - Always show for logged in users */}
-                  <QuickApplyButton
-                    jobId={job._id || jobId}
-                    jobTitle={job.jobTitle || job.title}
-                    company={job.company}
-                    user={user}
-                    onSuccess={() => alert('Quick application submitted!')}
-                  />
-                  
-                  {/* Regular Apply Button */}
-                  <button 
-                    onClick={() => {
-                      if (user && (user.name || user.fullName)) {
-                        // User is logged in - go directly to application page
-                        localStorage.setItem('selectedJob', JSON.stringify({
-                          _id: job._id || jobId,
-                          jobTitle: job.jobTitle || job.title,
-                          company: job.company,
-                          location: job.location,
-                          description: job.description,
-                          salary: job.salary,
-                          type: job.type,
-                          jobData: job
-                        }));
-                        onNavigate('job-application');
-                      } else {
-                        // User is not logged in - store job data and go to login
-                        localStorage.setItem('pendingJobApplication', JSON.stringify({
-                          jobId: job._id || jobId,
-                          jobTitle: job.jobTitle || job.title,
-                          company: job.company,
-                          jobData: job
-                        }));
-                        onNavigate('login');
-                      }
-                    }}
-                    className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  >
-                    {user && (user.name || user.fullName) ? 'Apply with Cover Letter' : 'Login to Apply'}
-                  </button>
+                  {hasApplied ? (
+                    <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-6 py-3 rounded-lg font-semibold">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Applied ({applicationStatus})</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Quick Apply Button - Always show for logged in users */}
+                      <QuickApplyButton
+                        jobId={job._id || jobId}
+                        jobTitle={job.jobTitle || job.title}
+                        company={job.company}
+                        user={user}
+                        onSuccess={() => {
+                          setHasApplied(true);
+                          setApplicationStatus('applied');
+                          alert('Quick application submitted!');
+                        }}
+                      />
+                      
+                      {/* Regular Apply Button */}
+                      <button 
+                        onClick={() => {
+                          if (user && (user.name || user.fullName)) {
+                            // User is logged in - go directly to application page
+                            localStorage.setItem('selectedJob', JSON.stringify({
+                              _id: job._id || jobId,
+                              jobTitle: job.jobTitle || job.title,
+                              company: job.company,
+                              location: job.location,
+                              description: job.description,
+                              salary: job.salary,
+                              type: job.type,
+                              jobData: job
+                            }));
+                            onNavigate('job-application');
+                          } else {
+                            // User is not logged in - store job data and go to login
+                            localStorage.setItem('pendingJobApplication', JSON.stringify({
+                              jobId: job._id || jobId,
+                              jobTitle: job.jobTitle || job.title,
+                              company: job.company,
+                              jobData: job
+                            }));
+                            onNavigate('login');
+                          }
+                        }}
+                        className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                      >
+                        {user && (user.name || user.fullName) ? 'Apply with Cover Letter' : 'Login to Apply'}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -644,49 +688,62 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             {user?.type !== 'employer' && user?.userType !== 'employer' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex flex-col space-y-3">
-                  {/* Quick Apply Button */}
-                  {user && (user.name || user.fullName) && (
-                    <QuickApplyButton
-                      jobId={job._id || jobId}
-                      jobTitle={job.jobTitle || job.title}
-                      company={job.company}
-                      user={user}
-                      onSuccess={() => alert('Quick application submitted!')}
-                      className="w-full justify-center"
-                    />
+                  {hasApplied ? (
+                    <div className="flex items-center justify-center space-x-2 bg-green-100 text-green-800 py-3 rounded-lg font-semibold">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Applied ({applicationStatus})</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Quick Apply Button */}
+                      {user && (user.name || user.fullName) && (
+                        <QuickApplyButton
+                          jobId={job._id || jobId}
+                          jobTitle={job.jobTitle || job.title}
+                          company={job.company}
+                          user={user}
+                          onSuccess={() => {
+                            setHasApplied(true);
+                            setApplicationStatus('applied');
+                            alert('Quick application submitted!');
+                          }}
+                          className="w-full justify-center"
+                        />
+                      )}
+                      
+                      {/* Regular Apply Button */}
+                      <button 
+                        onClick={() => {
+                          if (user && user.name) {
+                            // User is logged in - go directly to application page
+                            localStorage.setItem('selectedJob', JSON.stringify({
+                              _id: job._id || jobId,
+                              jobTitle: job.jobTitle || job.title,
+                              company: job.company,
+                              location: job.location,
+                              description: job.description,
+                              salary: job.salary,
+                              type: job.type,
+                              jobData: job
+                            }));
+                            onNavigate('job-application');
+                          } else {
+                            // User is not logged in - store job data and go to login
+                            localStorage.setItem('pendingJobApplication', JSON.stringify({
+                              jobId: job._id || jobId,
+                              jobTitle: job.jobTitle || job.title,
+                              company: job.company,
+                              jobData: job
+                            }));
+                            onNavigate('login');
+                          }
+                        }}
+                        className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                      >
+                        {user && user.name ? 'Apply with Cover Letter' : 'Login to Apply'}
+                      </button>
+                    </>
                   )}
-                  
-                  {/* Regular Apply Button */}
-                  <button 
-                    onClick={() => {
-                      if (user && user.name) {
-                        // User is logged in - go directly to application page
-                        localStorage.setItem('selectedJob', JSON.stringify({
-                          _id: job._id || jobId,
-                          jobTitle: job.jobTitle || job.title,
-                          company: job.company,
-                          location: job.location,
-                          description: job.description,
-                          salary: job.salary,
-                          type: job.type,
-                          jobData: job
-                        }));
-                        onNavigate('job-application');
-                      } else {
-                        // User is not logged in - store job data and go to login
-                        localStorage.setItem('pendingJobApplication', JSON.stringify({
-                          jobId: job._id || jobId,
-                          jobTitle: job.jobTitle || job.title,
-                          company: job.company,
-                          jobData: job
-                        }));
-                        onNavigate('login');
-                      }
-                    }}
-                    className="w-full bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-                  >
-                    {user && user.name ? 'Apply with Cover Letter' : 'Login to Apply'}
-                  </button>
                 </div>
                 <p className="text-xs text-gray-500 text-center mt-2">Posted {job.posted}</p>
               </div>

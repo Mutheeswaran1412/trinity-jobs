@@ -75,7 +75,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Trust proxy for Render.com deployment
+// Trust proxy for deployment
 app.set('trust proxy', 1);
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -84,6 +84,7 @@ const io = new Server(httpServer, {
       'http://localhost:5173',
       'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
       'https://trinity-jobs.vercel.app',
+      'https://stagging.zyncjobs.com',
       process.env.FRONTEND_URL
     ].filter(Boolean),
     credentials: true
@@ -185,11 +186,12 @@ app.use('/api/users/login', loginLimiter);
 app.use(limiter);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL, 'https://trinity-jobs.vercel.app'].filter(Boolean)
+    ? ['https://stagging.zyncjobs.com', process.env.FRONTEND_URL].filter(Boolean)
     : [
         'http://localhost:5173',
         'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
         'https://trinity-jobs.vercel.app',
+        'https://stagging.zyncjobs.com',
         process.env.FRONTEND_URL
       ].filter(Boolean),
   credentials: true
