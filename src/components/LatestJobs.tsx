@@ -148,16 +148,22 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                     <div className="flex items-center mb-4">
                       <div className="bg-blue-100 w-16 h-16 rounded-lg flex items-center justify-center p-2 mr-4">
                         <img 
-                          src={job.company.toLowerCase().includes('trinity') ? '/images/company-logos/trinity-logo.webp' : getCompanyLogo(job.company)} 
+                          src={job.company.toLowerCase().includes('trinity') ? '/images/trinity-logo.webp' : getCompanyLogo(job.company)} 
                           alt={`${job.company} logo`}
                           className="w-full h-full object-contain"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             console.log('Logo failed to load:', target.src, 'for company:', job.company);
                             
-                            // Special handling for Trinity - try alternate path
-                            if (job.company.toLowerCase().includes('trinity') && !target.src.includes('placeholder')) {
-                              target.src = 'https://via.placeholder.com/64x64/4F46E5/FFFFFF?text=Trinity';
+                            // Special handling for Trinity - use custom SVG logo
+                            if (job.company.toLowerCase().includes('trinity')) {
+                              target.src = `data:image/svg+xml,${encodeURIComponent(`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+                                  <rect width="64" height="64" fill="#4F46E5" rx="8"/>
+                                  <text x="32" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">Trinity</text>
+                                  <text x="32" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="8">Technology</text>
+                                </svg>
+                              `)}`;
                               return;
                             }
                             

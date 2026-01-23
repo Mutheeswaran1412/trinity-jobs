@@ -6,13 +6,8 @@ export const getCompanyLogo = (companyName: string): string => {
   
   // Check if company name contains 'trinity' (case insensitive)
   if (companyName.toLowerCase().includes('trinity')) {
-    // Use a reliable Trinity logo - try multiple paths
-    const paths = [
-      '/images/company-logos/trinity-logo.webp',
-      '/images/trinity-logo.webp',
-      'https://via.placeholder.com/64x64/4F46E5/FFFFFF?text=Trinity'
-    ];
-    return paths[0]; // Start with first path, fallback handled in component
+    // Use the correct Trinity logo path
+    return '/images/trinity-logo.webp';
   }
   
   // Clean company name for file lookup
