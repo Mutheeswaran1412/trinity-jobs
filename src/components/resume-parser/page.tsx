@@ -129,6 +129,7 @@ export default function ResumeParser({ onNavigate, user }: ResumeParserProps = {
         if (!a.matchScore || !b.matchScore) return 0;
         return b.matchScore.overall - a.matchScore.overall;
       });
+  };
   const calculateMatchingScore = (resume: any, job: any) => {
     if (!job || !resume) return null;
 
