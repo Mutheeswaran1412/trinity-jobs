@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/constants';
-import { getCompanyLogo } from '../utils/logoUtils';
+import { getCompanyLogo } from '../utils/logoHelper';
 
 interface LatestJobsProps {
   onNavigate?: (page: string, data?: any) => void;
@@ -148,12 +148,20 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                     <div className="flex items-center mb-4">
                       <div className="bg-blue-100 w-16 h-16 rounded-lg flex items-center justify-center p-2 mr-4">
                         <img 
-                          src={getCompanyLogo(job.company)} 
+                          src={job.company.toLowerCase().includes('trinity') ? '/images/company-logos/trinity-logo.webp' : getCompanyLogo(job.company)} 
                           alt={`${job.company} logo`}
                           className="w-full h-full object-contain"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            // Create letter avatar as fallback
+                            console.log('Logo failed to load:', target.src, 'for company:', job.company);
+                            
+                            // Special handling for Trinity - try alternate path
+                            if (job.company.toLowerCase().includes('trinity') && !target.src.includes('placeholder')) {
+                              target.src = 'https://via.placeholder.com/64x64/4F46E5/FFFFFF?text=Trinity';
+                              return;
+                            }
+                            
+                            // Create letter avatar as fallback for other companies
                             const initials = job.company.split(' ').map(n => n[0]).join('').toUpperCase();
                             target.src = `data:image/svg+xml,${encodeURIComponent(`
                               <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">

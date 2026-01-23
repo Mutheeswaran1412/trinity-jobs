@@ -1,10 +1,18 @@
+// Logo helper that works for both local and Vercel deployment
 export const getCompanyLogo = (companyName: string): string => {
   if (!companyName) return '/images/zync-logo.svg';
   
-  // Check if company name contains 'trinity' (case insensitive) - use Trinity logo with fallback
+  console.log('Getting logo for company:', companyName);
+  
+  // Check if company name contains 'trinity' (case insensitive)
   if (companyName.toLowerCase().includes('trinity')) {
-    // Try multiple paths for Trinity logo - prioritize company-logos folder
-    return '/images/company-logos/trinity-logo.webp';
+    // Use a reliable Trinity logo - try multiple paths
+    const paths = [
+      '/images/company-logos/trinity-logo.webp',
+      '/images/trinity-logo.webp',
+      'https://via.placeholder.com/64x64/4F46E5/FFFFFF?text=Trinity'
+    ];
+    return paths[0]; // Start with first path, fallback handled in component
   }
   
   // Clean company name for file lookup
@@ -12,22 +20,14 @@ export const getCompanyLogo = (companyName: string): string => {
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
   
-  // For specific companies, use letter avatars as fallback
-  const localLogos: { [key: string]: string } = {};
-  
-  // Check if we have a local logo (currently none defined)
-  if (localLogos[cleanName]) {
-    return localLogos[cleanName];
-  }
-  
-  // Try to get domain from company name for Clearbit (for non-Trinity companies)
+  // Try to get domain from company name for Clearbit
   const domain = getCompanyDomain(companyName);
   
   if (domain) {
     return `https://logo.clearbit.com/${domain}`;
   }
   
-  // Always return letter avatar as fallback instead of missing zync-logo.svg
+  // Return letter avatar as fallback
   const initials = companyName.split(' ').map(n => n[0]).join('').toUpperCase();
   return `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
@@ -40,7 +40,6 @@ export const getCompanyLogo = (companyName: string): string => {
 const getCompanyDomain = (companyName: string): string => {
   const name = companyName.toLowerCase();
   
-  // Common company domain mappings
   const domainMap: { [key: string]: string } = {
     'google': 'google.com',
     'microsoft': 'microsoft.com',
@@ -54,62 +53,24 @@ const getCompanyDomain = (companyName: string): string => {
     'airbnb': 'airbnb.com',
     'spotify': 'spotify.com',
     'twitter': 'twitter.com',
-    'linkedin': 'linkedin.com',
-    'instagram': 'instagram.com',
-    'youtube': 'youtube.com',
-    'adobe': 'adobe.com',
-    'salesforce': 'salesforce.com',
-    'oracle': 'oracle.com',
-    'ibm': 'ibm.com',
-    'intel': 'intel.com',
-    'nvidia': 'nvidia.com',
-    'paypal': 'paypal.com',
-    'ebay': 'ebay.com',
-    'zoom': 'zoom.us',
-    'slack': 'slack.com',
-    'dropbox': 'dropbox.com',
-    'github': 'github.com',
-    'gitlab': 'gitlab.com',
-    'atlassian': 'atlassian.com',
-    'shopify': 'shopify.com',
-    'stripe': 'stripe.com',
-    'square': 'squareup.com',
-    'twilio': 'twilio.com',
-    'mongodb': 'mongodb.com',
-    'redis': 'redis.com',
-    'docker': 'docker.com',
-    'kubernetes': 'kubernetes.io',
-    'aws': 'aws.amazon.com',
-    'azure': 'azure.microsoft.com',
-    'gcp': 'cloud.google.com',
-    'trinity technology solution': 'trinitetech.com'
+    'linkedin': 'linkedin.com'
   };
   
-  // Check for exact matches first
   if (domainMap[name]) {
     return domainMap[name];
   }
   
-  // Check for partial matches
   for (const [key, domain] of Object.entries(domainMap)) {
     if (name.includes(key) || key.includes(name)) {
       return domain;
     }
   }
   
-  // Try to construct domain from company name (only for known patterns)
   return '';
 };
 
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
-  
-  // Special handling for Trinity - ensure we return the correct path
-  if (companyName.toLowerCase().includes('trinity')) {
-    return '/images/company-logos/trinity-logo.webp';
-  }
-  
-  // Use the updated getCompanyLogo function
   return getCompanyLogo(companyName);
 };
 

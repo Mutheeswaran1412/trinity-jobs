@@ -1,13 +1,12 @@
 // Import logos as modules for Vercel deployment
-import trinityLogo from '/images/trinity-logo.webp';
-import zyncLogo from '/images/zync-logo.svg';
+// Note: Direct imports may not work in Vercel, using public paths instead
 
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return zyncLogo;
+  if (!companyName) return '/images/zync-logo.svg';
   
-  // Check if company name contains 'trinity' (case insensitive) - use imported logo
+  // Check if company name contains 'trinity' (case insensitive) - use company-logos path
   if (companyName.toLowerCase().includes('trinity')) {
-    return trinityLogo;
+    return '/images/company-logos/trinity-logo.webp';
   }
   
   // Clean company name for file lookup
@@ -17,8 +16,8 @@ export const getCompanyLogo = (companyName: string): string => {
   
   // For Trinity and other specific companies, use local logos
   const localLogos: { [key: string]: string } = {
-    'zyncjobs': zyncLogo,
-    'zync-jobs': zyncLogo
+    'zyncjobs': '/images/zync-logo.svg',
+    'zync-jobs': '/images/zync-logo.svg'
   };
   
   // Check if we have a local logo
@@ -103,6 +102,11 @@ const getCompanyDomain = (companyName: string): string => {
 
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
+  
+  // Special handling for Trinity - ensure we return the correct path
+  if (companyName.toLowerCase().includes('trinity')) {
+    return '/images/company-logos/trinity-logo.webp';
+  }
   
   // Use the updated getCompanyLogo function
   return getCompanyLogo(companyName);
