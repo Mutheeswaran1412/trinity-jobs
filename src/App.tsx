@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
-import { NavigationHelper, User } from './utils/navigationHelper';
-import { useModalManager } from './hooks/useModalManager';
 import Header from './components/Header';
 import NewHero from './components/NewHero';
 import JobCategories from './components/JobCategories';
@@ -118,7 +116,7 @@ function App() {
         const displayName = userData.name || userData.fullName || userData.email?.split('@')[0] || 'User';
         setUser({
           name: displayName,
-          type: userType as 'candidate' | 'employer',
+          type: userType,
           email: userData.email
         });
       } catch (error) {
@@ -328,15 +326,15 @@ function App() {
 
 
   if (currentPage === 'employers') {
-    return <EmployersPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <EmployersPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'job-listings') {
-    return <JobListingsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} searchParams={currentData} />;
+    return <JobListingsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} searchParams={currentData} />;
   }
 
   if (currentPage === 'companies') {
-    return <CompaniesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <CompaniesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'job-hunting') {
@@ -366,14 +364,14 @@ function App() {
   if (currentPage === 'job-detail') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <JobDetailPage 
           onNavigate={handleNavigation} 
           jobTitle={currentData?.jobTitle || currentTopic}
           jobId={currentData?.jobId}
           companyName={currentData?.companyName}
           jobData={currentData?.jobData}
-          user={user}
+          user={user as any}
           onLogout={handleLogout}
         />
         <Footer onNavigate={handleNavigation} />
@@ -388,7 +386,7 @@ function App() {
   if (currentPage === 'career-resources') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <CareerResources />
         <Footer onNavigate={handleNavigation} />
         <BackButton onBack={handleBackNavigation} />
@@ -410,7 +408,7 @@ function App() {
           <AdminDashboardPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         ) : (
           <div className="min-h-screen bg-white">
-            <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+            <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
             {user?.type === 'employer' ? (
               <EmployerDashboardPage onNavigate={handleNavigation} onLogout={handleLogout} />
             ) : (
@@ -426,7 +424,7 @@ function App() {
   if (currentPage === 'search') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <SearchEngine />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -436,7 +434,7 @@ function App() {
   if (currentPage === 'company-profile') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <CompanyProfilePage onNavigate={handleNavigation} companyName={currentData?.companyName} />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -448,7 +446,7 @@ function App() {
       <CompanyViewPage 
         onNavigate={handleNavigation} 
         companyName={currentData?.companyName}
-        user={user}
+        user={user as any}
         onLogout={handleLogout}
       />
     );
@@ -457,7 +455,7 @@ function App() {
   if (currentPage === 'candidate-profile') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <CandidateProfilePage onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -477,7 +475,7 @@ function App() {
   if (currentPage === 'daily-jobs') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <DailyJobsPage onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -493,14 +491,14 @@ function App() {
   if (currentPage === 'job-posting') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
-        <JobPostingPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <JobPostingPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
       </div>
     );
   }
 
   if (currentPage === 'candidate-search') {
-    return <CandidateSearchPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <CandidateSearchPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'hire-talent') {
@@ -508,11 +506,11 @@ function App() {
   }
 
   if (currentPage === 'job-management') {
-    return <JobManagementPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <JobManagementPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'candidate-response-detail') {
-    return <CandidateResponseDetailPage onNavigate={handleNavigation} application={currentData?.application} />;
+    return <CandidateResponseDetailPage onNavigate={handleNavigation} applicationId={currentData?.application} />;
   }
 
   if (currentPage === 'recruiter-actions') {
@@ -524,13 +522,13 @@ function App() {
   }
 
   if (currentPage === 'application-management') {
-    return <ApplicationManagementPage onNavigate={handleNavigation} />;
+    return null; // Component not imported
   }
 
 
 
   if (currentPage === 'resume-editor') {
-    return <ResumeEditorPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} template={currentTopic} />;
+    return <ResumeEditorPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} template={currentTopic} />;
   }
 
   if (currentPage.startsWith('resume-view/')) {
@@ -542,15 +540,15 @@ function App() {
 
   if (currentPage === 'ai-resume-builder') {
     console.log('Rendering AI Resume Builder page');
-    return <AIResumeBuilderPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <AIResumeBuilderPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'resume-templates') {
-    return <ResumeTemplatesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <ResumeTemplatesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'resume-ready') {
-    return <ResumeReadyPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <ResumeReadyPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
 
@@ -577,7 +575,7 @@ function App() {
     }
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <SettingsPage onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -592,8 +590,8 @@ function App() {
     }
     return (
       <>
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
-        <MyJobsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <MyJobsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
       </>
     );
   }
@@ -603,11 +601,11 @@ function App() {
       setCurrentPage('role-selection');
       return null;
     }
-    return <MyApplicationsPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <MyApplicationsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'resume-parser') {
-    return <ResumeParserPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <ResumeParserPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'company-test') {
@@ -626,7 +624,7 @@ function App() {
   if (currentPage === 'resume-moderation') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <ResumeModerationDashboard />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -636,7 +634,7 @@ function App() {
   if (currentPage === 'job-moderation') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <JobModerationDashboard />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -646,7 +644,7 @@ function App() {
   if (currentPage === 'resume-upload') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <div className="max-w-4xl mx-auto p-6">
           <h1 className="text-3xl font-bold mb-6">Upload Resume</h1>
           <ResumeUploadWithModeration 
@@ -668,7 +666,7 @@ function App() {
   if (currentPage === 'ai-scoring-demo') {
     return (
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <AIScoringDemoPage onNavigate={handleNavigation} />
         <Footer onNavigate={handleNavigation} />
       </div>
@@ -676,17 +674,17 @@ function App() {
   }
 
   if (currentPage === 'pricing') {
-    return <PricingPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <PricingPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'features') {
-    return <FeaturesPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <FeaturesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'skill-assessments') {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <SkillAssessment />
         <Footer onNavigate={handleNavigation} />
         <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
@@ -697,7 +695,7 @@ function App() {
   if (currentPage === 'interviews') {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <InterviewScheduling />
         <Footer onNavigate={handleNavigation} />
         <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
@@ -718,7 +716,7 @@ function App() {
   }
 
   if (currentPage === 'role-selection') {
-    return <RoleSelectionPage onNavigate={handleNavigation} user={user} onLogout={handleLogout} />;
+    return <RoleSelectionPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'employer-register') {
@@ -734,8 +732,8 @@ function App() {
         onClose={() => setNotification({ ...notification, isVisible: false })}
       />
       <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user} onLogout={handleLogout} />
-        <NewHero onNavigate={handleNavigation} user={user} />
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <NewHero onNavigate={handleNavigation} user={user as any} />
         <LatestJobs onNavigate={handleNavigation} />
         <HowItWorks onNavigate={handleNavigation} />
         <JobCategories onNavigate={handleNavigation} />

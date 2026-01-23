@@ -196,7 +196,7 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
       {/* AI Recommendations */}
       <div>
         <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
-          🤖 AI-Generated Job Suggestions
+          🤖 AI Job Suggestions
         </h4>
         <div className="space-y-3">
           {recommendations.map((rec, index) => (
@@ -224,7 +224,7 @@ const MistralJobRecommendations: React.FC<MistralJobRecommendationsProps> = ({
       {realJobs.length > 0 && (
         <div>
           <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2 text-sm">
-            💼 Live Job Postings (AI-Enhanced Matching)
+            💼 Live Job Postings (AI-Enhanced)
           </h4>
           <div className="space-y-4">
             {realJobs.map((job, index) => (

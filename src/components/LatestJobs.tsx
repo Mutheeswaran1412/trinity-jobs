@@ -148,7 +148,7 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                     <div className="flex items-center mb-4">
                       <div className="bg-blue-100 w-16 h-16 rounded-lg flex items-center justify-center p-2 mr-4">
                         <img 
-                          src={job.company.toLowerCase().includes('trinity') ? '/images/trinity-logo.webp' : getCompanyLogo(job.company)} 
+                          src={job.company.toLowerCase().includes('trinity') ? '/images/company-logos/trinity-logo.png' : getCompanyLogo(job.company)} 
                           alt={`${job.company} logo`}
                           className="w-full h-full object-contain"
                           onError={(e) => {

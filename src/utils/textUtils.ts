@@ -65,10 +65,15 @@ export const formatSalary = (salary: any): string => {
                           currency === 'AUD' ? 'A$' : 
                           currency === 'JPY' ? '¥' : 
                           currency === 'SGD' ? 'S$' : '$';
-    const periodText = period === 'yearly' ? 'per year' : 
-                      period === 'monthly' ? 'per month' : 
-                      period === 'hourly' ? 'per hour' : period;
-    return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()} ${periodText}`;
+    
+    // Format numbers in lakhs for INR
+    if (currency === 'INR') {
+      const minLakhs = (min / 100000).toFixed(1).replace('.0', '');
+      const maxLakhs = (max / 100000).toFixed(1).replace('.0', '');
+      return `₹${minLakhs} - ₹${maxLakhs} Lakhs`;
+    }
+    
+    return `${currencySymbol}${(min/1000).toFixed(0)}k - ${currencySymbol}${(max/1000).toFixed(0)}k`;
   }
   
   // Handle old string format - detect INR amounts and replace $ with ₹

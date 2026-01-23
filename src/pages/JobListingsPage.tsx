@@ -883,14 +883,25 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                     {/* Company Logo */}
                     <div className="flex-shrink-0 w-10 h-10 mr-3">
                       <div className="w-10 h-10 rounded border border-gray-200 flex items-center justify-center bg-white">
-                        {job.companyLogo ? (
+                        {job.companyLogo || job.company?.toLowerCase().includes('trinity') ? (
                           <img 
-                            src={job.companyLogo}
+                            src={job.company?.toLowerCase().includes('trinity') ? '/images/company-logos/trinity-logo.png' : job.companyLogo}
                             alt={`${job.company} logo`}
                             className="w-8 h-8 object-contain"
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
-                              img.src = '/images/zync-logo.svg';
+                              // Special Trinity fallback
+                              if (job.company?.toLowerCase().includes('trinity')) {
+                                img.src = `data:image/svg+xml,${encodeURIComponent(`
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                    <rect width="32" height="32" fill="#4F46E5" rx="4"/>
+                                    <text x="16" y="14" text-anchor="middle" fill="white" font-family="Arial" font-size="8" font-weight="bold">Trinity</text>
+                                    <text x="16" y="22" text-anchor="middle" fill="white" font-family="Arial" font-size="6">Tech</text>
+                                  </svg>
+                                `)}`;
+                              } else {
+                                img.src = '/images/zync-logo.svg';
+                              }
                             }}
                           />
                         ) : (
@@ -917,13 +928,14 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
                           <span>{job.location}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <DollarSign className="w-4 h-4" />
                           <span>{formatSalary(job.salary)}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Briefcase className="w-4 h-4" />
-                          <span>{job.type}</span>
-                        </div>
+                        {job.type && (
+                          <div className="flex items-center space-x-1">
+                            <Briefcase className="w-4 h-4" />
+                            <span>{job.type}</span>
+                          </div>
+                        )}
                         <span className="text-gray-500">{formatDate(job.createdAt)}</span>
                       </div>
 

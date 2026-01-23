@@ -3,8 +3,8 @@ export const getCompanyLogo = (companyName: string): string => {
   
   // Check if company name contains 'trinity' (case insensitive) - use Trinity logo with fallback
   if (companyName.toLowerCase().includes('trinity')) {
-    // Try multiple paths for Trinity logo - prioritize company-logos folder
-    return '/images/company-logos/trinity-logo.webp';
+    // Use Trinity PNG logo from company-logos folder
+    return '/images/company-logos/trinity-logo.png';
   }
   
   // Clean company name for file lookup
@@ -106,7 +106,7 @@ export const getSafeCompanyLogo = (job: any): string => {
   
   // Special handling for Trinity - ensure we return the correct path
   if (companyName.toLowerCase().includes('trinity')) {
-    return '/images/company-logos/trinity-logo.webp';
+    return '/images/company-logos/trinity-logo.png';
   }
   
   // Use the updated getCompanyLogo function

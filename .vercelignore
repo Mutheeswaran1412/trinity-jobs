@@ -3,7 +3,6 @@ backend/
 backend/**
 
 # Ignore other unnecessary files
-images/
 *.md
 *.bat
 docker-compose.yml

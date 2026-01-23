@@ -1353,7 +1353,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       company: user?.companyName || jobData.companyName || 'Your Company',
       companyLogo: logoUrl,
       location: jobData.jobLocation,
-      jobType: jobData.jobType[0] || 'Full-time',
+      jobType: jobData.jobType.length > 0 ? jobData.jobType.join(', ') : 'Full-time',
       description: jobData.jobDescription,
       requirements: jobData.skills,
       skills: jobData.skills,

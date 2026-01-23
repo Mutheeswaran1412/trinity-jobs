@@ -370,12 +370,13 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     <MapPin className="w-4 h-4" />
                     <span>{job.location}</span>
                   </div>
+                  {job.type && (
+                    <div className="flex items-center space-x-2">
+                      <Briefcase className="w-4 h-4" />
+                      <span>{job.type}</span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2">
-                    <Briefcase className="w-4 h-4" />
-                    <span>{job.type}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <DollarSign className="w-4 h-4" />
                     <span>{typeof job.salary === 'object' ? `${job.salary.currency === 'INR' ? '₹' : job.salary.currency === 'USD' ? '$' : job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
