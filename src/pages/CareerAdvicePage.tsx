@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, TrendingUp, Users, Heart, FileText, Radio } from 'lucide-react';
 import Header from '../components/Header';
+import BackButton from '../components/BackButton';
 
 interface CareerAdvicePageProps {
   onNavigate: (page: string) => void;
@@ -107,6 +108,11 @@ const CareerAdvicePage: React.FC<CareerAdvicePageProps> = ({ onNavigate, topic, 
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <BackButton 
+          onClick={() => onNavigate && onNavigate('home')}
+          text="Back to Home"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-6"
+        />
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">{content.title} {content.emoji}</h1>
           <p className="text-xl text-gray-600">{content.description}</p>

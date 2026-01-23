@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/api';
 import { ArrowLeft, Search, Filter, MapPin, Star, Users, Code, Mail, Phone } from 'lucide-react';
 import CandidateProfileModal from '../components/CandidateProfileModal';
+import BackButton from '../components/BackButton';
 import Header from '../components/Header';
 
 interface Candidate {
@@ -197,6 +198,11 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <BackButton 
+          onClick={() => onNavigate && onNavigate('employer-dashboard')}
+          text="Back to Dashboard"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-6"
+        />
         <div className="text-center mb-16">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight">

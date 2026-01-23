@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, User, Briefcase, MessageSquare, FileText, Bookmark, CreditCard, Settings, Trash2, LogOut, Search, Bell, Plus, MoreVertical, Users, Eye, Edit, UserPlus, FileSearch, Folder } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
+import BackButton from '../components/BackButton';
 import AutoRejectionSettings from '../components/AutoRejectionSettings';
 
 interface EmployerDashboardPageProps {
@@ -249,6 +250,11 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* User Profile */}
         <div className="p-6 border-b border-gray-200">
+          <BackButton 
+            onClick={() => onNavigate && onNavigate('home')}
+            text="Back to Home"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
+          />
           <div className="flex items-center space-x-3">
             <div className="relative">
               <img

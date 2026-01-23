@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, X, Star, Crown, Zap } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackButton from '../components/BackButton';
 
 interface PricingPageProps {
   onNavigate: (page: string) => void;
@@ -80,6 +81,11 @@ const PricingPage: React.FC<PricingPageProps> = ({ onNavigate, user, onLogout })
       
       <div className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <BackButton 
+            onClick={() => onNavigate && onNavigate('home')}
+            text="Back to Home"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-6"
+          />
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               Choose Your Plan

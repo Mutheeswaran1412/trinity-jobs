@@ -492,7 +492,7 @@ export default function ResumeParser({ onNavigate, user }: ResumeParserProps = {
                 resumeSkills={resume.skills.featuredSkills} 
                 location={resume.profile.location} 
                 experience={resume.workExperiences[0]?.jobTitle}
-onNavigate={(page, data) => {
+                onNavigate={(page, data) => {
                   if (page === 'job-application' && onNavigate) {
                     // Store job data for application page
                     localStorage.setItem('selectedJob', JSON.stringify(data.job));

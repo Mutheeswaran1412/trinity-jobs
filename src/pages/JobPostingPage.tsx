@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Notification from '../components/Notification';
+import BackButton from '../components/BackButton';
 import mistralAIService from '../services/mistralAIService';
 import { API_ENDPOINTS } from '../config/constants';
 
@@ -491,6 +492,10 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           />
         </div>
         <div className="flex justify-between items-center">
+          <BackButton 
+            onClick={() => onNavigate('employer-dashboard')}
+            text="Back to Dashboard"
+          />
           <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
           <button onClick={() => onNavigate('employer-dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
         </div>

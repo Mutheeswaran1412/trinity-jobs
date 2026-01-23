@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, ChevronDown, Info, TrendingUp, Star } from 'lucide-react';
 import Notification from '../components/Notification';
+import BackButton from '../components/BackButton';
 import ResumeUploadModal from '../components/ResumeUploadModal';
 import ResumeParserModal from '../components/ResumeParserModal';
 import ProfilePhotoEditor from '../components/ProfilePhotoEditor';
@@ -259,7 +260,12 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       {/* Tab Navigation */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+          <div className="flex items-center space-x-8">
+            <BackButton 
+              onClick={() => onNavigate && onNavigate('home')}
+              text="Back to Home"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors py-4"
+            />
             <button 
               onClick={() => setActiveTab('Profile')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${

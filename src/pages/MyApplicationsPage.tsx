@@ -254,7 +254,12 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
       {/* Page Header */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
+            <BackButton 
+              onClick={() => onNavigate('dashboard')}
+              text="Back to Dashboard"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            />
             <div className="text-2xl">📊</div>
             <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
           </div>
@@ -348,9 +353,18 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                     <div className="flex items-start justify-between">
                       {/* Left side - Job info */}
                       <div className="flex items-start space-x-4 flex-1">
-                        {/* Company Avatar */}
-                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                          {application.jobId?.company ? application.jobId.company.charAt(0).toUpperCase() : 'C'}
+                        {/* Trinity Logo */}
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-white border border-gray-200">
+                          <img 
+                            src="/images/trinity-logo.webp" 
+                            alt="Trinity Logo" 
+                            className="w-10 h-10 object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.parentElement!.innerHTML = '<div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">T</div>';
+                            }}
+                          />
                         </div>
                         
                         {/* Job details */}

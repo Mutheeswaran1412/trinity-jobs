@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
+import { MapPin, Briefcase, Clock, DollarSign, Building, Share2, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
 import { getCompanyLogo } from '../utils/logoUtils';
 import { formatJobDescription } from '../utils/textUtils';
 import QuickApplyButton from '../components/QuickApplyButton';
+import BackButton from '../components/BackButton';
 
 interface JobDetailPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -310,7 +311,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
       {/* Job Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <button 
+          <BackButton 
             onClick={() => {
               console.log('🔙 Back button clicked');
               console.log('📊 User:', user);
@@ -339,11 +340,9 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                 }
               }
             }}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            <span>Back to {user?.type === 'employer' || user?.userType === 'employer' ? 'My Jobs' : 'Jobs'}</span>
-          </button>
+            text={`Back to ${user?.type === 'employer' || user?.userType === 'employer' ? 'My Jobs' : 'Jobs'}`}
+            className="mb-4"
+          />
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start space-x-4 flex-1">

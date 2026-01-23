@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Users, Star, Building, Globe, ChevronDown } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackButton from '../components/BackButton';
 import { API_ENDPOINTS } from '../config/env';
 
 interface Company {
@@ -165,6 +166,11 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
       {/* Hero Section */}
       <div className="bg-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <BackButton 
+            onClick={() => onNavigate && onNavigate('job-listings')}
+            text="Back to Jobs"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
+          />
           <p className="text-gray-600 text-lg mb-4">Browse Companies</p>
           <h1 className="text-5xl font-bold text-gray-900 mb-12">
             {loading ? 'Loading...' : `${companies.length} Companies`}
@@ -202,7 +208,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredIndustries().map((industry, index) => (
                     <div
-                      key={`industry-${index}-${industry}`}
+                      key={`industry-${industry}-${index}`}
                       onClick={() => handleIndustrySelect(industry)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -229,7 +235,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredSizes().map((size, index) => (
                     <div
-                      key={`size-${index}-${size}`}
+                      key={`size-${size}-${index}`}
                       onClick={() => handleSizeSelect(size)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -256,7 +262,7 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                   {getFilteredWorkSettings().map((setting, index) => (
                     <div
-                      key={`setting-${index}-${setting}`}
+                      key={`setting-${setting}-${index}`}
                       onClick={() => handleWorkSettingSelect(setting)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >

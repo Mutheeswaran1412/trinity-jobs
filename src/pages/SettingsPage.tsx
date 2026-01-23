@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Mail, Lock, User, Trash2 } from 'lucide-react';
 import Notification from '../components/Notification';
+import BackButton from '../components/BackButton';
 
 
 interface SettingsPageProps {
@@ -114,13 +115,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
         <div className="bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-              <button
-                onClick={() => onNavigate('dashboard')}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                ← Back to Dashboard
-              </button>
+              <div className="flex items-center space-x-4">
+                <BackButton 
+                  onClick={() => onNavigate('dashboard')}
+                  text="Back to Dashboard"
+                  className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                />
+                <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+              </div>
             </div>
           </div>
         </div>

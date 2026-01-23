@@ -49,7 +49,7 @@ import DailyJobsPage from './pages/DailyJobsPage';
 import JobRolePage from './pages/JobRolePage';
 import HireTalentPage from './pages/HireTalentPage';
 import JobManagementPage from './pages/JobManagementPage';
-import CandidateResponseDetailPage from './pages/CandidateResponseDetailPage';
+import CandidateResponseDetailPage from './pages/CandidateResponseDetailPageNew';
 import RecruiterActionsPage from './pages/RecruiterActionsPage';
 import SearchAppearancesPage from './pages/SearchAppearancesPage';
 
@@ -64,6 +64,7 @@ import ResumeModerationDashboard from './pages/ResumeModerationDashboard';
 import JobModerationDashboard from './pages/JobModerationDashboard';
 import ResumeUploadWithModeration from './components/ResumeUploadWithModeration';
 import AIScoringDemoPage from './pages/AIScoringDemoPage';
+import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
@@ -389,7 +390,7 @@ function App() {
         <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <CareerResources />
         <Footer onNavigate={handleNavigation} />
-        <BackButton onBack={handleBackNavigation} />
+        <BackButton onClick={handleBackNavigation} />
       </div>
     );
   }
@@ -522,7 +523,7 @@ function App() {
   }
 
   if (currentPage === 'application-management') {
-    return null; // Component not imported
+    return <ApplicationManagementPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
 

@@ -255,12 +255,10 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
 
             {/* Navigation */}
             <div className="flex justify-between items-center">
-              <button
+              <BackButton 
                 onClick={() => onNavigate('job-listings')}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                ← Back to Jobs
-              </button>
+                text="Back to Jobs"
+              />
               <button
                 onClick={nextStep}
                 disabled={!hasResume && !applicationData.resumeFile}

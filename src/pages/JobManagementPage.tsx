@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/api';
-import { Briefcase, Users, Eye, Edit, Trash2, Plus, ArrowLeft, Search, Filter, RefreshCw, MoreVertical, CheckSquare, Mail, UserCheck } from 'lucide-react';
+import { Briefcase, Users, Eye, Edit, Trash2, Plus, Search, Filter, RefreshCw, MoreVertical, CheckSquare, Mail, UserCheck } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackButton from '../components/BackButton';
 
 interface Job {
   _id: string;
@@ -129,13 +130,11 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button
+        <BackButton 
           onClick={() => onNavigate('employer-dashboard')}
-          className="flex items-center text-blue-600 hover:text-blue-700 font-medium mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </button>
+          text="Back to Dashboard"
+          className="mb-6"
+        />
         
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -315,6 +314,8 @@ const JobManagementPage: React.FC<JobManagementPageProps> = ({ onNavigate, user,
                         onClick={() => {
                           // Navigate to applications for this job
                           sessionStorage.setItem('selectedJobId', job._id);
+                          sessionStorage.setItem('selectedJobTitle', job.jobTitle || job.title || 'Job Position');
+                          sessionStorage.setItem('selectedJobCompany', job.company || 'Company');
                           onNavigate('application-management');
                         }}
                         className="text-center hover:bg-blue-50 p-2 rounded transition-colors"

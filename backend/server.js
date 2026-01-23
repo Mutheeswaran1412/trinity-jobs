@@ -488,17 +488,19 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, session_id, language } = req.body;
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Check if API key exists
+    console.log('💬 Chat request:', { message, session_id });
+
+    // Check if OpenRouter API key exists
     if (!process.env.OPENROUTER_API_KEY) {
-      console.error('OpenRouter API key not found');
+      console.error('❌ OpenRouter API key not found');
       return res.json({
-        response: "I'm here to help with jobs, careers, resumes, and interviews. What specific question do you have?",
+        response: "I'm ZyncJobs AI Assistant! I can help you with job searching, resume building, interview preparation, and career advice. What would you like to know?",
         sources: []
       });
     }
@@ -518,47 +520,107 @@ app.post('/api/chat', async (req, res) => {
           {
             role: 'system',
             content: `You are ZyncJobs AI Assistant, a helpful chatbot for a job portal called ZyncJobs. You help users with:
-- Job searching and applications
-- Resume building and optimization
-- Interview preparation
-- Career advice
-- Salary negotiation
-- Skills development
-- Company research
 
-Always be helpful, professional, and focus on job-related topics. Keep responses concise and actionable.`
+🔍 Job Search & Applications:
+- Finding relevant job opportunities
+- Application strategies and tips
+- Job market insights
+
+📄 Resume & Profile:
+- Resume writing and optimization
+- LinkedIn profile enhancement
+- Skills highlighting
+
+🎯 Interview Preparation:
+- Common interview questions
+- Interview techniques and tips
+- Salary negotiation advice
+
+💼 Career Development:
+- Career path guidance
+- Skills development recommendations
+- Industry trends and insights
+
+🏢 Company Research:
+- Company culture insights
+- Industry analysis
+- Work environment tips
+
+Always be helpful, professional, and focus on job-related topics. Keep responses concise, actionable, and encouraging. Use emojis sparingly for better readability.`
           },
           {
             role: 'user',
             content: message
           }
         ],
-        max_tokens: 500,
-        temperature: 0.7
+        max_tokens: 600,
+        temperature: 0.7,
+        top_p: 0.9
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`OpenRouter API error: ${response.status} - ${errorText}`);
-      throw new Error(`OpenRouter API error: ${response.status}`);
+      console.error(`❌ OpenRouter API error: ${response.status} - ${errorText}`);
+      
+      // Provide helpful fallback response based on common queries
+      const fallbackResponse = getFallbackResponse(message);
+      return res.json({
+        response: fallbackResponse,
+        sources: []
+      });
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content || "I'm here to help with jobs, careers, resumes, and interviews. What specific question do you have?";
+    const aiResponse = data.choices?.[0]?.message?.content || getFallbackResponse(message);
+    
+    console.log('✅ Chat response generated successfully');
     
     res.json({
-      response: aiResponse,
+      response: aiResponse.trim(),
       sources: []
     });
   } catch (error) {
-    console.error('Chat error:', error);
+    console.error('❌ Chat error:', error.message);
+    
+    const fallbackResponse = getFallbackResponse(req.body.message || '');
     res.json({
-      response: "I'm here to help with jobs, careers, resumes, and interviews. What specific question do you have?",
+      response: fallbackResponse,
       sources: []
     });
   }
 });
+
+// Helper function for fallback responses
+function getFallbackResponse(message) {
+  const lowerMessage = (message || '').toLowerCase();
+  
+  if (lowerMessage.includes('apply') || lowerMessage.includes('application')) {
+    return "📝 Here's how to apply for jobs effectively:\n\n• Create a complete profile with your skills and experience\n• Search for jobs that match your qualifications\n• Customize your resume for each application\n• Write a compelling cover letter\n• Follow up after applying\n• Use the 'Quick Apply' feature for faster applications\n\nWould you like specific tips on any of these steps?";
+  }
+  
+  if (lowerMessage.includes('resume') || lowerMessage.includes('cv')) {
+    return "📄 I'd be happy to help with your resume! Here are some key tips:\n\n• Use a clean, professional format\n• Highlight relevant skills and achievements\n• Quantify your accomplishments with numbers\n• Tailor your resume for each job application\n• Keep it concise (1-2 pages)\n\nWould you like specific advice on any section of your resume?";
+  }
+  
+  if (lowerMessage.includes('interview')) {
+    return "🎯 Great question about interviews! Here are some essential tips:\n\n• Research the company and role thoroughly\n• Practice common interview questions\n• Prepare specific examples using the STAR method\n• Ask thoughtful questions about the role\n• Follow up with a thank-you email\n\nWhat specific aspect of interview preparation would you like to focus on?";
+  }
+  
+  if (lowerMessage.includes('job') || lowerMessage.includes('career')) {
+    return "💼 I'm here to help with your job search and career! I can assist with:\n\n• Finding relevant job opportunities\n• Optimizing your job applications\n• Career path planning\n• Skill development recommendations\n• Industry insights\n\nWhat specific area would you like guidance on?";
+  }
+  
+  if (lowerMessage.includes('salary') || lowerMessage.includes('negotiate')) {
+    return "💰 Salary negotiation is important! Here are key strategies:\n\n• Research market rates for your role\n• Highlight your unique value and achievements\n• Consider the total compensation package\n• Practice your negotiation conversation\n• Be prepared to justify your request\n\nWould you like tips on researching salary ranges or negotiation techniques?";
+  }
+  
+  if (lowerMessage.includes('hi') || lowerMessage.includes('hello') || lowerMessage.includes('hey')) {
+    return "👋 Hello! I'm ZyncJobs AI Assistant. I'm here to help you with:\n\n🔍 Job searching and applications\n📄 Resume writing and optimization\n🎯 Interview preparation\n💼 Career development advice\n🏢 Company research\n\nWhat would you like assistance with today?";
+  }
+  
+  return "👋 Hello! I'm ZyncJobs AI Assistant. I'm here to help you with:\n\n🔍 Job searching and applications\n📄 Resume writing and optimization\n🎯 Interview preparation\n💼 Career development advice\n🏢 Company research\n\nWhat would you like assistance with today?";
+}
 
 app.post('/api/generate-content', async (req, res) => {
   try {

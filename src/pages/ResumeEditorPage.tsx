@@ -1,6 +1,7 @@
 import React, { useState, lazy, Suspense, ErrorBoundary } from 'react';
 import { API_ENDPOINTS } from '../config/api';
 import Header from '../components/Header';
+import BackButton from '../components/BackButton';
 import aiService from '../services/aiService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -442,24 +443,11 @@ const ResumeEditorPage: React.FC<ResumeEditorPageProps> = ({ onNavigate, user, o
       
       {/* Back to Templates Button */}
       <div style={{ padding: "15px 20px", backgroundColor: "white", borderBottom: "1px solid #e5e7eb" }}>
-        <button
-          onClick={() => onNavigate?.('resume-templates')}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "none",
-            border: "1px solid #d1d5db",
-            color: "#374151",
-            fontSize: "14px",
-            cursor: "pointer",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            fontWeight: "500"
-          }}
-        >
-          ← Back to Templates
-        </button>
+        <BackButton 
+          onClick={() => onNavigate && onNavigate('resume-templates')}
+          text="Back to Templates"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+        />
       </div>
 
       <div style={{ display: "flex", height: "calc(100vh - 140px)" }}>

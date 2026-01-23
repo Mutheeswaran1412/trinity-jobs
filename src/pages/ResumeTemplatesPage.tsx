@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import BackButton from '../components/BackButton';
 
 interface ResumeTemplatesPageProps {
   onNavigate?: (page: string) => void;
@@ -69,6 +70,11 @@ const ResumeTemplatesPage: React.FC<ResumeTemplatesPageProps> = ({ onNavigate, u
 
             {/* Header */}
             <div className="templates-root__header--without-create-resume-button templates-root__header-sticky text-center">
+              <BackButton 
+                onClick={() => onNavigate && onNavigate('dashboard')}
+                text="Back to Dashboard"
+                className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
+              />
               <h1 className="templates-root__header-title">Resume templates</h1>
               <p className="templates-root__header-subtitle">
                 Each resume template is designed to follow the exact rules you need to get hired faster. Use our resume templates and get free access to 18 more career tools!
