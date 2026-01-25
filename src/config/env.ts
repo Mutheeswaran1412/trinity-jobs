@@ -1,9 +1,14 @@
 // Environment Configuration
 // Only non-sensitive frontend configuration
 
+// Debug: Log environment variables
+console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('🔧 Environment:', import.meta.env.MODE);
+console.log('🔧 All env vars:', import.meta.env);
+
 export const config = {
-  // API Configuration
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  // API Configuration - Force production URL if not set
+  API_URL: import.meta.env.VITE_API_URL || 'http://ec2-3-110-178-223.ap-south-1.compute.amazonaws.com:5000',
   
   // App Configuration
   APP_NAME: import.meta.env.VITE_APP_NAME || 'ZyncJobs',
@@ -18,6 +23,9 @@ export const config = {
   IS_DEVELOPMENT: import.meta.env.DEV,
   IS_PRODUCTION: import.meta.env.PROD,
 };
+
+// Debug: Log final API URL
+console.log('🌐 Final API_URL:', config.API_URL);
 
 // API Endpoints
 export const API_ENDPOINTS = {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './components/ErrorBoundary';
+import APITest from './components/APITest';
 import Header from './components/Header';
 import NewHero from './components/NewHero';
 import JobCategories from './components/JobCategories';
@@ -726,6 +727,7 @@ function App() {
 
   return (
     <>
+      <APITest />
       <Notification
         type={notification.type}
         message={notification.message}

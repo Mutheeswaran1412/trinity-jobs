@@ -60,7 +60,8 @@ const JobListingsPage = ({ onNavigate, user, onLogout, searchParams }: {
     try {
       let url = API_ENDPOINTS.JOBS;
       
-      console.log('🔍 Fetching jobs from API_ENDPOINTS.JOBS:', url);
+      console.log('🔍 API_ENDPOINTS.JOBS:', API_ENDPOINTS.JOBS);
+      console.log('🔍 API_ENDPOINTS.BASE_URL:', API_ENDPOINTS.BASE_URL);
       
       // Use advanced search if filters are applied
       if (searchTerm || location || filters.industry.length > 0 || filters.companySize.length > 0 || filters.freshness) {
