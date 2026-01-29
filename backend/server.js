@@ -23,6 +23,7 @@ import resumeRoutes from './routes/resume.js';
 import resumeAttachRoutes from './routes/resumeAttach.js';
 import resumeModerationRoutes from './routes/resumeModeration.js';
 import analyticsRoutes from './routes/analytics.js';
+import analyticsTrackingRoutes from './routes/analyticsTracking.js';
 import adminJobsRoutes from './routes/adminJobs.js';
 import companyRoutes from './routes/companies.js';
 import companySearchRoutes from './routes/companySearch.js';
@@ -219,6 +220,7 @@ app.use('/api/job-alerts', jobAlertRoutes);
 // app.use('/api/upload', uploadRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/analytics', analyticsTrackingRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/company', companySearchRoutes);
@@ -788,16 +790,17 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
       const Job = (await import('./models/Job.js')).default;
       const Application = (await import('./models/Application.js')).default;
       
-      // Check both postedBy and employerEmail fields with more flexible matching
+      // Get real job count
       const jobsPosted = await Job.countDocuments({ 
         $or: [
           { employerEmail: { $regex: new RegExp(email, 'i') } },
           { postedBy: { $regex: new RegExp(email, 'i') } },
           { 'employer.email': { $regex: new RegExp(email, 'i') } }
         ],
-        isActive: { $ne: false } // Include jobs where isActive is true or undefined
+        isActive: { $ne: false }
       });
 
+      // Get real applications count
       const applicationsReceived = await Application.countDocuments({ 
         $or: [
           { employerEmail: { $regex: new RegExp(email, 'i') } },
@@ -813,19 +816,29 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
       });
     } else {
       const Application = (await import('./models/Application.js')).default;
+      const Analytics = (await import('./models/Analytics.js')).default;
       
+      // Get real applications sent
       const applicationsSent = await Application.countDocuments({ 
         candidateEmail: { $regex: new RegExp(email, 'i') }
       });
 
-      const profileViews = Math.floor(applicationsSent * 2.5) + Math.floor(Math.random() * 10);
-      const recruiterActions = Math.floor(applicationsSent * 1.2) + Math.floor(Math.random() * 5);
+      // Get real analytics data from database
+      const searchAppearances = await Analytics.countDocuments({
+        email: { $regex: new RegExp(email, 'i') },
+        eventType: 'search_appearance'
+      });
 
-      console.log('📈 Candidate analytics result:', { applicationsSent, profileViews, recruiterActions, email });
+      const recruiterActions = await Analytics.countDocuments({
+        email: { $regex: new RegExp(email, 'i') },
+        eventType: 'recruiter_action'
+      });
+
+      console.log('📈 Candidate analytics result:', { applicationsSent, searchAppearances, recruiterActions, email });
 
       res.json({
-        searchAppearances: profileViews,
-        recruiterActions: recruiterActions
+        searchAppearances: searchAppearances || 0,
+        recruiterActions: recruiterActions || 0
       });
     }
   } catch (error) {
