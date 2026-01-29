@@ -22,6 +22,11 @@
     "mammoth": "^1.11.0",
     "pdf-parse": "^1.1.1",
     "multer": "^1.4.5-lts.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "axios": "^1.6.0",
+    "uuid": "^9.0.1",
+    "fs-extra": "^11.2.0",
+    "path": "^0.12.7",
+    "crypto": "^1.0.1"
   }
 }
