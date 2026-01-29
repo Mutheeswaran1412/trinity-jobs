@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Video, Phone, MapPin, CheckCircle, XCircle } from 'lucide-react';
+import BackButton from './BackButton';
 
 const InterviewScheduling = () => {
   const [interviews, setInterviews] = useState([]);
@@ -185,6 +186,13 @@ const InterviewScheduling = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-6">
+        <BackButton 
+          onClick={() => window.history.back()}
+          text="Back"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+        />
+      </div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Interview Scheduling</h1>
         <button

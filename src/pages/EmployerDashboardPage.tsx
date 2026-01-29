@@ -251,8 +251,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         {/* User Profile */}
         <div className="p-6 border-b border-gray-200">
           <BackButton 
-            onClick={() => onNavigate && onNavigate('home')}
-            text="Back to Home"
+            onClick={() => window.history.back()}
+            text="Back"
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
           />
           <div className="flex items-center space-x-3">

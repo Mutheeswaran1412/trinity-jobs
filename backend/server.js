@@ -85,6 +85,8 @@ const io = new Server(httpServer, {
       'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
       'https://trinity-jobs.vercel.app',
       'https://stagging.zyncjobs.com',
+      'https://zyncjobs.com',
+      'https://www.zyncjobs.com',
       process.env.FRONTEND_URL
     ].filter(Boolean),
     credentials: true
@@ -185,15 +187,13 @@ const loginLimiter = rateLimit({
 app.use('/api/users/login', loginLimiter);
 app.use(limiter);
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://stagging.zyncjobs.com', process.env.FRONTEND_URL].filter(Boolean)
-    : [
-        'http://localhost:5173',
-        'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
-        'https://trinity-jobs.vercel.app',
-        'https://stagging.zyncjobs.com',
-        process.env.FRONTEND_URL
-      ].filter(Boolean),
+  origin: [
+    "https://stagging.zyncjobs.com",
+    "https://api-staging.zyncjobs.com",
+    "http://localhost:5173",
+    "https://zyncjobs.com",
+    "https://www.zyncjobs.com"
+  ],
   credentials: true
 }));
 app.use(cookieParser());

@@ -8,8 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start:all": "concurrently \"cd backend && npm start\" \"npm run dev\"",
-    "kill:backend": "taskkill /F /IM node.exe 2>nul || echo No backend processes found"
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "npm run dev",
+    "start:all": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "install:all": "npm install && cd backend && npm install"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
@@ -27,6 +29,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.8",
+    "concurrently": "^8.2.2",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",

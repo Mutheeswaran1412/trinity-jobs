@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import BackButton from '../components/BackButton';
 
 interface SearchAppearancesPageProps {
   onNavigate: (page: string) => void;
@@ -9,13 +10,11 @@ const SearchAppearancesPage: React.FC<SearchAppearancesPageProps> = ({ onNavigat
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <button
-          onClick={() => onNavigate('candidate-dashboard')}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </button>
+        <BackButton 
+          onClick={() => window.history.back()}
+          text="Back"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
+        />
         <h1 className="text-2xl font-bold text-gray-900">Search Appearances</h1>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
           <div className="p-8 text-center">

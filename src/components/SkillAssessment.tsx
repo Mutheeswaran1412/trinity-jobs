@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Search } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/constants';
+import BackButton from './BackButton';
 
 const SkillAssessment = () => {
   const [skills, setSkills] = useState([]);
@@ -242,6 +243,13 @@ const SkillAssessment = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-6">
+        <BackButton 
+          onClick={() => window.history.back()}
+          text="Back"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+        />
+      </div>
       <h1 className="text-3xl font-bold mb-8">Skill Assessments</h1>
       
       <div className="grid md:grid-cols-2 gap-8">

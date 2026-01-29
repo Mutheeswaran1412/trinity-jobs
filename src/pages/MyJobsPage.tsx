@@ -3,6 +3,7 @@ import { ChevronRight, Briefcase, MapPin, DollarSign, Bookmark, Clock, Search, F
 import { decodeHtmlEntities, formatDate, formatSalary, formatJobDescription } from '../utils/textUtils';
 import { getCompanyLogo } from '../utils/logoUtils';
 import { API_ENDPOINTS } from '../config/env';
+import BackButton from '../components/BackButton';
 
 interface MyJobsPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -359,6 +360,13 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <BackButton 
+              onClick={() => onNavigate('dashboard')}
+              text="Back to Dashboard"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            />
+          </div>
           <div className="flex items-center justify-between mb-8">
             <div className="flex space-x-1">
               {user?.type === 'employer' ? (

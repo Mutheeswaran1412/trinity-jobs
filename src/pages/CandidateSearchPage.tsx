@@ -199,7 +199,7 @@ const CandidateSearchPage: React.FC<CandidateSearchPageProps> = ({ onNavigate, u
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <BackButton 
-          onClick={() => onNavigate && onNavigate('employer-dashboard')}
+          onClick={() => onNavigate && onNavigate('dashboard')}
           text="Back to Dashboard"
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-6"
         />

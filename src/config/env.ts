@@ -7,8 +7,8 @@ console.log('🔧 Environment:', import.meta.env.MODE);
 console.log('🔧 All env vars:', import.meta.env);
 
 export const config = {
-  // API Configuration - Force production URL if not set
-  API_URL: import.meta.env.VITE_API_URL || 'http://ec2-3-110-178-223.ap-south-1.compute.amazonaws.com:5000',
+  // API Configuration - Use Trinity Jobs Render endpoint
+  API_URL: import.meta.env.VITE_API_URL || 'https://trinity-jobs.onrender.com',
   
   // App Configuration
   APP_NAME: import.meta.env.VITE_APP_NAME || 'ZyncJobs',

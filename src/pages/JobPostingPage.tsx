@@ -493,11 +493,11 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         </div>
         <div className="flex justify-between items-center">
           <BackButton 
-            onClick={() => onNavigate('employer-dashboard')}
+            onClick={() => onNavigate('dashboard')}
             text="Back to Dashboard"
           />
           <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
-          <button onClick={() => onNavigate('employer-dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
+          <button onClick={() => onNavigate('dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
         </div>
       </div>
       
@@ -1429,9 +1429,9 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         });
         setCurrentStep(1);
         
-        // Navigate back to employer dashboard after 2 seconds
+        // Navigate back to dashboard after 2 seconds
         setTimeout(() => {
-          onNavigate('employer-dashboard');
+          onNavigate('dashboard');
         }, 2000);
       } else {
         const errorText = await response.text();
@@ -1488,7 +1488,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
                 <button
                   onClick={() => {
                     setShowUpgradeModal(false);
-                    onNavigate('employer-dashboard');
+                    onNavigate('dashboard');
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
