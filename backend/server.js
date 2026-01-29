@@ -192,8 +192,9 @@ app.use(cors({
     "https://api-staging.zyncjobs.com",
     "http://localhost:5173",
     "https://zyncjobs.com",
-    "https://www.zyncjobs.com"
-  ],
+    "https://www.zyncjobs.com",
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(cookieParser());
