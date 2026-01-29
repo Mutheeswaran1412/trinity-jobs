@@ -17,7 +17,6 @@ const sensitiveEnvVars = [
 const validateFormat = {
   MONGODB_URI: (val) => val.startsWith('mongodb'),
   SMTP_EMAIL: (val) => val.includes('@'),
-  FRONTEND_URL: (val) => val.startsWith('http'),
   JWT_SECRET: (val) => val.length >= 32
 };
 
