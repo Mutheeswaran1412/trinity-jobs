@@ -2,7 +2,10 @@ const requiredEnvVars = [
   'MONGODB_URI',
   'JWT_SECRET',
   'SMTP_EMAIL',
-  'SMTP_PASSWORD',
+  'SMTP_PASSWORD'
+];
+
+const optionalEnvVars = [
   'FRONTEND_URL'
 ];
 
@@ -26,12 +29,18 @@ export const validateEnv = () => {
     process.exit(1);
   }
 
-  // Format validation
+  // Format validation - only validate if the env var exists
   for (const [key, validator] of Object.entries(validateFormat)) {
     if (process.env[key] && !validator(process.env[key])) {
       console.error(`Invalid format for ${key}`);
       process.exit(1);
     }
+  }
+
+  // Set default for FRONTEND_URL if not provided
+  if (!process.env.FRONTEND_URL) {
+    process.env.FRONTEND_URL = 'https://trinity-jobs.vercel.app';
+    console.log('✓ Using default FRONTEND_URL:', process.env.FRONTEND_URL);
   }
 
   console.log('✓ Environment variables validated');

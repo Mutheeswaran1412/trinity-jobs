@@ -82,8 +82,8 @@ const io = new Server(httpServer, {
   cors: {
     origin: [
       'http://localhost:5173',
-      'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
       'https://trinity-jobs.vercel.app',
+      'https://trinity-jobs-ezblun328-mutheeswarans-projects.vercel.app',
       'https://stagging.zyncjobs.com',
       'https://zyncjobs.com',
       'https://www.zyncjobs.com',
@@ -188,6 +188,7 @@ app.use('/api/users/login', loginLimiter);
 app.use(limiter);
 app.use(cors({
   origin: [
+    "https://trinity-jobs.vercel.app",
     "https://stagging.zyncjobs.com",
     "https://api-staging.zyncjobs.com",
     "http://localhost:5173",
