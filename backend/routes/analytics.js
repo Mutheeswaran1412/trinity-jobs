@@ -1,6 +1,7 @@
 import express from 'express';
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
+import Analytics from '../models/Analytics.js';
 
 const router = express.Router();
 
@@ -10,38 +11,58 @@ router.get('/profile/:email', async (req, res) => {
     const { email } = req.params;
     const { userType } = req.query;
 
+    console.log('📊 Analytics request for:', email, 'userType:', userType);
+
     if (userType === 'employer') {
       // For employers: Jobs Posted and Applications Received
       const jobsPosted = await Job.countDocuments({ 
-        employerEmail: email,
-        isActive: true 
+        $or: [
+          { employerEmail: { $regex: new RegExp(email, 'i') } },
+          { postedBy: { $regex: new RegExp(email, 'i') } },
+          { 'employer.email': { $regex: new RegExp(email, 'i') } }
+        ],
+        isActive: { $ne: false }
       });
 
       const applicationsReceived = await Application.countDocuments({ 
-        employerEmail: email 
+        $or: [
+          { employerEmail: { $regex: new RegExp(email, 'i') } },
+          { 'employer.email': { $regex: new RegExp(email, 'i') } }
+        ]
       });
+
+      console.log('📈 Employer analytics result:', { jobsPosted, applicationsReceived, email });
 
       res.json({
         jobsPosted,
         applicationsReceived
       });
     } else {
-      // For candidates: Applications Sent and Profile Views (simulated)
+      // For candidates: Real analytics from database
       const applicationsSent = await Application.countDocuments({ 
-        candidateEmail: email 
+        candidateEmail: { $regex: new RegExp(email, 'i') }
       });
 
-      // Simulate profile views and recruiter actions based on applications
-      const profileViews = Math.floor(applicationsSent * 2.5); // Realistic ratio
-      const recruiterActions = Math.floor(applicationsSent * 1.2);
+      // Get real analytics data from database
+      const searchAppearances = await Analytics.countDocuments({
+        email: { $regex: new RegExp(email, 'i') },
+        eventType: 'search_appearance'
+      });
+
+      const recruiterActions = await Analytics.countDocuments({
+        email: { $regex: new RegExp(email, 'i') },
+        eventType: 'recruiter_action'
+      });
+
+      console.log('📈 Candidate analytics result:', { applicationsSent, searchAppearances, recruiterActions, email });
 
       res.json({
-        searchAppearances: profileViews,
-        recruiterActions: recruiterActions
+        searchAppearances: searchAppearances || 0,
+        recruiterActions: recruiterActions || 0
       });
     }
   } catch (error) {
-    console.error('Error fetching analytics:', error);
+    console.error('❌ Analytics error:', error);
     res.status(500).json({ error: error.message });
   }
 });

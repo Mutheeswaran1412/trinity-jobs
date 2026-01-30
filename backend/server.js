@@ -24,6 +24,7 @@ import resumeAttachRoutes from './routes/resumeAttach.js';
 import resumeModerationRoutes from './routes/resumeModeration.js';
 import analyticsRoutes from './routes/analytics.js';
 import analyticsTrackingRoutes from './routes/analyticsTracking.js';
+import analyticsDebugRoutes from './routes/analyticsDebug.js';
 import adminJobsRoutes from './routes/adminJobs.js';
 import companyRoutes from './routes/companies.js';
 import companySearchRoutes from './routes/companySearch.js';
@@ -221,6 +222,7 @@ app.use('/api/job-alerts', jobAlertRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/analytics', analyticsTrackingRoutes);
+app.use('/api/analytics', analyticsDebugRoutes);
 app.use('/api/admin/jobs', adminJobsRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/company', companySearchRoutes);
@@ -857,6 +859,40 @@ app.get('/api/test', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+// Test analytics endpoint
+app.get('/api/test-analytics', async (req, res) => {
+  try {
+    const Analytics = (await import('./models/Analytics.js')).default;
+    
+    const email = 'mutheeswaran@trinitetech.com';
+    
+    const searchAppearances = await Analytics.countDocuments({
+      email: { $regex: new RegExp(email, 'i') },
+      eventType: 'search_appearance'
+    });
+
+    const recruiterActions = await Analytics.countDocuments({
+      email: { $regex: new RegExp(email, 'i') },
+      eventType: 'recruiter_action'
+    });
+    
+    const allData = await Analytics.find({
+      email: { $regex: new RegExp(email, 'i') }
+    }).sort({ createdAt: -1 });
+    
+    res.json({
+      status: 'success',
+      email,
+      searchAppearances,
+      recruiterActions,
+      totalRecords: allData.length,
+      data: allData
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
