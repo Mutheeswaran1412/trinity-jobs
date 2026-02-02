@@ -9,6 +9,7 @@ import session from 'express-session';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
@@ -769,13 +770,23 @@ function generateJobRequirements(jobTitle) {
 app.get('/sw.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Service-Worker-Allowed', '/');
-  res.sendFile(path.join(__dirname, '../public/sw.js'));
+  const swPath = path.join(process.cwd(), 'public', 'sw.js');
+  if (fs.existsSync(swPath)) {
+    res.sendFile(swPath);
+  } else {
+    res.status(404).send('Service worker not found');
+  }
 });
 
 // Serve manifest with correct MIME type
 app.get('/manifest.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.sendFile(path.join(__dirname, '../public/manifest.json'));
+  const manifestPath = path.join(process.cwd(), 'public', 'manifest.json');
+  if (fs.existsSync(manifestPath)) {
+    res.sendFile(manifestPath);
+  } else {
+    res.status(404).send('Manifest not found');
+  }
 });
 
 app.get('/', (req, res) => {
