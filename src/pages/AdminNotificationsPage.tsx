@@ -169,6 +169,7 @@ const AdminNotificationsPage: React.FC<AdminNotificationsPageProps> = ({ onNavig
                   value={emailForm.priority}
                   onChange={(e) => setEmailForm({...emailForm, priority: e.target.value})}
                   className="w-full border rounded px-3 py-2"
+                  title="Select notification priority"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -182,6 +183,7 @@ const AdminNotificationsPage: React.FC<AdminNotificationsPageProps> = ({ onNavig
                   value={emailForm.type}
                   onChange={(e) => setEmailForm({...emailForm, type: e.target.value})}
                   className="w-full border rounded px-3 py-2"
+                  title="Select notification type"
                 >
                   <option value="email">Email</option>
                   <option value="sms">SMS</option>
@@ -235,6 +237,7 @@ const AdminNotificationsPage: React.FC<AdminNotificationsPageProps> = ({ onNavig
                 value={broadcastForm.userType}
                 onChange={(e) => setBroadcastForm({...broadcastForm, userType: e.target.value})}
                 className="w-full border rounded px-3 py-2"
+                title="Select target audience for broadcast"
               >
                 <option value="all">All Users</option>
                 <option value="candidates">Candidates Only</option>

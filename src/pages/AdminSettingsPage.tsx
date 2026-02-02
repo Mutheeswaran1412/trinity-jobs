@@ -68,6 +68,8 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate }) => 
               value={settings.siteName || ''}
               onChange={(e) => setSettings({...settings, siteName: e.target.value})}
               className="w-full border rounded px-3 py-2"
+              title="Enter the site name"
+              placeholder="Enter site name"
             />
           </div>
 
@@ -77,6 +79,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate }) => 
               checked={settings.allowRegistration || false}
               onChange={(e) => setSettings({...settings, allowRegistration: e.target.checked})}
               className="rounded"
+              title="Allow new user registration"
             />
             <label>Allow new user registration</label>
           </div>
@@ -87,6 +90,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate }) => 
               checked={settings.autoApproveJobs || false}
               onChange={(e) => setSettings({...settings, autoApproveJobs: e.target.checked})}
               className="rounded"
+              title="Auto-approve job postings"
             />
             <label>Auto-approve job postings</label>
           </div>
@@ -97,6 +101,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate }) => 
               checked={settings.maintenanceMode || false}
               onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})}
               className="rounded"
+              title="Enable maintenance mode"
             />
             <label className="text-red-600">Maintenance Mode</label>
           </div>
@@ -108,6 +113,7 @@ const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate }) => 
               value={settings.maxJobsPerEmployer || 50}
               onChange={(e) => setSettings({...settings, maxJobsPerEmployer: parseInt(e.target.value)})}
               className="w-full border rounded px-3 py-2"
+              title="Maximum number of jobs per employer"
             />
           </div>
         </div>
