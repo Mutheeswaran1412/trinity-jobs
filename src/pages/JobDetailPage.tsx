@@ -407,7 +407,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                     </div>
                   )}
                   <div className="flex items-center space-x-2">
-                    <span>{typeof job.salary === 'object' ? `${job.salary.currency === 'INR' ? '₹' : job.salary.currency === 'USD' ? '$' : job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
+                    <span>{typeof job.salary === 'object' ? `${job.salary.currency === 'INR' ? '₹' : job.salary.currency === 'USD' ? '$' : job.salary.currency || '₹'}${job.salary.min?.toLocaleString()}-${job.salary.max?.toLocaleString()} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive')}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4" />
@@ -673,7 +673,7 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                       <p className="text-sm text-gray-600">{similarJob.company}</p>
                       <p className="text-xs text-gray-500">
                         {similarJob.location} • {typeof similarJob.salary === 'object' 
-                          ? `${similarJob.salary.currency === 'INR' ? '₹' : similarJob.salary.currency === 'USD' ? '$' : similarJob.salary.currency || '$'}${similarJob.salary.min}-${similarJob.salary.max}` 
+                          ? `${similarJob.salary.currency === 'INR' ? '₹' : similarJob.salary.currency === 'USD' ? '$' : similarJob.salary.currency || '₹'}${similarJob.salary.min?.toLocaleString()}-${similarJob.salary.max?.toLocaleString()}` 
                           : 'Competitive salary'}
                       </p>
                     </div>

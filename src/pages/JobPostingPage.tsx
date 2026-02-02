@@ -81,7 +81,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     minSalary: parsedData?.minSalary || '50,000',
     maxSalary: parsedData?.maxSalary || '80,000',
     payRate: parsedData?.payRate || 'per year',
-    currency: parsedData?.currency || 'USD',
+    currency: parsedData?.currency || 'INR',
     benefits: parsedData?.benefits || [],
     jobDescription: parsedData?.jobDescription || '',
     skills: parsedData?.skills || [],
@@ -513,7 +513,52 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     updateJobData('skills', jobData.skills.filter(skill => skill !== skillToRemove));
   };
 
+  const validateStep = (step: number): { isValid: boolean; message: string } => {
+    switch (step) {
+      case 1:
+        if (!jobData.jobTitle.trim()) return { isValid: false, message: 'Job title is required' };
+        if (!jobData.companyName.trim()) return { isValid: false, message: 'Company name is required' };
+        if (!jobData.jobLocation.trim()) return { isValid: false, message: 'Job location is required' };
+        if (!jobData.jobCategory.trim()) return { isValid: false, message: 'Job category is required' };
+        if (!jobData.country.trim()) return { isValid: false, message: 'Country is required' };
+        if (!jobData.experienceRange.trim()) return { isValid: false, message: 'Experience range is required' };
+        const languages = Array.isArray(jobData.language) ? jobData.language : jobData.language ? [jobData.language] : [];
+        if (languages.length === 0) return { isValid: false, message: 'At least one language is required' };
+        break;
+      case 2:
+        if (!jobData.hiringTimeline.trim()) return { isValid: false, message: 'Hiring timeline is required' };
+        if (!jobData.numberOfPeople || jobData.numberOfPeople <= 0) return { isValid: false, message: 'Number of people to hire is required' };
+        break;
+      case 3:
+        if (jobData.jobType.length === 0) return { isValid: false, message: 'At least one job type is required' };
+        break;
+      case 4:
+        if (!jobData.minSalary.trim()) return { isValid: false, message: 'Minimum salary is required' };
+        if (!jobData.maxSalary.trim()) return { isValid: false, message: 'Maximum salary is required' };
+        break;
+      case 5:
+        if (jobData.skills.length === 0) return { isValid: false, message: 'At least one skill is required' };
+        const education = Array.isArray(jobData.educationLevel) ? jobData.educationLevel : jobData.educationLevel ? [jobData.educationLevel] : [];
+        if (education.length === 0) return { isValid: false, message: 'Education level is required' };
+        break;
+      case 6:
+        if (!jobData.jobDescription.trim()) return { isValid: false, message: 'Job description is required' };
+        break;
+    }
+    return { isValid: true, message: '' };
+  };
+
   const nextStep = () => {
+    const validation = validateStep(currentStep);
+    if (!validation.isValid) {
+      setNotification({
+        type: 'error',
+        message: validation.message,
+        isVisible: true
+      });
+      return;
+    }
+    
     if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     }
@@ -1591,7 +1636,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           minSalary: '50,000',
           maxSalary: '80,000',
           payRate: 'per year',
-          currency: 'USD',
+          currency: 'INR',
           benefits: [],
           jobDescription: '',
           skills: [],

@@ -373,7 +373,14 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                             <h3 className="font-semibold text-lg text-gray-900">
                               {application.jobId?.jobTitle || 'Job Title Not Available'}
                             </h3>
-                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(application.status)}`}>
+                            <div className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium border ${
+                              application.status === 'applied' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              application.status === 'reviewed' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              application.status === 'shortlisted' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              application.status === 'hired' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              application.status === 'rejected' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              'bg-gray-50 text-gray-700 border-gray-200'
+                            }`}>
                               {getStatusIcon(application.status)}
                               <span className="ml-2">{application.status.charAt(0).toUpperCase() + application.status.slice(1)}</span>
                             </div>
@@ -396,7 +403,7 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                             </div>
                             {application.isQuickApply && (
                               <div className="flex items-center space-x-2">
-                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                                   Quick Apply
                                 </span>
                               </div>
@@ -482,10 +489,30 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                               View Job
                             </button>
                             <button 
-                              onClick={() => onNavigate(`candidate-profile-view/${application.candidateEmail}`)}
-                              className="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 transition-colors"
+                              onClick={() => {
+                                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                                if (userData.resume) {
+                                  let resumeUrl = '';
+                                  if (userData.resume.filename) {
+                                    resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/${userData.resume.filename}`;
+                                  } else if (userData.resume.url) {
+                                    resumeUrl = userData.resume.url.startsWith('http') ? userData.resume.url : `${API_ENDPOINTS.BASE_URL}${userData.resume.url}`;
+                                  }
+                                  if (resumeUrl) {
+                                    window.open(resumeUrl, '_blank');
+                                  } else {
+                                    alert('Resume not found');
+                                  }
+                                } else {
+                                  alert('No resume available');
+                                }
+                              }}
+                              className="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 transition-colors flex items-center"
                             >
-                              Profile
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Resume
                             </button>
                           </div>
                           

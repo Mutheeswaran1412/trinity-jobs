@@ -112,14 +112,7 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'reviewed': return 'bg-blue-100 text-blue-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'shortlisted': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    return 'bg-gray-100 text-gray-700 border border-gray-300';
   };
 
   if (loading) {
@@ -179,25 +172,25 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-500">Pending</h3>
-            <p className="text-2xl font-bold text-yellow-600">
+            <p className="text-2xl font-bold text-gray-700">
               {applications.filter(app => app.status === 'pending').length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-500">Reviewed</h3>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-gray-700">
               {applications.filter(app => app.status === 'reviewed').length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-500">Shortlisted</h3>
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-gray-700">
               {applications.filter(app => app.status === 'shortlisted').length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-sm font-medium text-gray-500">Accepted</h3>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-gray-700">
               {applications.filter(app => app.status === 'accepted').length}
             </p>
           </div>
@@ -266,7 +259,7 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => onNavigate('candidate-response-detail', { application })}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-gray-700 hover:text-gray-900 border border-gray-300 px-3 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
                           >
                             View Details
                           </button>
@@ -280,7 +273,7 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
                                 applicationId: application._id
                               });
                             }}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
+                            className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 transition-colors"
                           >
                             Schedule Interview
                           </button>

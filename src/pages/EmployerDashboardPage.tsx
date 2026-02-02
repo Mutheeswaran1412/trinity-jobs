@@ -697,18 +697,11 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                 <h3 className="text-xl font-semibold text-gray-900">
                                   {application.candidateName || application.candidateEmail}
                                 </h3>
-                                <p className="text-lg text-emerald-600 font-medium">
+                                <p className="text-lg text-gray-700 font-medium">
                                   Applied for: {application.jobId?.jobTitle || application.jobId?.title}
                                 </p>
                               </div>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                application.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
-                                application.status === 'shortlisted' ? 'bg-green-100 text-green-800' :
-                                application.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                application.status === 'hired' ? 'bg-purple-100 text-purple-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
+                              <span className="px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300">
                                 {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                               </span>
                             </div>
@@ -824,13 +817,13 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                 applicationId: application._id
                               });
                             }}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
+                            className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors text-sm"
                           >
                             Schedule Interview
                           </button>
                           <button 
                             onClick={() => onNavigate('candidate-profile')}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+                            className="bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm"
                           >
                             View Profile
                           </button>
