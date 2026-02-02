@@ -765,6 +765,19 @@ function generateJobRequirements(jobTitle) {
 • Proficiency in relevant tools and technologies`;
 }
 
+// Serve service worker with correct MIME type
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.setHeader('Service-Worker-Allowed', '/');
+  res.sendFile(path.join(__dirname, '../public/sw.js'));
+});
+
+// Serve manifest with correct MIME type
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.join(__dirname, '../public/manifest.json'));
+});
+
 app.get('/', (req, res) => {
   res.json({ message: 'Trinity Jobs API is running!', status: 'OK' });
 });

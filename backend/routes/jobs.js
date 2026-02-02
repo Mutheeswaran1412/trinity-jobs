@@ -21,7 +21,7 @@ try {
   console.error('Error loading companies data:', error);
 }
 
-// GET /api/jobs/titles - Get all job titles
+// GET /api/jobs/titles - Get all job titles (MUST be before /:id route)
 router.get('/titles', (req, res) => {
   try {
     const titlesPath = path.join(__dirname, '../data/job_titles.json');
@@ -34,7 +34,7 @@ router.get('/titles', (req, res) => {
   }
 });
 
-// GET /api/jobs/countries - Get all countries
+// GET /api/jobs/countries - Get all countries (MUST be before /:id route)
 router.get('/countries', (req, res) => {
   try {
     const locationsPath = path.join(__dirname, '../data/locations.json');
@@ -44,6 +44,47 @@ router.get('/countries', (req, res) => {
   } catch (error) {
     console.error('Error loading locations:', error);
     res.json({ countries: [] });
+  }
+});
+
+// GET /api/jobs/search - Search jobs (MUST be before /:id route)
+router.get('/search/query', async (req, res) => {
+  try {
+    const { q, location } = req.query;
+    const query = { isActive: true, status: 'approved' };
+
+    if (q || location) {
+      const searchConditions = [];
+      
+      if (q) {
+        searchConditions.push(
+          { jobTitle: { $regex: q, $options: 'i' } },
+          { company: { $regex: q, $options: 'i' } },
+          { description: { $regex: q, $options: 'i' } },
+          { skills: { $in: [new RegExp(q, 'i')] } }
+        );
+      }
+      
+      if (location) {
+        searchConditions.push({ location: { $regex: location, $options: 'i' } });
+      }
+      
+      if (searchConditions.length > 0) {
+        query.$or = searchConditions;
+      }
+    }
+
+    const jobs = await Job.find(query).sort({ createdAt: -1 }).limit(20).lean();
+    
+    // Add company logos to jobs
+    const jobsWithLogos = jobs.map(job => ({
+      ...job,
+      companyLogo: getCompanyLogo(job.company)
+    }));
+    
+    res.json(jobsWithLogos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -102,7 +143,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/jobs/:id - Get single job
+// GET /api/jobs/:id - Get single job (MUST be after specific routes)
 router.get('/:id', async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).lean();
@@ -176,7 +217,7 @@ router.post('/', [
   }
 });
 
-// GET /api/jobs/search - Search jobs
+// GET /api/jobs/search - Search jobs (MUST be before /:id route)
 router.get('/search/query', async (req, res) => {
   try {
     const { q, location } = req.query;
