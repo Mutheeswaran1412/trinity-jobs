@@ -102,7 +102,9 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
         payRate: extractSalary(description).payRate,
         benefits: extractBenefits(description),
         educationLevel: extractEducation(description),
-        jobDescription: description.trim(),
+        jobDescription: extractJobDescription(description),
+        responsibilities: extractResponsibilities(description),
+        requirements: extractRequirements(description),
         jobCategory: extractJobCategory(description),
         priority: extractPriority(description),
         clientName: extractClientName(description),
@@ -572,6 +574,129 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
     }
     
     return workAuth.length > 0 ? workAuth : ['No Sponsorship Required'];
+  };
+
+  const extractJobDescription = (text: string): string => {
+    // Remove responsibilities and requirements sections to get clean description
+    let cleanDescription = text;
+    
+    // Remove common section headers and their content
+    cleanDescription = cleanDescription.replace(/(?:key\s+)?responsibilities?[:\s]*[\s\S]*?(?=(?:requirements?|qualifications?|skills?|benefits?|about\s+(?:us|the\s+role)|$))/gi, '');
+    cleanDescription = cleanDescription.replace(/(?:job\s+)?requirements?[:\s]*[\s\S]*?(?=(?:responsibilities?|qualifications?|skills?|benefits?|about\s+(?:us|the\s+role)|$))/gi, '');
+    cleanDescription = cleanDescription.replace(/qualifications?[:\s]*[\s\S]*?(?=(?:responsibilities?|requirements?|skills?|benefits?|about\s+(?:us|the\s+role)|$))/gi, '');
+    
+    // Clean up extra whitespace and newlines
+    cleanDescription = cleanDescription.replace(/\n{3,}/g, '\n\n').trim();
+    
+    return cleanDescription || text.substring(0, 500) + '...';
+  };
+
+  const extractResponsibilities = (text: string): string[] => {
+    const responsibilities = [];
+    
+    // Look for responsibilities section
+    const responsibilitiesMatch = text.match(/(?:key\s+)?responsibilities?[:\s]*([\s\S]*?)(?=(?:requirements?|qualifications?|skills?|benefits?|about\s+(?:us|the\s+role)|$))/gi);
+    
+    if (responsibilitiesMatch && responsibilitiesMatch[0]) {
+      const section = responsibilitiesMatch[0];
+      
+      // Extract bullet points or numbered items
+      const bulletPoints = section.match(/(?:^|\n)\s*[•\-\*\d+\.)\s]+(.+)/gm);
+      if (bulletPoints) {
+        bulletPoints.forEach(point => {
+          const cleaned = point.replace(/^\s*[•\-\*\d+\.)\s]+/, '').trim();
+          if (cleaned.length > 10 && cleaned.length < 200) {
+            responsibilities.push(cleaned);
+          }
+        });
+      }
+      
+      // If no bullet points found, try to split by sentences
+      if (responsibilities.length === 0) {
+        const sentences = section.split(/[.!]\s+/);
+        sentences.forEach(sentence => {
+          const cleaned = sentence.replace(/(?:key\s+)?responsibilities?[:\s]*/gi, '').trim();
+          if (cleaned.length > 20 && cleaned.length < 200 && !cleaned.toLowerCase().includes('responsibilities')) {
+            responsibilities.push(cleaned);
+          }
+        });
+      }
+    }
+    
+    // Fallback: look for action verbs at start of lines
+    if (responsibilities.length === 0) {
+      const actionVerbs = /(?:^|\n)\s*(?:develop|design|implement|manage|lead|create|build|maintain|collaborate|work|ensure|support|analyze|review|participate|contribute|assist|coordinate|execute|deliver|optimize|troubleshoot|monitor|test|document|train|mentor|research|evaluate|plan|organize|communicate|present|report|oversee|supervise|guide|facilitate|establish|improve|enhance|streamline|integrate|deploy|configure|administer|operate|handle|process|resolve|investigate|identify|recommend|propose|initiate|drive|champion|advocate|promote|foster|cultivate|nurture|engage|interact|liaise|negotiate|influence|persuade|convince|educate|inform|update|notify|alert|escalate|prioritize|schedule|allocate|assign|delegate|distribute|share|exchange|transfer|migrate|upgrade|modernize|automate|digitize|transform|innovate|pioneer|explore|experiment|prototype|pilot|launch|rollout|scale|expand|grow|increase|maximize|minimize|reduce|eliminate|prevent|mitigate|address|tackle|solve|fix|repair|restore|recover|backup|archive|secure|protect|safeguard|comply|adhere|follow|observe|respect|honor|uphold|maintain|sustain|preserve|conserve|save|store|organize|categorize|classify|sort|filter|search|find|locate|retrieve|extract|collect|gather|compile|aggregate|summarize|synthesize|consolidate|merge|combine|integrate|unify|standardize|normalize|validate|verify|confirm|check|inspect|audit|assess|evaluate|measure|quantify|calculate|compute|estimate|forecast|predict|project|model|simulate|visualize|illustrate|demonstrate|showcase|exhibit|display|present|publish|release|distribute|disseminate|broadcast|announce|declare|proclaim|advertise|market|promote|sell|negotiate|close|finalize|complete|finish|conclude|wrap|deliver|ship|deploy|install|setup|configure|customize|tailor|adapt|adjust|modify|update|upgrade|enhance|improve|refine|polish|perfect|optimize|streamline|simplify|clarify|explain|describe|define|specify|detail|outline|summarize|abstract|generalize|conceptualize|theorize|hypothesize|assume|presume|suppose|believe|think|consider|contemplate|reflect|ponder|deliberate|decide|determine|conclude|judge|evaluate|assess|appraise|rate|rank|score|grade|mark|label|tag|categorize|classify|group|cluster|segment|partition|divide|separate|isolate|extract|remove|delete|eliminate|exclude|omit|skip|bypass|avoid|prevent|block|stop|halt|pause|suspend|defer|postpone|delay|reschedule|reorganize|restructure|redesign|rebuild|reconstruct|renovate|refurbish|restore|repair|fix|correct|rectify|remedy|resolve|solve|address|handle|deal|cope|manage|control|regulate|govern|rule|direct|guide|steer|navigate|pilot|drive|operate|run|execute|perform|conduct|carry|undertake|pursue|follow|track|trace|monitor|observe|watch|supervise|oversee|manage|administer|govern|control|regulate|coordinate|organize|arrange|plan|prepare|setup|establish|create|build|construct|develop|design|engineer|architect|craft|make|produce|generate|manufacture|fabricate|assemble|compile|compose|write|author|draft|edit|revise|review|proofread|polish|refine|improve|enhance|optimize|perfect|finalize|complete|finish|conclude|close|end|terminate|stop|cease|discontinue|abandon|cancel|abort|withdraw|retreat|return|revert|restore|recover|retrieve|reclaim|regain|resume|restart|continue|proceed|advance|progress|move|shift|transfer|migrate|relocate|transport|carry|deliver|ship|send|transmit|broadcast|communicate|convey|express|articulate|verbalize|vocalize|speak|talk|discuss|converse|chat|dialogue|interview|question|interrogate|inquire|ask|request|demand|require|need|want|desire|wish|hope|expect|anticipate|predict|forecast|foresee|envision|imagine|visualize|picture|see|observe|notice|spot|detect|discover|find|locate|identify|recognize|distinguish|differentiate|discriminate|separate|isolate|extract|derive|deduce|infer|conclude|determine|establish|prove|demonstrate|show|reveal|expose|uncover|unveil|disclose|share|communicate|inform|notify|alert|warn|caution|advise|counsel|guide|direct|instruct|teach|educate|train|coach|mentor|tutor|help|assist|support|aid|facilitate|enable|empower|encourage|motivate|inspire|influence|persuade|convince|sway|impact|affect|change|alter|modify|adjust|adapt|customize|tailor|personalize|individualize|specialize|focus|concentrate|emphasize|highlight|stress|underscore|accentuate|amplify|magnify|enlarge|expand|extend|stretch|reach|achieve|attain|accomplish|realize|fulfill|satisfy|meet|exceed|surpass|outperform|excel|shine|stand|distinguish|differentiate|separate|isolate|unique|special|exceptional|outstanding|remarkable|notable|significant|important|critical|essential|vital|crucial|key|primary|main|principal|chief|leading|top|best|finest|highest|greatest|maximum|optimal|ideal|perfect|excellent|superior|premium|quality|standard|benchmark|reference|model|example|template|pattern|framework|structure|system|process|procedure|method|approach|technique|strategy|tactic|plan|scheme|design|blueprint|roadmap|pathway|route|course|direction|guidance|instruction|manual|handbook|guide|tutorial|lesson|course|program|curriculum|syllabus|agenda|schedule|timeline|calendar|plan|project|initiative|campaign|effort|endeavor|venture|enterprise|business|operation|activity|task|assignment|job|work|duty|responsibility|obligation|commitment|promise|pledge|vow|oath|agreement|contract|deal|arrangement|understanding|accord|pact|treaty|alliance|partnership|collaboration|cooperation|teamwork|joint|shared|collective|group|team|squad|crew|staff|personnel|workforce|employees|workers|members|participants|contributors|stakeholders|partners|allies|associates|colleagues|peers|friends|companions|mates|buddies|pals|acquaintances|contacts|connections|relationships|bonds|ties|links|associations|affiliations|memberships|subscriptions|registrations|enrollments|applications|submissions|entries|records|files|documents|papers|reports|studies|research|analysis|investigation|examination|inspection|audit|review|assessment|evaluation|appraisal|judgment|opinion|view|perspective|standpoint|position|stance|attitude|approach|mindset|mentality|psychology|behavior|conduct|actions|activities|practices|habits|routines|procedures|processes|methods|techniques|strategies|tactics|plans|schemes|designs|blueprints|roadmaps|pathways|routes|courses|directions|guidelines|instructions|manuals|handbooks|guides|tutorials|lessons|courses|programs|curricula|syllabi|agendas|schedules|timelines|calendars|plans|projects|initiatives|campaigns|efforts|endeavors|ventures|enterprises|businesses|operations|activities|tasks|assignments|jobs|work|duties|responsibilities|obligations|commitments|promises|pledges|vows|oaths|agreements|contracts|deals|arrangements|understandings|accords|pacts|treaties|alliances|partnerships|collaborations|cooperations)\s+(.+)/gmi;
+      
+      const actionMatches = text.match(actionVerbs);
+      if (actionMatches) {
+        actionMatches.forEach(match => {
+          const cleaned = match.replace(/^\s*/, '').trim();
+          if (cleaned.length > 20 && cleaned.length < 200) {
+            responsibilities.push(cleaned);
+          }
+        });
+      }
+    }
+    
+    return responsibilities.slice(0, 8); // Limit to 8 responsibilities
+  };
+
+  const extractRequirements = (text: string): string[] => {
+    const requirements = [];
+    
+    // Look for requirements/qualifications section
+    const requirementsMatch = text.match(/(?:(?:job\s+)?requirements?|qualifications?|skills?)[:\s]*([\s\S]*?)(?=(?:responsibilities?|benefits?|about\s+(?:us|the\s+role)|$))/gi);
+    
+    if (requirementsMatch && requirementsMatch[0]) {
+      const section = requirementsMatch[0];
+      
+      // Extract bullet points or numbered items
+      const bulletPoints = section.match(/(?:^|\n)\s*[•\-\*\d+\.)\s]+(.+)/gm);
+      if (bulletPoints) {
+        bulletPoints.forEach(point => {
+          const cleaned = point.replace(/^\s*[•\-\*\d+\.)\s]+/, '').trim();
+          if (cleaned.length > 10 && cleaned.length < 200) {
+            requirements.push(cleaned);
+          }
+        });
+      }
+      
+      // If no bullet points found, try to split by sentences
+      if (requirements.length === 0) {
+        const sentences = section.split(/[.!]\s+/);
+        sentences.forEach(sentence => {
+          const cleaned = sentence.replace(/(?:(?:job\s+)?requirements?|qualifications?|skills?)[:\s]*/gi, '').trim();
+          if (cleaned.length > 20 && cleaned.length < 200 && !cleaned.toLowerCase().includes('requirements') && !cleaned.toLowerCase().includes('qualifications')) {
+            requirements.push(cleaned);
+          }
+        });
+      }
+    }
+    
+    // Fallback: look for degree/experience requirements
+    if (requirements.length === 0) {
+      const degreeMatch = text.match(/(?:bachelor|master|phd|degree|diploma|certification)[^.!]*[.!]/gi);
+      if (degreeMatch) {
+        degreeMatch.forEach(match => {
+          const cleaned = match.trim();
+          if (cleaned.length > 15 && cleaned.length < 200) {
+            requirements.push(cleaned);
+          }
+        });
+      }
+      
+      const experienceMatch = text.match(/(?:\d+[\s-]+years?|experience)[^.!]*[.!]/gi);
+      if (experienceMatch) {
+        experienceMatch.forEach(match => {
+          const cleaned = match.trim();
+          if (cleaned.length > 15 && cleaned.length < 200) {
+            requirements.push(cleaned);
+          }
+        });
+      }
+    }
+    
+    return requirements.slice(0, 8); // Limit to 8 requirements
   };
 
   return (

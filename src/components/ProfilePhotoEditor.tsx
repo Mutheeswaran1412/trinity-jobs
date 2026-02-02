@@ -91,7 +91,7 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]">
       <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold">Profile Photo</h2>
@@ -113,9 +113,21 @@ const ProfilePhotoEditor: React.FC<ProfilePhotoEditorProps> = ({
                 }}
               >
                 {photo ? (
-                  <img src={photo} alt="Profile" className="w-full h-full object-cover" />
+                  <img 
+                    src={photo} 
+                    alt="Profile Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Image failed to load:', photo);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => console.log('Image loaded successfully:', photo)}
+                  />
                 ) : (
-                  <Camera className="w-16 h-16 text-gray-400" />
+                  <div className="flex flex-col items-center text-gray-400">
+                    <Camera className="w-16 h-16 mb-2" />
+                    <span className="text-sm">No photo selected</span>
+                  </div>
                 )}
               </div>
             </div>

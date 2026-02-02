@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS } from '../config/constants';
 import { Bell, Plus, Edit, Trash2, Mail, Smartphone } from 'lucide-react';
 
 interface JobAlert {
@@ -29,6 +29,14 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingAlert, setEditingAlert] = useState<JobAlert | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Suggestion states
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [companySuggestions, setCompanySuggestions] = useState<string[]>([]);
+  const [jobTitleSuggestions, setJobTitleSuggestions] = useState<string[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
+  const [showJobTitleDropdown, setShowJobTitleDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     alertName: '',
@@ -170,6 +178,75 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
     }));
   };
 
+  // Location suggestions
+  const handleLocationChange = async (value: string) => {
+    setFormData(prev => ({ ...prev, location: value }));
+    
+    if (value.length >= 2) {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/locations/search/${encodeURIComponent(value)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setLocationSuggestions(data.locations || []);
+          setShowLocationDropdown(true);
+        }
+      } catch (error) {
+        const fallbackLocations = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune', 'Remote', 'Work from Home']
+          .filter(loc => loc.toLowerCase().includes(value.toLowerCase()));
+        setLocationSuggestions(fallbackLocations);
+        setShowLocationDropdown(fallbackLocations.length > 0);
+      }
+    } else {
+      setShowLocationDropdown(false);
+    }
+  };
+
+  // Company suggestions
+  const handleCompanyChange = async (value: string) => {
+    setFormData(prev => ({ ...prev, company: value }));
+    
+    if (value.length >= 2) {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies/search?q=${encodeURIComponent(value)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCompanySuggestions(data.map((c: any) => c.name) || []);
+          setShowCompanyDropdown(true);
+        }
+      } catch (error) {
+        const fallbackCompanies = ['Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Netflix', 'Tesla', 'Uber', 'Airbnb', 'TCS', 'Infosys', 'Wipro']
+          .filter(comp => comp.toLowerCase().includes(value.toLowerCase()));
+        setCompanySuggestions(fallbackCompanies);
+        setShowCompanyDropdown(fallbackCompanies.length > 0);
+      }
+    } else {
+      setShowCompanyDropdown(false);
+    }
+  };
+
+  // Job title suggestions
+  const handleJobTitleChange = async (value: string) => {
+    setFormData(prev => ({ ...prev, keywords: value }));
+    
+    if (value.length >= 2) {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/suggest?q=${encodeURIComponent(value)}&type=job`);
+        if (response.ok) {
+          const data = await response.json();
+          setJobTitleSuggestions(data.suggestions || []);
+          setShowJobTitleDropdown(true);
+        }
+      } catch (error) {
+        const fallbackTitles = ['Software Engineer', 'Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Data Scientist', 'Product Manager', 'DevOps Engineer', 'UI/UX Designer']
+          .filter(title => title.toLowerCase().includes(value.toLowerCase()));
+        setJobTitleSuggestions(fallbackTitles);
+        setShowJobTitleDropdown(fallbackTitles.length > 0);
+      }
+    } else {
+      setShowJobTitleDropdown(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -211,29 +288,66 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Alert Name *
+                Job Title *
               </label>
               <input
                 type="text"
                 value={formData.alertName}
-                onChange={(e) => setFormData(prev => ({ ...prev, alertName: e.target.value }))}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setFormData(prev => ({ ...prev, alertName: e.target.value }));
+                }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., React Developer Jobs"
+                placeholder="e.g., React Developer"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Keywords (comma separated)
+                Skills (comma separated)
               </label>
-              <input
-                type="text"
-                value={formData.keywords}
-                onChange={(e) => setFormData(prev => ({ ...prev, keywords: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., React, JavaScript, Frontend"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.keywords}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({ ...prev, keywords: value }));
+                    if (value.length >= 2) {
+                      handleJobTitleChange(value);
+                    } else {
+                      setShowJobTitleDropdown(false);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (formData.keywords.length >= 2) {
+                      setShowJobTitleDropdown(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setShowJobTitleDropdown(false), 200)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., React, JavaScript, Frontend"
+                />
+                {showJobTitleDropdown && jobTitleSuggestions.length > 0 && (
+                  <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
+                    {jobTitleSuggestions.map((title, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setFormData(prev => ({ ...prev, keywords: title }));
+                          setShowJobTitleDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                      >
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,26 +355,94 @@ const JobAlertsManager: React.FC<JobAlertsManagerProps> = ({ user }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Location
                 </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., San Francisco, Remote"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData(prev => ({ ...prev, location: value }));
+                      if (value.length >= 2) {
+                        handleLocationChange(value);
+                      } else {
+                        setShowLocationDropdown(false);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (formData.location.length >= 2) {
+                        setShowLocationDropdown(true);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., San Francisco, Remote"
+                  />
+                  {showLocationDropdown && locationSuggestions.length > 0 && (
+                    <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
+                      {locationSuggestions.map((location, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setFormData(prev => ({ ...prev, location }));
+                            setShowLocationDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                        >
+                          {location}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Company
                 </label>
-                <input
-                  type="text"
-                  value={formData.company}
-                  onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Google, Microsoft"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData(prev => ({ ...prev, company: value }));
+                      if (value.length >= 2) {
+                        handleCompanyChange(value);
+                      } else {
+                        setShowCompanyDropdown(false);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (formData.company.length >= 2) {
+                        setShowCompanyDropdown(true);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowCompanyDropdown(false), 200)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., Google, Microsoft"
+                  />
+                  {showCompanyDropdown && companySuggestions.length > 0 && (
+                    <div className="absolute z-[9999] w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto" style={{ zIndex: 9999 }}>
+                      {companySuggestions.map((company, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setFormData(prev => ({ ...prev, company }));
+                            setShowCompanyDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm border-b last:border-b-0 transition-colors"
+                        >
+                          {company}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

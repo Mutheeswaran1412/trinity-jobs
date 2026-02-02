@@ -16,6 +16,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [companyName, setCompanyName] = useState('');
   const [companyLogo, setCompanyLogo] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
+  const [companyDomain, setCompanyDomain] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [interviews, setInterviews] = useState<any[]>([]);
@@ -30,16 +31,50 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
     if (userData) {
       const parsedUser = JSON.parse(userData);
       console.log('Dashboard - User data:', parsedUser);
-      console.log('Dashboard - companyLogo:', parsedUser.companyLogo);
-      console.log('Dashboard - companyWebsite:', parsedUser.companyWebsite);
       setUser(parsedUser);
       setEmployerName(parsedUser.name || 'Employer');
       setCompanyName(parsedUser.company || parsedUser.companyName || 'Company');
       setCompanyLogo(parsedUser.companyLogo || '');
       setCompanyWebsite(parsedUser.companyWebsite || '');
+      
+      // Fetch company domain from companies.json
+      fetchCompanyDomain(parsedUser.company || parsedUser.companyName || 'Company');
+      
       fetchDashboardData(parsedUser);
     }
   }, []);
+
+  const fetchCompanyDomain = async (companyName: string) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/companies`);
+      if (response.ok) {
+        const companies = await response.json();
+        console.log('Companies loaded:', companies.length);
+        
+        // Try exact match first
+        let company = companies.find((c: any) => 
+          c.name.toLowerCase() === companyName.toLowerCase()
+        );
+        
+        // If no exact match, try partial match
+        if (!company) {
+          company = companies.find((c: any) => 
+            c.name.toLowerCase().includes(companyName.toLowerCase()) ||
+            companyName.toLowerCase().includes(c.name.toLowerCase())
+          );
+        }
+        
+        if (company) {
+          console.log('Found company:', company.name, 'domain:', company.domain);
+          setCompanyDomain(company.domain);
+        } else {
+          console.log('Company not found in database:', companyName);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    }
+  };
 
   // Add effect to refresh data when component becomes visible
   useEffect(() => {
@@ -294,15 +329,15 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             </div>
             <div className="flex-1">
               <p className="font-semibold text-gray-900 text-sm">{employerName}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
-              {companyWebsite && (
+              <p className="text-xs text-gray-500">{companyName}</p>
+              {companyDomain && (
                 <a 
-                  href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`}
+                  href={`https://${companyDomain}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-blue-600 hover:text-blue-700 block truncate"
                 >
-                  {companyWebsite.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  {companyDomain}
                 </a>
               )}
             </div>

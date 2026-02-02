@@ -73,6 +73,7 @@ import ResumeUploadWithModeration from './components/ResumeUploadWithModeration'
 import AIScoringDemoPage from './pages/AIScoringDemoPage';
 import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
+import EmployerProfilePage from './pages/EmployerProfilePage';
 import CompanyReviewsPage from './pages/CompanyReviewsPage';
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
@@ -371,6 +372,20 @@ function App() {
 
   if (currentPage === 'companies') {
     return <CompaniesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'employer-profile') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <EmployerProfilePage 
+          onNavigate={handleNavigation} 
+          employerId={currentData?.employerId}
+          employerData={currentData?.employerData}
+        />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
   }
 
   if (currentPage === 'company-reviews') {

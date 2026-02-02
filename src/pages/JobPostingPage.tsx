@@ -51,6 +51,8 @@ interface JobData {
   
   // Step 6: Job Description
   jobDescription: string;
+  responsibilities: string[];
+  requirements: string[];
   
   // Company Information
   companyName: string;
@@ -84,6 +86,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     currency: parsedData?.currency || 'INR',
     benefits: parsedData?.benefits || [],
     jobDescription: parsedData?.jobDescription || '',
+    responsibilities: parsedData?.responsibilities || [],
+    requirements: parsedData?.requirements || [],
     skills: parsedData?.skills || [],
     educationLevel: parsedData?.educationLevel || "Bachelor's degree",
     certifications: [],
@@ -267,11 +271,17 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           setLocationSuggestions(data.locations);
           setShowLocationSuggestions(true);
         } else {
-          setShowLocationSuggestions(false);
+          // Fallback to basic locations if API fails
+          const fallbackLocations = getFallbackLocations(value);
+          setLocationSuggestions(fallbackLocations);
+          setShowLocationSuggestions(fallbackLocations.length > 0);
         }
       } catch (error) {
         console.error('Location suggestions failed:', error);
-        setShowLocationSuggestions(false);
+        // Fallback to basic locations if API fails
+        const fallbackLocations = getFallbackLocations(value);
+        setLocationSuggestions(fallbackLocations);
+        setShowLocationSuggestions(fallbackLocations.length > 0);
       } finally {
         setIsLoadingLocations(false);
       }
@@ -279,6 +289,44 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       setShowLocationSuggestions(false);
       setLocationSuggestions([]);
     }
+  };
+
+  const getFallbackLocations = (input: string) => {
+    const key = input.toLowerCase();
+    const allLocations = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad',
+      'Surat', 'Jaipur', 'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal',
+      'Visakhapatnam', 'Patna', 'Vadodara', 'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik',
+      'Faridabad', 'Meerut', 'Rajkot', 'Varanasi', 'Srinagar', 'Aurangabad', 'Dhanbad',
+      'Amritsar', 'Navi Mumbai', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur',
+      'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Guwahati',
+      'Chandigarh', 'Solapur', 'Hubli-Dharwad', 'Bareilly', 'Moradabad', 'Mysore',
+      'Gurgaon', 'Aligarh', 'Jalandhar', 'Tiruchirappalli', 'Bhubaneswar', 'Salem',
+      'Warangal', 'Guntur', 'Bhiwandi', 'Saharanpur', 'Gorakhpur', 'Bikaner', 'Amravati',
+      'Noida', 'Jamshedpur', 'Bhilai', 'Cuttack', 'Firozabad', 'Kochi', 'Nellore',
+      'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol', 'Rourkela', 'Nanded', 'Kolhapur',
+      'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar', 'Ujjain', 'Loni', 'Siliguri', 'Jhansi',
+      'Ulhasnagar', 'Jammu', 'Mangalore', 'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli',
+      'Malegaon', 'Gaya', 'Jalgaon', 'Udaipur', 'Maheshtala', 'Davanagere', 'Kozhikode',
+      'Kurnool', 'Rajahmundry', 'Bokaro', 'South Dumdum', 'Bellary', 'Patiala', 'Gopalpur',
+      'Agartala', 'Bhagalpur', 'Muzaffarnagar', 'Bhatpara', 'Panihati', 'Latur', 'Dhule',
+      'Rohtak', 'Korba', 'Bhilwara', 'Berhampur', 'Muzaffarpur', 'Ahmednagar', 'Mathura',
+      'Kollam', 'Avadi', 'Kadapa', 'Kamarhati', 'Sambalpur', 'Bilaspur', 'Shahjahanpur',
+      'Satara', 'Bijapur', 'Rampur', 'Shivamogga', 'Chandrapur', 'Junagadh', 'Thrissur',
+      'Alwar', 'Bardhaman', 'Kulti', 'Kakinada', 'Nizamabad', 'Parbhani', 'Tumkur',
+      'Khammam', 'Ozhukarai', 'Bihar Sharif', 'Panipat', 'Darbhanga', 'Bally', 'Aizawl',
+      'Dewas', 'Ichalkaranji', 'Karnal', 'Bathinda', 'Jalna', 'Eluru', 'Baranagar',
+      'Purnia', 'Satna', 'Mau', 'Sonipat', 'Farrukhabad', 'Sagar', 'Durg', 'Imphal',
+      'Ratlam', 'Hapur', 'Arrah', 'Anantapur', 'Karimnagar', 'Etawah', 'Ambernath',
+      'North Dumdum', 'Bharatpur', 'Begusarai', 'New Delhi', 'Gandhidham', 'Tiruvottiyur',
+      'Puducherry', 'Sikar', 'Thoothukudi', 'Rewa', 'Mirzapur', 'Raichur', 'Pali',
+      'Ramagundam', 'Silchar', 'Orai', 'Tenali', 'Jorhat', 'Karaikudi', 'Kishanganj',
+      'Surendranagar', 'Remote', 'Work from Home', 'Pan India', 'India'
+    ];
+    
+    return allLocations.filter(location => 
+      location.toLowerCase().includes(key)
+    ).slice(0, 10);
   };
 
 
@@ -1369,29 +1417,113 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
               value={jobData.jobDescription}
               onChange={(e) => updateJobData('jobDescription', e.target.value)}
               placeholder="Enter job description here..."
-              className="w-full p-4 min-h-[300px] resize-none border-none outline-none focus:ring-0"
+              className="w-full p-4 min-h-[200px] resize-none border-none outline-none focus:ring-0"
             />
           </div>
+        </div>
+        
+        {/* Key Responsibilities Section */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Key Responsibilities</label>
+          <p className="text-gray-500 text-sm mb-4">List the main responsibilities for this role (one per line)</p>
           
-          <div className="flex justify-end mt-4">
+          <div className="space-y-2">
+            {jobData.responsibilities.map((responsibility, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={responsibility}
+                  onChange={(e) => {
+                    const newResponsibilities = [...jobData.responsibilities];
+                    newResponsibilities[index] = e.target.value;
+                    updateJobData('responsibilities', newResponsibilities);
+                  }}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Develop and maintain web applications"
+                />
+                <button
+                  onClick={() => {
+                    const newResponsibilities = jobData.responsibilities.filter((_, i) => i !== index);
+                    updateJobData('responsibilities', newResponsibilities);
+                  }}
+                  className="text-red-600 hover:text-red-800 p-2"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
             <button
-              onClick={() => generateJobDescription(jobData.jobTitle)}
-              disabled={!jobData.jobTitle || isGeneratingDescription}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
+              onClick={() => {
+                updateJobData('responsibilities', [...jobData.responsibilities, '']);
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
             >
-              {isGeneratingDescription ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <span>🤖</span>
-                  <span>Generate with AI</span>
-                </>
-              )}
+              <span>+</span>
+              <span>Add Responsibility</span>
             </button>
           </div>
+        </div>
+        
+        {/* Requirements Section */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Requirements</label>
+          <p className="text-gray-500 text-sm mb-4">List the key requirements for this role (one per line)</p>
+          
+          <div className="space-y-2">
+            {jobData.requirements.map((requirement, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={requirement}
+                  onChange={(e) => {
+                    const newRequirements = [...jobData.requirements];
+                    newRequirements[index] = e.target.value;
+                    updateJobData('requirements', newRequirements);
+                  }}
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Bachelor's degree in Computer Science"
+                />
+                <button
+                  onClick={() => {
+                    const newRequirements = jobData.requirements.filter((_, i) => i !== index);
+                    updateJobData('requirements', newRequirements);
+                  }}
+                  className="text-red-600 hover:text-red-800 p-2"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                updateJobData('requirements', [...jobData.requirements, '']);
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
+            >
+              <span>+</span>
+              <span>Add Requirement</span>
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={() => generateJobDescription(jobData.jobTitle)}
+            disabled={!jobData.jobTitle || isGeneratingDescription}
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
+          >
+            {isGeneratingDescription ? (
+              <>
+                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <span>🤖</span>
+                <span>Generate with AI</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
       
@@ -1573,6 +1705,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       location: jobData.jobLocation,
       jobType: jobData.jobType.length > 0 ? jobData.jobType.join(', ') : 'Full-time',
       description: jobData.jobDescription,
+      responsibilities: jobData.responsibilities,
+      requirements: jobData.requirements,
       requirements: jobData.skills,
       skills: jobData.skills,
       experienceRange: jobData.experienceRange,
@@ -1639,6 +1773,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           currency: 'INR',
           benefits: [],
           jobDescription: '',
+          responsibilities: [],
+          requirements: [],
           skills: [],
           educationLevel: "Bachelor's degree",
           certifications: [],

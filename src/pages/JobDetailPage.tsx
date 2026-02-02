@@ -532,24 +532,51 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Key Responsibilities</h2>
               <ul className="space-y-3">
-                {job.responsibilities && job.responsibilities.length > 0 ? (
-                  Array.isArray(job.responsibilities) ? job.responsibilities.map((responsibility, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{responsibility}</span>
-                    </li>
-                  )) : (
+                {(() => {
+                  // Try to get responsibilities from separate field first
+                  if (job.responsibilities && job.responsibilities.length > 0) {
+                    return Array.isArray(job.responsibilities) ? job.responsibilities.map((responsibility, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-600">{responsibility}</span>
+                      </li>
+                    )) : (
+                      <li className="flex items-start">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-600">{job.responsibilities}</span>
+                      </li>
+                    );
+                  }
+                  
+                  // Extract from description if separate field not available
+                  const description = job.jobDescription || job.description || '';
+                  const responsibilitiesMatch = description.match(/(?:key\s+)?responsibilities?[:\s]*([\s\S]*?)(?=(?:required\s+qualifications?|requirements?|qualifications?|what\s+we\s+offer|benefits?|$))/gi);
+                  
+                  if (responsibilitiesMatch && responsibilitiesMatch[0]) {
+                    const section = responsibilitiesMatch[0];
+                    const bulletPoints = section.match(/•\s*(.+)/g);
+                    
+                    if (bulletPoints) {
+                      return bulletPoints.map((point, index) => {
+                        const cleaned = point.replace(/^•\s*/, '').trim();
+                        return (
+                          <li key={index} className="flex items-start">
+                            <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            <span className="text-gray-600">{cleaned}</span>
+                          </li>
+                        );
+                      });
+                    }
+                  }
+                  
+                  // Fallback
+                  return (
                     <li className="flex items-start">
                       <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{job.responsibilities}</span>
+                      <span className="text-gray-600">Responsibilities will be discussed during the interview process.</span>
                     </li>
-                  )
-                ) : (
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">Responsibilities will be discussed during the interview process.</span>
-                  </li>
-                )}
+                  );
+                })()}
               </ul>
             </div>
 
@@ -557,24 +584,61 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
               <ul className="space-y-3">
-                {job.requirements && job.requirements.length > 0 ? (
-                  Array.isArray(job.requirements) ? job.requirements.map((requirement, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{requirement}</span>
-                    </li>
-                  )) : (
+                {(() => {
+                  // Try to get requirements from separate field first
+                  if (job.requirements && job.requirements.length > 0) {
+                    return Array.isArray(job.requirements) ? job.requirements.map((requirement, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-600">{requirement}</span>
+                      </li>
+                    )) : (
+                      <li className="flex items-start">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-600">{job.requirements}</span>
+                      </li>
+                    );
+                  }
+                  
+                  // Extract from description if separate field not available
+                  const description = job.jobDescription || job.description || '';
+                  const requirementsMatch = description.match(/(?:required\s+qualifications?|requirements?|qualifications?)[:\s]*([\s\S]*?)(?=(?:what\s+we\s+offer|benefits?|join\s+our\s+team|$))/gi);
+                  
+                  if (requirementsMatch && requirementsMatch[0]) {
+                    const section = requirementsMatch[0];
+                    const bulletPoints = section.match(/•\s*(.+)/g);
+                    
+                    if (bulletPoints) {
+                      return bulletPoints.map((point, index) => {
+                        const cleaned = point.replace(/^•\s*/, '').trim();
+                        return (
+                          <li key={index} className="flex items-start">
+                            <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            <span className="text-gray-600">{cleaned}</span>
+                          </li>
+                        );
+                      });
+                    }
+                  }
+                  
+                  // Fallback to skills if available
+                  if (job.skills && Array.isArray(job.skills) && job.skills.length > 0) {
+                    return job.skills.map((skill, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-600">Experience with {skill}</span>
+                      </li>
+                    ));
+                  }
+                  
+                  // Final fallback
+                  return (
                     <li className="flex items-start">
                       <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-600">{job.requirements}</span>
+                      <span className="text-gray-600">Requirements will be discussed during the interview process.</span>
                     </li>
-                  )
-                ) : (
-                  <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                    <span className="text-gray-600">Requirements will be discussed during the interview process.</span>
-                  </li>
-                )}
+                  );
+                })()}
               </ul>
             </div>
           </div>
@@ -605,7 +669,21 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                   <p className="text-xs text-gray-400">Posting for: {job.company}</p>
                 </div>
               </div>
-              <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center">
+              <button 
+                onClick={() => {
+                  if (jobPoster && (jobPoster.id || jobPoster._id)) {
+                    // Navigate to employer profile page
+                    onNavigate('employer-profile', { 
+                      employerId: jobPoster.id || jobPoster._id,
+                      employerData: jobPoster 
+                    });
+                  } else {
+                    // Show modal with available employer info
+                    alert(`Employer Information:\n\nName: ${jobPoster?.name || job.employerName || 'Hiring Manager'}\nCompany: ${jobPoster?.company || job.employerCompany || job.company}\nEmail: ${job.employerEmail || 'Not available'}\n\nNote: Full profile not available for this employer.`);
+                  }
+                }}
+                className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center transition-colors"
+              >
                 View Profile
                 <span className="ml-1">→</span>
               </button>

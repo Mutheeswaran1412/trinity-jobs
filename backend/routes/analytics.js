@@ -67,4 +67,36 @@ router.get('/profile/:email', async (req, res) => {
   }
 });
 
+// GET /api/analytics/recruiter-actions/:email - Get detailed recruiter actions
+router.get('/recruiter-actions/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const actions = await Analytics.find({
+      email: { $regex: new RegExp(email, 'i') },
+      eventType: 'recruiter_action'
+    }).sort({ createdAt: -1 }).limit(10);
+    
+    res.json(actions);
+  } catch (error) {
+    console.error('❌ Recruiter actions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/search-appearances/:email - Get detailed search appearances
+router.get('/search-appearances/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const appearances = await Analytics.find({
+      email: { $regex: new RegExp(email, 'i') },
+      eventType: 'search_appearance'
+    }).sort({ createdAt: -1 }).limit(10);
+    
+    res.json(appearances);
+  } catch (error) {
+    console.error('❌ Search appearances error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

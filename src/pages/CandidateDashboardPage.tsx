@@ -34,6 +34,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [showWelcomeParser, setShowWelcomeParser] = useState(false);
   const [showVisibilityModal, setShowVisibilityModal] = useState(false);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [showEducationModal, setShowEducationModal] = useState(false);
+  const [editingEducation, setEditingEducation] = useState<any>(null);
 
   // Handle tab parameter from navigation
   useEffect(() => {
@@ -46,13 +48,13 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
   useEffect(() => {
     const loadUserProfile = async () => {
-      const userData = localStorage.getItem('user');
+      const userData = sessionStorage.getItem('user');
       if (userData) {
         try {
           const parsedUser = JSON.parse(userData);
           console.log('Loading user data:', parsedUser);
           
-          // Fetch latest profile data from backend
+          // Always fetch latest profile data from backend
           if (parsedUser.id || parsedUser._id || parsedUser.email) {
             const identifier = parsedUser.email || parsedUser.id || parsedUser._id;
             
@@ -63,7 +65,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 console.log('Profile data loaded from backend:', profileData);
                 const mergedUser = { ...parsedUser, ...profileData };
                 setUser(mergedUser);
-                localStorage.setItem('user', JSON.stringify(mergedUser));
                 calculateProfileCompletion(mergedUser);
                 fetchApplications(mergedUser.email);
                 fetchRecommendations(mergedUser.id || mergedUser._id);
@@ -74,7 +75,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 fetchRecommendations(parsedUser.id || parsedUser._id);
               }
             } catch (err) {
-              console.log('Backend fetch failed, using local data:', err);
+              console.log('Backend fetch failed, using session data:', err);
               setUser(parsedUser);
               calculateProfileCompletion(parsedUser);
               fetchApplications(parsedUser.email);
@@ -86,20 +87,19 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             fetchApplications(parsedUser.email);
           }
           
-          // Show parser popup for new users
-          const hasSeenParser = localStorage.getItem('hasSeenResumeParser');
+          const hasSeenParser = sessionStorage.getItem('hasSeenResumeParser');
           const isNewUser = !parsedUser.name && !parsedUser.location && !parsedUser.skills;
           if (isNewUser && !hasSeenParser) {
             setTimeout(() => setShowWelcomeParser(true), 2000);
           }
         } catch (error) {
           console.error('Error parsing user data:', error);
-          localStorage.removeItem('user');
+          sessionStorage.removeItem('user');
           setUser(null);
         }
       } else {
         setUser(null);
-        const hasSeenParser = localStorage.getItem('hasSeenResumeParser');
+        const hasSeenParser = sessionStorage.getItem('hasSeenResumeParser');
         if (!hasSeenParser) {
           setTimeout(() => setShowWelcomeParser(true), 2000);
         }
@@ -216,20 +216,23 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       const reader = new FileReader();
       reader.onload = async (event) => {
         const imageUrl = event.target?.result as string;
-        const updatedUser = { ...user, profilePhoto: imageUrl };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
         
-        // Save to backend using email
+        // Save directly to backend
         if (user?.email) {
           try {
-            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidate-profile`, {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: user.email, profilePhoto: imageUrl })
+              body: JSON.stringify({ 
+                email: user.email, 
+                userId: user.id || user._id,
+                profilePhoto: imageUrl 
+              })
             });
             if (response.ok) {
               console.log('Profile photo saved to backend');
+              const updatedUser = { ...user, profilePhoto: imageUrl };
+              setUser(updatedUser);
             }
           } catch (err) {
             console.log('Backend save failed:', err);
@@ -380,8 +383,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       accept="image/*"
                       aria-label="Upload banner image"
                       onChange={(e) => {
+                        console.log('Banner file input triggered');
                         const file = e.target.files?.[0];
                         if (file) {
+                          console.log('Banner file selected:', file.name, file.size);
                           if (file.size > 5 * 1024 * 1024) {
                             setNotification({
                               type: 'error',
@@ -390,23 +395,36 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             });
                             return;
                           }
+                          if (!file.type.startsWith('image/')) {
+                            setNotification({
+                              type: 'error',
+                              message: 'Please select a valid image file',
+                              isVisible: true
+                            });
+                            return;
+                          }
                           const reader = new FileReader();
                           reader.onload = async (event) => {
+                            console.log('Banner file read successfully');
                             const imageUrl = event.target?.result as string;
-                            const updatedUser = { ...user, bannerPhoto: imageUrl };
-                            setUser(updatedUser);
-                            localStorage.setItem('user', JSON.stringify(updatedUser));
                             
-                            // Save to backend using email
+                            // Save directly to backend
                             if (user?.email) {
                               try {
-                                const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/candidate-profile`, {
+                                const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ email: user.email, bannerPhoto: imageUrl })
+                                  body: JSON.stringify({ 
+                                    email: user.email, 
+                                    userId: user.id || user._id,
+                                    bannerPhoto: imageUrl 
+                                  })
                                 });
                                 if (response.ok) {
                                   console.log('Banner saved to backend');
+                                  // Update user state from database
+                                  const updatedUser = { ...user, bannerPhoto: imageUrl };
+                                  setUser(updatedUser);
                                 }
                               } catch (err) {
                                 console.log('Backend save failed:', err);
@@ -420,6 +438,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             });
                           };
                           reader.readAsDataURL(file);
+                        } else {
+                          console.log('No banner file selected');
                         }
                       }}
                       className="hidden"
@@ -433,7 +453,17 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           className="w-full h-48 object-cover"
                         />
                         <button 
-                          onClick={() => document.getElementById('banner-photo-upload')?.click()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Banner change button clicked');
+                            const fileInput = document.getElementById('banner-photo-upload') as HTMLInputElement;
+                            if (fileInput) {
+                              fileInput.click();
+                            } else {
+                              console.error('Banner file input not found');
+                            }
+                          }}
                           className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors"
                           title="Change banner"
                         >
@@ -443,16 +473,39 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     ) : (
                       <div className="h-48 bg-gray-300 relative">
                         <button 
-                          onClick={() => document.getElementById('banner-photo-upload')?.click()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Banner add button clicked');
+                            const fileInput = document.getElementById('banner-photo-upload') as HTMLInputElement;
+                            if (fileInput) {
+                              fileInput.click();
+                            } else {
+                              console.error('Banner file input not found');
+                            }
+                          }}
                           className="absolute top-4 right-4 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition-colors"
                           title="Add banner image"
                         >
                           <Camera className="w-4 h-4 text-gray-600" />
                         </button>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center text-gray-600">
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black/10 transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Banner center area clicked');
+                            const fileInput = document.getElementById('banner-photo-upload') as HTMLInputElement;
+                            if (fileInput) {
+                              fileInput.click();
+                            } else {
+                              console.error('Banner file input not found');
+                            }
+                          }}
+                        >
+                          <div className="text-center text-white bg-black/20 rounded-lg p-4">
                             <Camera className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-sm">Add banner image</p>
+                            <p className="text-sm">Click to add banner image</p>
                           </div>
                         </div>
                       </div>
@@ -854,7 +907,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                                       } 
                                     };
                                     setUser(updatedUser);
-                                    localStorage.setItem('user', JSON.stringify(updatedUser));
                                     
                                     // Save to backend profile
                                     if (user?.email) {
@@ -899,7 +951,20 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                               const updatedUser = { ...user };
                               delete updatedUser.resume;
                               setUser(updatedUser);
-                              localStorage.setItem('user', JSON.stringify(updatedUser));
+                              
+                              // Remove from backend
+                              if (user?.email) {
+                                fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ 
+                                    email: user.email, 
+                                    userId: user.id || user._id,
+                                    resume: null
+                                  })
+                                });
+                              }
+                              
                               calculateProfileCompletion(updatedUser);
                               setNotification({
                                 type: 'success',
@@ -956,27 +1021,96 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-xl font-semibold text-gray-700">Education</h2>
+                      <button 
+                        onClick={() => {
+                          setEditingEducation(null);
+                          setShowEducationModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                      >
+                        <span className="text-lg mr-1">+</span>
+                        Add Education
+                      </button>
                     </div>
-                    {user?.education ? (
+                    {user?.educationList && user.educationList.length > 0 ? (
                       <div className="space-y-4">
-                        <div className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900">Loyola-ICAM College of Engineering and Technology</h3>
-                              <p className="text-gray-600">Bachelor's degree, Computer Science</p>
-                              <p className="text-sm text-gray-500">2018 - 2022</p>
+                        {user.educationList.map((edu: any, index: number) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900">{edu.school}</h3>
+                                <p className="text-gray-600">{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</p>
+                                <p className="text-sm text-gray-500">{edu.startYear} - {edu.endYear || 'Present'}</p>
+                                {edu.description && (
+                                  <p className="text-sm text-gray-600 mt-2">{edu.description}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 ml-4">
+                                <button 
+                                  onClick={() => {
+                                    setEditingEducation({ ...edu, index });
+                                    setShowEducationModal(true);
+                                  }}
+                                  className="text-gray-400 hover:text-blue-600 p-1"
+                                  title="Edit education"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    const updatedEducationList = user.educationList.filter((_: any, i: number) => i !== index);
+                                    const updatedUser = { ...user, educationList: updatedEducationList };
+                                    setUser(updatedUser);
+                                    
+                                    // Save to backend
+                                    if (user?.email) {
+                                      fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ 
+                                          email: user.email, 
+                                          userId: user.id || user._id,
+                                          educationList: updatedEducationList
+                                        })
+                                      });
+                                    }
+                                    
+                                    setNotification({
+                                      type: 'success',
+                                      message: 'Education removed successfully!',
+                                      isVisible: true
+                                    });
+                                  }}
+                                  className="text-gray-400 hover:text-red-600 p-1"
+                                  title="Delete education"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <p className="text-gray-600 font-medium mb-2">Add any formal education or professional qualifications</p>
+                        <div className="text-gray-400 mb-4">
+                          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                        </div>
+                        <p className="text-gray-600 font-medium mb-2">Add your education</p>
                         <p className="text-sm text-gray-500 mb-6">
-                          These could help you get hired for the roles you want.
+                          Add any formal education or professional qualifications to help employers understand your background.
                         </p>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setEditingEducation(null);
+                            setShowEducationModal(true);
+                          }}
                           className="border border-blue-600 text-blue-600 hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700 px-6 py-2 rounded-full font-medium flex items-center mx-auto transition-all cursor-pointer"
                         >
                           <span className="text-xl mr-2">+</span>
@@ -1032,7 +1166,18 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   user={user} 
                   onUpdateUser={(updatedUser) => {
                     setUser(updatedUser);
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    // Save to backend immediately
+                    if (user?.email) {
+                      fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                          email: user.email, 
+                          userId: user.id || user._id,
+                          ...updatedUser
+                        })
+                      });
+                    }
                   }} 
                 />
               </div>
@@ -1146,7 +1291,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         onClose={() => {
           setShowParserModal(false);
           setShowWelcomeParser(false);
-          localStorage.setItem('hasSeenResumeParser', 'true');
+          sessionStorage.setItem('hasSeenResumeParser', 'true');
         }}
         onProfileUpdate={(profileData) => {
           const updatedUser = {
@@ -1165,7 +1310,20 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           };
           
           setUser(updatedUser);
-          localStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          // Save to backend immediately
+          if (user?.email) {
+            fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                email: user.email, 
+                userId: user.id || user._id,
+                ...updatedUser
+              })
+            });
+          }
+          
           calculateProfileCompletion(updatedUser);
           
           setNotification({
@@ -1183,9 +1341,11 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-semibold text-gray-900">You may be missing out on job opportunities.</h2>
               <button 
+                type="button"
                 onClick={() => setShowVisibilityModal(false)}
                 className="text-gray-400 hover:text-gray-600"
                 title="Close modal"
+                aria-label="Close modal"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1200,39 +1360,78 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             <ul className="space-y-2 mb-6">
               <li className="flex items-center text-blue-600">
                 <span className="mr-2">•</span>
-                <button onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} className="hover:underline">Location</button>
+                <button 
+                  type="button"
+                  onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} 
+                  className="hover:underline"
+                  title="Update location"
+                >
+                  Location
+                </button>
               </li>
               <li className="flex items-center text-blue-600">
                 <span className="mr-2">•</span>
-                <button onClick={() => { setShowVisibilityModal(false); setShowResumeModal(true); }} className="hover:underline">Resume</button>
+                <button 
+                  type="button"
+                  onClick={() => { setShowVisibilityModal(false); setShowResumeModal(true); }} 
+                  className="hover:underline"
+                  title="Upload resume"
+                >
+                  Resume
+                </button>
               </li>
               <li className="flex items-center text-blue-600">
                 <span className="mr-2">•</span>
-                <button onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} className="hover:underline">Skills (at least 5)</button>
+                <button 
+                  type="button"
+                  onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} 
+                  className="hover:underline"
+                  title="Add skills"
+                >
+                  Skills (at least 5)
+                </button>
               </li>
               <li className="flex items-center text-blue-600">
                 <span className="mr-2">•</span>
-                <button onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} className="hover:underline">Work Authorization</button>
+                <button 
+                  type="button"
+                  onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} 
+                  className="hover:underline"
+                  title="Update work authorization"
+                >
+                  Work Authorization
+                </button>
               </li>
               <li className="flex items-center text-blue-600">
                 <span className="mr-2">•</span>
-                <button onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} className="hover:underline">Employment Type</button>
+                <button 
+                  type="button"
+                  onClick={() => { setShowVisibilityModal(false); onNavigate('candidate-profile'); }} 
+                  className="hover:underline"
+                  title="Update employment type"
+                >
+                  Employment Type
+                </button>
               </li>
             </ul>
             
             <div className="flex justify-end space-x-3">
               <button
+                type="button"
                 onClick={() => setShowVisibilityModal(false)}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Close modal"
               >
                 Close
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowVisibilityModal(false);
                   onNavigate('candidate-profile');
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title="Complete profile"
               >
                 Complete Profile
               </button>
@@ -1247,7 +1446,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         onSave={async (photo, frame) => {
           const updatedUser = { ...user, profilePhoto: photo, profileFrame: frame || 'none' };
           setUser(updatedUser);
-          localStorage.setItem('user', JSON.stringify(updatedUser));
           
           // Save to backend immediately
           if (user?.email) {
@@ -1277,6 +1475,183 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         currentPhoto={user?.profilePhoto}
         currentFrame={user?.profileFrame || 'none'}
       />
+      
+      {/* Education Modal */}
+      {showEducationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {editingEducation ? 'Edit Education' : 'Add Education'}
+                </h2>
+                <button 
+                  onClick={() => {
+                    setShowEducationModal(false);
+                    setEditingEducation(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                const educationData = {
+                  school: formData.get('school') as string,
+                  degree: formData.get('degree') as string,
+                  fieldOfStudy: formData.get('fieldOfStudy') as string,
+                  startYear: formData.get('startYear') as string,
+                  endYear: formData.get('endYear') as string,
+                  description: formData.get('description') as string
+                };
+                
+                if (!educationData.school || !educationData.degree || !educationData.startYear) {
+                  setNotification({
+                    type: 'error',
+                    message: 'Please fill in all required fields (School, Degree, Start Year)',
+                    isVisible: true
+                  });
+                  return;
+                }
+                
+                let updatedEducationList = user?.educationList || [];
+                
+                if (editingEducation && editingEducation.index !== undefined) {
+                  // Edit existing education
+                  updatedEducationList[editingEducation.index] = educationData;
+                } else {
+                  // Add new education
+                  updatedEducationList = [...updatedEducationList, educationData];
+                }
+                
+                const updatedUser = { ...user, educationList: updatedEducationList };
+                setUser(updatedUser);
+                
+                // Save to backend
+                if (user?.email) {
+                  fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      email: user.email, 
+                      userId: user.id || user._id,
+                      educationList: updatedEducationList
+                    })
+                  });
+                }
+                
+                setNotification({
+                  type: 'success',
+                  message: editingEducation ? 'Education updated successfully!' : 'Education added successfully!',
+                  isVisible: true
+                });
+                
+                setShowEducationModal(false);
+                setEditingEducation(null);
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">School *</label>
+                  <input
+                    type="text"
+                    name="school"
+                    defaultValue={editingEducation?.school || ''}
+                    placeholder="e.g., Loyola-ICAM College of Engineering and Technology"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Degree *</label>
+                  <input
+                    type="text"
+                    name="degree"
+                    defaultValue={editingEducation?.degree || ''}
+                    placeholder="e.g., Bachelor's degree, Master's degree, PhD"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Field of Study</label>
+                  <input
+                    type="text"
+                    name="fieldOfStudy"
+                    defaultValue={editingEducation?.fieldOfStudy || ''}
+                    placeholder="e.g., Computer Science, Engineering, Business"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Year *</label>
+                    <input
+                      type="number"
+                      name="startYear"
+                      defaultValue={editingEducation?.startYear || ''}
+                      placeholder="2018"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Year</label>
+                    <input
+                      type="number"
+                      name="endYear"
+                      defaultValue={editingEducation?.endYear || ''}
+                      placeholder="2022 (leave empty if ongoing)"
+                      min="1950"
+                      max={new Date().getFullYear() + 10}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    defaultValue={editingEducation?.description || ''}
+                    placeholder="Describe your achievements, relevant coursework, or activities..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEducationModal(false);
+                      setEditingEducation(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingEducation ? 'Update' : 'Add'} Education
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

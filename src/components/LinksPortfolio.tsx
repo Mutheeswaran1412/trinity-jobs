@@ -116,8 +116,13 @@ const LinksPortfolio: React.FC<LinksPortfolioProps> = ({ user, onUpdateUser }) =
 
       {/* Add Link Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowAddModal(false);
+            setFormData({ type: 'github', url: '', label: '' });
+          }
+        }}>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Add New Link</h3>
             
             <div className="space-y-4">
@@ -126,7 +131,7 @@ const LinksPortfolio: React.FC<LinksPortfolioProps> = ({ user, onUpdateUser }) =
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value as any})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="github">GitHub</option>
                   <option value="linkedin">LinkedIn</option>
@@ -140,8 +145,9 @@ const LinksPortfolio: React.FC<LinksPortfolioProps> = ({ user, onUpdateUser }) =
                   type="text"
                   value={formData.label}
                   onChange={(e) => setFormData({...formData, label: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="My GitHub Profile"
+                  autoFocus
                 />
               </div>
               
@@ -151,7 +157,7 @@ const LinksPortfolio: React.FC<LinksPortfolioProps> = ({ user, onUpdateUser }) =
                   type="url"
                   value={formData.url}
                   onChange={(e) => setFormData({...formData, url: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://github.com/username"
                 />
               </div>
@@ -159,18 +165,20 @@ const LinksPortfolio: React.FC<LinksPortfolioProps> = ({ user, onUpdateUser }) =
             
             <div className="flex gap-3 mt-6">
               <button
+                type="button"
                 onClick={() => {
                   setShowAddModal(false);
                   setFormData({ type: 'github', url: '', label: '' });
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSaveLink}
                 disabled={!formData.url.trim() || !formData.label.trim()}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Add Link
               </button>
