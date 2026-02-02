@@ -104,9 +104,9 @@ function App() {
 
   // Initialize user from localStorage on app start
   useEffect(() => {
-    // Initialize PWA
-    PWAManager.registerServiceWorker();
-    PWAManager.requestNotificationPermission();
+    // Disable PWA for now to prevent fetch errors
+    // PWAManager.registerServiceWorker();
+    // PWAManager.requestNotificationPermission();
     
     // Check for OAuth callback token first
     const urlParams = new URLSearchParams(window.location.search);
@@ -814,7 +814,7 @@ function App() {
         <Footer onNavigate={handleNavigation} />
       <ChatWidget />
       <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
-      <PWAInstallButton />
+      {/* <PWAInstallButton /> */}
       
       {/* Modals */}
       <LoginModal 

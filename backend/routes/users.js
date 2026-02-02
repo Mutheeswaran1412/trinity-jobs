@@ -121,24 +121,23 @@ router.post('/register', [
 
 
 // POST /api/users/login - Login user
-router.post('/login', [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required')
-], async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
     
     console.log('🔐 Login attempt for:', email);
     console.log('🔐 Password provided:', password ? 'Yes' : 'No');
+    console.log('🔐 Request body:', { email, password: password ? '***' : 'MISSING' });
+
+    // Basic validation
+    if (!email || !password) {
+      console.log('❌ Missing email or password');
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     // Find user - case insensitive
     const user = await User.findOne({ 
-      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } 
     });
     
     // Check if user exists
@@ -152,6 +151,8 @@ router.post('/login', [
     
     console.log('✅ User found:', user.email);
     console.log('🔐 Stored password hash exists:', user.password ? 'Yes' : 'No');
+    console.log('🔐 User active:', user.isActive);
+    console.log('🔐 User status:', user.status);
     
     // Check if account is active
     if (!user.isActive) {
@@ -159,12 +160,14 @@ router.post('/login', [
     }
     
     // Check password - add validation
-    if (!password || !user.password) {
-      console.log('❌ Missing password data - provided:', !!password, 'stored:', !!user.password);
-      return res.status(400).json({ error: 'Invalid login data' });
+    if (!user.password) {
+      console.log('❌ No password stored for user');
+      return res.status(400).json({ error: 'Account has no password. Please reset your password.' });
     }
     
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password.trim(), user.password);
+    console.log('🔐 Password comparison result:', isPasswordValid);
+    
     if (!isPasswordValid) {
       console.log('❌ Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid password. Please try again.' });
@@ -253,6 +256,22 @@ router.post('/login', [
     });
   } catch (error) {
     console.error('❌ Login error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/users/:id - Get user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -refreshTokens');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error('❌ Get user error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -582,6 +601,27 @@ router.delete('/sessions/:tokenId', async (req, res) => {
 
     res.json({ message: 'Session revoked successfully' });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/by-email/:email - Delete user by email (admin only)
+router.delete('/by-email/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    console.log('🗑️ Delete request for user:', email);
+    
+    const user = await User.findOneAndDelete({ email: email });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log('✅ User deleted successfully:', email);
+    res.json({ message: 'User deleted successfully', email: email });
+  } catch (error) {
+    console.error('❌ Delete user error:', error);
     res.status(500).json({ error: error.message });
   }
 });

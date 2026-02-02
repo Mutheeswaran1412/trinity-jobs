@@ -58,7 +58,7 @@ router.get('/:identifier', async (req, res) => {
     const identifier = req.params.identifier;
     console.log('Profile get request for identifier:', identifier);
     
-    const profile = await Profile.findOne({
+    let profile = await Profile.findOne({
       $or: [
         { userId: identifier },
         { email: identifier }
@@ -70,7 +70,18 @@ router.get('/:identifier', async (req, res) => {
       res.json(profile);
     } else {
       console.log('Profile not found for identifier:', identifier);
-      res.status(404).json({ error: 'Profile not found' });
+      // Create a basic profile entry if it doesn't exist
+      if (identifier.includes('@')) {
+        profile = new Profile({
+          email: identifier,
+          updatedAt: new Date()
+        });
+        await profile.save();
+        console.log('Created new profile for:', identifier);
+        res.json(profile);
+      } else {
+        res.status(404).json({ error: 'Profile not found' });
+      }
     }
   } catch (error) {
     console.error('Profile get error:', error);

@@ -38,9 +38,9 @@ export interface User {
 }
 
 export const authAPI = {
-  async register(userData: RegisterData): Promise<{ id: string; message: string; userType: string }> {
+  async register(userData: RegisterData): Promise<{ id: string; message: string; userType: string; user?: any; accessToken?: string; refreshToken?: string }> {
     console.log('Calling register API:', API_ENDPOINTS.REGISTER);
-    console.log('Register data:', userData);
+    console.log('Register data:', { ...userData, password: '***' });
     
     const response = await fetch(API_ENDPOINTS.REGISTER, {
       method: 'POST',
@@ -53,19 +53,34 @@ export const authAPI = {
     console.log('Register response status:', response.status);
     
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Register error:', error);
-      throw new Error(error.error || 'Registration failed');
+      const errorText = await response.text();
+      console.error('Register error response:', errorText);
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error: 'Registration failed' };
+      }
+      throw new Error(error.error || 'User already exists with this email');
     }
 
     const result = await response.json();
     console.log('Register success:', result);
+    
+    // Store tokens if provided
+    if (result.accessToken) {
+      localStorage.setItem('accessToken', result.accessToken);
+    }
+    if (result.refreshToken) {
+      localStorage.setItem('refreshToken', result.refreshToken);
+    }
+    
     return result;
   },
 
-  async login(loginData: LoginData): Promise<{ message: string; user: User }> {
+  async login(loginData: LoginData): Promise<{ message: string; user: User; accessToken?: string; refreshToken?: string }> {
     console.log('Calling login API:', API_ENDPOINTS.LOGIN);
-    console.log('Login data:', loginData);
+    console.log('Login data:', { email: loginData.email, password: '***' });
     
     const response = await fetch(API_ENDPOINTS.LOGIN, {
       method: 'POST',
@@ -78,13 +93,28 @@ export const authAPI = {
     console.log('Login response status:', response.status);
     
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Login error:', error);
-      throw new Error(error.error || 'Login failed');
+      const errorText = await response.text();
+      console.error('Login error response:', errorText);
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error: 'Invalid login data' };
+      }
+      throw new Error(error.error || 'Invalid login data');
     }
 
     const result = await response.json();
     console.log('Login success:', result);
+    
+    // Store tokens if provided
+    if (result.accessToken) {
+      localStorage.setItem('accessToken', result.accessToken);
+    }
+    if (result.refreshToken) {
+      localStorage.setItem('refreshToken', result.refreshToken);
+    }
+    
     return result;
   },
 

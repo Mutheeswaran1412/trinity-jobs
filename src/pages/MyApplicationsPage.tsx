@@ -443,16 +443,18 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                                   <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                       <div className="text-sm text-gray-600 mb-2">
-                                        <span className="font-medium">Cover Letter:</span>
+                                        <span className="font-medium">Application Method:</span>
                                       </div>
                                       <p className="text-sm text-gray-700">
-                                        {application.coverLetter.length > 150 
-                                          ? `${application.coverLetter.substring(0, 150)}...`
-                                          : application.coverLetter
+                                        {application.isQuickApply 
+                                          ? "Professional application submitted with resume and profile details"
+                                          : application.coverLetter.length > 150 
+                                            ? `${application.coverLetter.substring(0, 150)}...`
+                                            : application.coverLetter
                                         }
                                       </p>
                                     </div>
-                                    {application.status === 'applied' && (
+                                    {application.status === 'applied' && !application.isQuickApply && (
                                       <button
                                         onClick={() => handleEditApplication(application._id, application.coverLetter || '')}
                                         className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"

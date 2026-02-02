@@ -13,6 +13,7 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
   const [location, setLocation] = useState('');
   const [allJobTitles, setAllJobTitles] = useState<string[]>([]);
   const [allLocations, setAllLocations] = useState<string[]>([]);
+  const [popularSearches, setPopularSearches] = useState<string[]>([]);
   const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showJobDropdown, setShowJobDropdown] = useState(false);
@@ -52,9 +53,25 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
         console.error('Error fetching locations:', error);
       }
     };
+
+    // Fetch popular searches
+    const fetchPopularSearches = async () => {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/search-analytics/popular`);
+        const data = await response.json();
+        if (data.searches) {
+          setPopularSearches(data.searches);
+        }
+      } catch (error) {
+        console.error('Error fetching popular searches:', error);
+        // Fallback to default searches
+        setPopularSearches(['React', 'Python', 'JavaScript', 'Node.js', 'Java', 'Angular']);
+      }
+    };
     
     fetchJobTitles();
     fetchLocations();
+    fetchPopularSearches();
   }, []);
 
   const handleJobSearch = (value: string) => {
@@ -111,8 +128,23 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
       return;
     }
     
+    // Track the search query
+    trackSearch(searchTerm);
+    
     if (onNavigate) {
       onNavigate('job-listings', { searchTerm, location });
+    }
+  };
+
+  const trackSearch = async (query: string) => {
+    try {
+      await fetch(`${API_ENDPOINTS.BASE_URL}/api/search-analytics/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+    } catch (error) {
+      console.error('Error tracking search:', error);
     }
   };
 
@@ -230,11 +262,12 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
               <div className="flex flex-wrap items-center gap-2">
                 <h4 className="font-semibold text-gray-900">Popular Searches:</h4>
                 <div className="flex flex-wrap gap-2">
-                  {['Designer', 'Senior', 'Architecture', 'iOS', 'React', 'Python'].map((term) => (
+                  {popularSearches.map((term) => (
                     <button
                       key={term}
                       onClick={() => {
                         setSearchTerm(term);
+                        trackSearch(term);
                         if (onNavigate) {
                           onNavigate('job-listings', { searchTerm: term, location });
                         }
@@ -276,12 +309,30 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-12">
-            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-            <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31" alt="Microsoft" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-            <img src="https://d1.awsstatic.com/logos/aws-logo-lockups/poweredbyaws/PB_AWS_logo_RGB_REV_SQ.8c88ac215fe4e441dc42865dd6962ed4f444a90d.png" alt="Amazon" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-            <img src="https://www.apple.com/ac/structured-data/images/knowledge_graph_logo.png" alt="Apple" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-            <img src="https://assets.nflxext.com/ffe/siteui/common/icons/nficon2016.png" alt="Netflix" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Google</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Microsoft</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Amazon</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Meta</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Apple</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+              <span className="text-gray-600 text-sm font-medium">Netflix</span>
+            </div>
           </div>
         </div>
       </div>

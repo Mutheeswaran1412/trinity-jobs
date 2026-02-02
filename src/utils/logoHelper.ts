@@ -11,11 +11,6 @@ export const getCompanyLogo = (companyName: string): string => {
     return '/images/company-logos/trinity-logo.png';
   }
   
-  // Clean company name for file lookup
-  const cleanName = companyName.toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '');
-  
   // Try to get domain from company name for Clearbit
   const domain = getCompanyDomain(companyName);
   
@@ -25,9 +20,13 @@ export const getCompanyLogo = (companyName: string): string => {
   
   // Return letter avatar as fallback
   const initials = companyName.split(' ').map(n => n[0]).join('').toUpperCase();
+  const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4'];
+  const colorIndex = companyName.length % colors.length;
+  const bgColor = colors[colorIndex];
+  
   return `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-      <rect width="64" height="64" fill="#3B82F6" rx="8"/>
+      <rect width="64" height="64" fill="${bgColor}" rx="8"/>
       <text x="32" y="40" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="bold">${initials}</text>
     </svg>
   `)}`;
