@@ -769,15 +769,39 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                                           : `${API_ENDPOINTS.BASE_URL}/uploads/${resumeUrl}`;
                                       }
                                       
-                                      // Test if file exists
-                                      const testResponse = await fetch(resumeUrl, { method: 'HEAD' });
-                                      if (testResponse.ok) {
-                                        window.open(resumeUrl, '_blank', 'noopener,noreferrer');
-                                      } else {
-                                        alert('Resume file not found. The candidate may need to re-upload their resume.');
+                                      console.log('Attempting to open resume:', resumeUrl);
+                                      
+                                      // Test if file exists with better error handling
+                                      try {
+                                        const testResponse = await fetch(resumeUrl, { 
+                                          method: 'HEAD',
+                                          mode: 'cors'
+                                        });
+                                        
+                                        if (testResponse.ok) {
+                                          // Open in new tab with proper handling
+                                          const newWindow = window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+                                          if (!newWindow) {
+                                            // Fallback if popup blocked
+                                            window.location.href = resumeUrl;
+                                          }
+                                        } else {
+                                          throw new Error(`File not accessible: ${testResponse.status}`);
+                                        }
+                                      } catch (fetchError) {
+                                        console.error('Resume fetch error:', fetchError);
+                                        // Try direct download as fallback
+                                        const link = document.createElement('a');
+                                        link.href = resumeUrl;
+                                        link.download = `resume_${application.candidateName || 'candidate'}.pdf`;
+                                        link.target = '_blank';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
                                       }
                                     } catch (error) {
-                                      alert('Unable to open resume. File may not exist.');
+                                      console.error('Resume open error:', error);
+                                      alert('Unable to open resume. The file may have been moved or deleted. Please ask the candidate to re-upload their resume.');
                                     }
                                   }}
                                   className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center space-x-1 bg-blue-50 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors"

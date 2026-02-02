@@ -20,7 +20,7 @@ import userRoutes from './routes/users.js';
 import usersGetRoutes from './routes/users-get.js';
 import applicationRoutes from './routes/applications.js';
 import jobAlertRoutes from './routes/jobAlerts.js';
-// import uploadRoutes from './routes/upload.js';
+import uploadRoutes from './routes/upload.js';
 import moderationRoutes from './routes/moderation.js';
 import resumeBasicRoutes from './routes/resumeBasic.js';
 import resumeRoutes from './routes/resume.js';
@@ -230,8 +230,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files with proper headers
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    // Set proper content type for PDFs
+    if (path.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+    }
+    // Allow cross-origin access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
 
 app.use('/api/jobs', jobRoutes);
 app.use('/api/auth', authRoutes);
@@ -240,7 +249,7 @@ app.use('/api/users/:id', usersGetRoutes);
 // Move applications route before catch-all
 app.use('/api/applications', applicationRoutes);
 app.use('/api/job-alerts', jobAlertRoutes);
-// app.use('/api/upload', uploadRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/analytics', analyticsTrackingRoutes);

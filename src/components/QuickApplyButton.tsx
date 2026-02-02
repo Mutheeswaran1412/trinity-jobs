@@ -42,12 +42,25 @@ const QuickApplyButton: React.FC<QuickApplyButtonProps> = ({
       let userResume = '';
       let userPhone = currentUser.phone || '';
       
-      // TEMPORARY: Skip resume check for testing
-      console.log('User resume data:', currentUser.resume);
-      console.log('User profile resume:', currentUser.profile?.resume);
-      
-      // Always allow quick apply for now
-      userResume = 'resume_uploaded_via_dashboard';
+      // Get resume from user profile
+      if (currentUser.resume) {
+        const resume = currentUser.resume;
+        if (resume.filename) {
+          userResume = `/uploads/${resume.filename}`;
+        } else if (resume.url) {
+          userResume = resume.url;
+        } else if (resume.path) {
+          userResume = resume.path;
+        } else if (typeof resume === 'string') {
+          userResume = resume;
+        } else {
+          userResume = 'resume_from_profile';
+        }
+      } else if (currentUser.profile?.resume) {
+        userResume = currentUser.profile.resume;
+      } else {
+        userResume = 'resume_from_quick_apply';
+      }
       
       console.log('Using resume for quick apply:', userResume);
 

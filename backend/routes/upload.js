@@ -25,7 +25,9 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = /pdf|doc|docx/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const mimetype = file.mimetype === 'application/pdf' || 
+                     file.mimetype === 'application/msword' || 
+                     file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     
     if (mimetype && extname) {
       return cb(null, true);
@@ -42,14 +44,18 @@ router.post('/resume', upload.single('resume'), (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
+    console.log('File uploaded successfully:', req.file.filename);
+    
     const fileUrl = `/uploads/${req.file.filename}`;
     res.json({ 
       success: true, 
       fileUrl: fileUrl,
       filename: req.file.filename,
-      originalName: req.file.originalname
+      originalName: req.file.originalname,
+      size: req.file.size
     });
   } catch (error) {
+    console.error('Upload error:', error);
     res.status(500).json({ error: error.message });
   }
 });
