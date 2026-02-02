@@ -62,7 +62,7 @@ import skillAssessmentRoutes from './routes/skillAssessments.js';
 import interviewRoutes from './routes/interviews.js';
 import meetingRoutes from './routes/meetings.js';
 import advancedSearchRoutes from './routes/advancedSearch.js';
-import reminderScheduler from './services/reminderScheduler.js';
+// import reminderScheduler from './services/reminderScheduler.js';
 import Notification from './models/Notification.js';
 import Message from './models/Message.js';
 import { loadInitialData } from './scripts/loadInitialData.js';
@@ -103,6 +103,9 @@ connectDB().then(() => {
   console.log('✅ Database connected');
   // Comment out loadInitialData for faster startup
   // loadInitialData();
+}).catch(err => {
+  console.error('❌ Database connection failed:', err);
+  process.exit(1);
 });
 
 // Socket.io connection
@@ -955,4 +958,7 @@ httpServer.listen(PORT, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`💬 Socket.io enabled for real-time features`);
+}).on('error', (err) => {
+  console.error('❌ Server failed to start:', err);
+  process.exit(1);
 });
