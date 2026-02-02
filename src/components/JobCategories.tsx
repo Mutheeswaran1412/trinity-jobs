@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { 
-  Mail, 
-  Headphones, 
-  User, 
-  CheckSquare, 
+  Code, 
+  Database, 
+  Smartphone, 
+  Shield, 
+  Cloud, 
+  Cpu, 
   TrendingUp, 
-  MessageSquare, 
-  BookOpen, 
   Palette 
 } from 'lucide-react';
 
@@ -36,14 +36,14 @@ const JobCategories: React.FC<JobCategoriesProps> = ({ onNavigate }) => {
   }, []);
 
   const categories = [
-    { name: "Marketing", jobs: "123 Vacancy", icon: Mail, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Customer Service", jobs: "123 Vacancy", icon: Headphones, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Human Resource", jobs: "123 Vacancy", icon: User, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Project Management", jobs: "123 Vacancy", icon: CheckSquare, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Business Development", jobs: "123 Vacancy", icon: TrendingUp, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Sales & Communication", jobs: "123 Vacancy", icon: MessageSquare, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Teaching & Education", jobs: "123 Vacancy", icon: BookOpen, color: "bg-blue-50", iconColor: "text-blue-600" },
-    { name: "Design & Creative", jobs: "123 Vacancy", icon: Palette, color: "bg-blue-50", iconColor: "text-blue-600" }
+    { name: "Software Development", jobs: "245 Vacancy", icon: Code, color: "bg-blue-50", iconColor: "text-blue-600" },
+    { name: "Data Science & AI", jobs: "189 Vacancy", icon: Database, color: "bg-purple-50", iconColor: "text-purple-600" },
+    { name: "Mobile Development", jobs: "156 Vacancy", icon: Smartphone, color: "bg-green-50", iconColor: "text-green-600" },
+    { name: "Cybersecurity", jobs: "134 Vacancy", icon: Shield, color: "bg-red-50", iconColor: "text-red-600" },
+    { name: "Cloud Engineering", jobs: "167 Vacancy", icon: Cloud, color: "bg-indigo-50", iconColor: "text-indigo-600" },
+    { name: "DevOps & Infrastructure", jobs: "123 Vacancy", icon: Cpu, color: "bg-orange-50", iconColor: "text-orange-600" },
+    { name: "Product Management", jobs: "98 Vacancy", icon: TrendingUp, color: "bg-teal-50", iconColor: "text-teal-600" },
+    { name: "UI/UX Design", jobs: "112 Vacancy", icon: Palette, color: "bg-pink-50", iconColor: "text-pink-600" }
   ];
 
   return (

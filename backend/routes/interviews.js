@@ -7,10 +7,19 @@ router.get('/', async (req, res) => {
   try {
     const { employerId, employerEmail } = req.query;
     
-    // Return empty array for now since interviews feature is not implemented
-    res.json([]);
+    // Return empty array with proper JSON response
+    res.json({ 
+      success: true,
+      interviews: [],
+      message: 'No interviews found'
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Interviews API error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      interviews: []
+    });
   }
 });
 

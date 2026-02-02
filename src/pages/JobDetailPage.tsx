@@ -778,28 +778,53 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
                   const experience = job.experience;
                   const jobType = job.type;
                   
-                  // Create comprehensive job post content
-                  const postContent = `🚀 Exciting Job Opportunity Alert! 🚀
+                  // Different content based on user type
+                  const postContent = user?.type === 'employer' || user?.userType === 'employer' ? 
+                    // Employer sharing their job posting
+                    `🚀 We're Hiring! Join Our Team!
 
-📍 Position: ${jobTitle}
-🏢 Company: ${company}
-📍 Location: ${location}
-💰 Salary: ${salary}
-⏰ Type: ${jobType}
+🎯 ${jobTitle}
+🏢 ${company}
+📍 ${location}
+💰 ${salary}
+⏰ ${jobType}
 🎯 Experience: ${experience}
 
-📋 Job Description:
-${job.description || 'Great opportunity to join our team!'}
+📋 What you'll do:
+${job.description?.substring(0, 200)}...
 
-${job.skills && Array.isArray(job.skills) ? `🔧 Required Skills:
-${job.skills.map(skill => `• ${skill}`).join('\n')}` : ''}
+${job.skills && Array.isArray(job.skills) ? `🔧 We're looking for:
+${job.skills.slice(0, 5).map(skill => `• ${skill}`).join('\n')}` : ''}
 
-${job.benefits && Array.isArray(job.benefits) ? `🎁 Benefits:
+${job.benefits && Array.isArray(job.benefits) ? `✨ What we offer:
 ${job.benefits.slice(0, 3).map(benefit => `• ${benefit}`).join('\n')}` : ''}
 
-💼 Ready to take your career to the next level? Apply now!
+💼 Ready to join our team? Apply now!
 
-#JobOpportunity #Hiring #${company.replace(/\s+/g, '')} #${jobTitle.replace(/\s+/g, '')} #TechJobs #CareerOpportunity
+#WeAreHiring #JoinOurTeam #${company.replace(/\s+/g, '')} #${jobTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '')} #CareerOpportunity #NowHiring
+
+Apply here: ${window.location.href}` :
+                    // Candidate sharing job opportunity
+                    `💼 Found an interesting job opportunity that might be perfect for someone in my network!
+
+🎯 ${jobTitle} at ${company}
+📍 ${location}
+💰 ${salary}
+⏰ ${jobType}
+🎯 Experience: ${experience}
+
+📝 About the role:
+${job.description?.substring(0, 200)}...
+
+${job.skills && Array.isArray(job.skills) ? `🔧 Looking for:
+${job.skills.slice(0, 5).map(skill => `• ${skill}`).join('\n')}` : ''}
+
+${job.benefits && Array.isArray(job.benefits) ? `✨ What they offer:
+${job.benefits.slice(0, 3).map(benefit => `• ${benefit}`).join('\n')}` : ''}
+
+🤝 Know someone who'd be a great fit? Feel free to share!
+
+#JobOpportunity #Hiring #${company.replace(/\s+/g, '')} #${jobTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '')} #CareerOpportunity #JobAlert
 
 Apply here: ${window.location.href}`;
                   
@@ -839,13 +864,17 @@ Apply here: ${window.location.href}`;
                   const location = job.location;
                   const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max}` : (job.salary || 'Competitive');
                   
-                  const tweetText = `🚀 ${jobTitle} at ${company}
+                  const tweetText = `💼 Spotted a great opportunity!
+
+${jobTitle} at ${company}
 📍 ${location}
 💰 ${salary}
 
 ${job.skills && Array.isArray(job.skills) ? `Skills: ${job.skills.slice(0, 3).join(', ')}` : ''}
 
-#JobAlert #Hiring #${company.replace(/\s+/g, '')} #TechJobs`;
+Might be perfect for someone in my network! 🤝
+
+#JobAlert #Hiring #${company.replace(/\s+/g, '')} #Opportunity`;
                   
                   const encodedText = encodeURIComponent(tweetText);
                   window.open(`https://twitter.com/intent/tweet?url=${url}&text=${encodedText}`, '_blank');
@@ -868,7 +897,9 @@ ${job.skills && Array.isArray(job.skills) ? `Skills: ${job.skills.slice(0, 3).jo
                   const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary');
                   const experience = job.experience;
                   
-                  const whatsappMessage = `🚀 *Job Opportunity*
+                  const whatsappMessage = user?.type === 'employer' || user?.userType === 'employer' ?
+                    // Employer sharing their job posting
+                    `🚀 *We're Hiring!*
 
 *Position:* ${jobTitle}
 *Company:* ${company}
@@ -876,12 +907,31 @@ ${job.skills && Array.isArray(job.skills) ? `Skills: ${job.skills.slice(0, 3).jo
 *Salary:* ${salary}
 *Experience:* ${experience}
 
-*Description:*
+*About the role:*
 ${job.description?.substring(0, 200)}...
 
-${job.skills && Array.isArray(job.skills) ? `*Skills Required:* ${job.skills.slice(0, 5).join(', ')}` : ''}
+${job.skills && Array.isArray(job.skills) ? `*We're looking for:* ${job.skills.slice(0, 5).join(', ')}` : ''}
 
-Apply here: ${window.location.href}`;
+Interested? Apply now! 💼
+
+${window.location.href}` :
+                    // Candidate sharing job opportunity
+                    `💼 *Found an interesting job opportunity!*
+
+*Position:* ${jobTitle}
+*Company:* ${company}
+*Location:* ${location}
+*Salary:* ${salary}
+*Experience:* ${experience}
+
+*About the role:*
+${job.description?.substring(0, 200)}...
+
+${job.skills && Array.isArray(job.skills) ? `*Skills they're looking for:* ${job.skills.slice(0, 5).join(', ')}` : ''}
+
+Thought this might be perfect for someone in our group! 🤝
+
+Check it out: ${window.location.href}`;
                   
                   const encodedMessage = encodeURIComponent(whatsappMessage);
                   window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
@@ -893,6 +943,78 @@ Apply here: ${window.location.href}`;
                   <span className="text-white font-bold text-sm">W</span>
                 </div>
                 <span className="font-medium text-gray-900">Share on WhatsApp</span>
+              </button>
+
+              {/* Telegram */}
+              <button
+                onClick={() => {
+                  const jobTitle = job.jobTitle || job.title;
+                  const company = job.company;
+                  const location = job.location;
+                  const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary');
+                  
+                  const telegramMessage = `💼 Found a great job opportunity!
+
+🎯 ${jobTitle} at ${company}
+📍 Location: ${location}
+💰 Salary: ${salary}
+
+${job.description?.substring(0, 150)}...
+
+Might be perfect for someone here! 🤝
+
+Check it out: ${window.location.href}`;
+                  
+                  const encodedMessage = encodeURIComponent(telegramMessage);
+                  window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodedMessage}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-400 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">T</span>
+                </div>
+                <span className="font-medium text-gray-900">Share on Telegram</span>
+              </button>
+
+              {/* Email */}
+              <button
+                onClick={() => {
+                  const jobTitle = job.jobTitle || job.title;
+                  const company = job.company;
+                  const location = job.location;
+                  const salary = typeof job.salary === 'object' ? `${job.salary.currency || '$'}${job.salary.min}-${job.salary.max} ${job.salary.period || 'per year'}` : (job.salary || 'Competitive salary');
+                  
+                  const subject = `Thought you might be interested: ${jobTitle} at ${company}`;
+                  const body = `Hi,
+
+I came across this job opportunity and thought it might be a great fit for you or someone you know:
+
+💼 Position: ${jobTitle}
+🏢 Company: ${company}
+📍 Location: ${location}
+💰 Salary: ${salary}
+
+About the role:
+${job.description?.substring(0, 300)}...
+
+${job.skills && Array.isArray(job.skills) ? `They're looking for skills in: ${job.skills.join(', ')}` : ''}
+
+If you're interested or know someone who might be, you can check out the full details and apply here: ${window.location.href}
+
+Hope this helps!
+
+Best regards`;
+                  
+                  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                  setShowShareModal(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-8 h-8 bg-red-500 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">@</span>
+                </div>
+                <span className="font-medium text-gray-900">Share via Email</span>
               </button>
 
               {/* Copy Link */}

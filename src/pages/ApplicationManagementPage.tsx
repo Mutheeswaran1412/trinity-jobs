@@ -270,6 +270,20 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
                           >
                             View Details
                           </button>
+                          <button
+                            onClick={() => {
+                              // Navigate to interview scheduling with candidate data
+                              onNavigate('interview-schedule', {
+                                candidateName: application.candidateName,
+                                candidateEmail: application.candidateEmail,
+                                jobTitle: application.jobTitle,
+                                applicationId: application._id
+                              });
+                            }}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
+                          >
+                            Schedule Interview
+                          </button>
                           <select
                             value={application.status}
                             onChange={(e) => updateApplicationStatus(application._id, e.target.value)}

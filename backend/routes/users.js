@@ -37,11 +37,20 @@ router.post('/register', [
 
     const { name, fullName, email, password, userType, phone, company, companyName, companyLogo, companyWebsite, location } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    console.log('🔍 Registration attempt for:', email);
+    console.log('🔍 UserType:', userType);
+
+    // Check if user already exists - case insensitive
+    const existingUser = await User.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    });
+    
     if (existingUser) {
+      console.log('❌ User already exists:', email);
       return res.status(400).json({ error: 'User already exists with this email' });
     }
+
+    console.log('✅ Email available, creating user...');
 
     // Hash password with lower rounds for faster processing
     const hashedPassword = await bcrypt.hash(password, 8);
@@ -52,7 +61,7 @@ router.post('/register', [
     
     const user = new User({
       name: userName,
-      email,
+      email: email.toLowerCase(), // Store email in lowercase
       password: hashedPassword,
       userType: userType || 'candidate',
       phone: phone || '',
@@ -63,6 +72,7 @@ router.post('/register', [
     });
 
     await user.save();
+    console.log('✅ User created successfully:', email);
 
     // Send welcome email asynchronously (don't wait for it)
     setImmediate(async () => {
@@ -99,7 +109,11 @@ router.post('/register', [
       refreshToken
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
+    if (error.code === 11000) {
+      // Duplicate key error
+      return res.status(400).json({ error: 'User already exists with this email' });
+    }
     res.status(400).json({ error: error.message });
   }
 });
@@ -118,25 +132,45 @@ router.post('/login', [
     }
 
     const { email, password } = req.body;
+    
+    console.log('🔐 Login attempt for:', email);
+    console.log('🔐 Password provided:', password ? 'Yes' : 'No');
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Find user - case insensitive
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    });
     
     // Check if user exists
     if (!user) {
-      return res.status(404).json({ error: 'Account not found. Please register first.' });
+      console.log('❌ User not found:', email);
+      return res.status(404).json({ 
+        error: 'Account not found. Please register first.',
+        needsRegistration: true 
+      });
     }
+    
+    console.log('✅ User found:', user.email);
+    console.log('🔐 Stored password hash exists:', user.password ? 'Yes' : 'No');
     
     // Check if account is active
     if (!user.isActive) {
       return res.status(403).json({ error: 'Account is inactive. Contact support.' });
     }
     
-    // Check password
+    // Check password - add validation
+    if (!password || !user.password) {
+      console.log('❌ Missing password data - provided:', !!password, 'stored:', !!user.password);
+      return res.status(400).json({ error: 'Invalid login data' });
+    }
+    
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      console.log('❌ Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid password. Please try again.' });
     }
+
+    console.log('✅ Password valid for:', email);
 
     // Check account status
     if (user.status === 'suspended') {
@@ -210,6 +244,7 @@ router.post('/login', [
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
+    console.log('✅ Login successful for:', email);
     res.json({ 
       message: 'Login successful',
       user: userResponse,
@@ -217,6 +252,7 @@ router.post('/login', [
       refreshToken // Also send in response for flexibility
     });
   } catch (error) {
+    console.error('❌ Login error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -452,6 +488,71 @@ router.get('/sessions', async (req, res) => {
 
     res.json({ sessions: activeSessions });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/users/check/:email - Check if user exists (for testing)
+router.get('/check/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    });
+    
+    if (user) {
+      res.json({ 
+        exists: true, 
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+          createdAt: user.createdAt
+        }
+      });
+    } else {
+      res.json({ exists: false, message: 'User not found in database' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/cleanup/:email - Delete user by email (for testing)
+router.delete('/cleanup/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const result = await User.deleteOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    });
+    
+    if (result.deletedCount > 0) {
+      res.json({ message: `User ${email} deleted successfully`, deletedCount: result.deletedCount });
+    } else {
+      res.json({ message: `No user found with email ${email}`, deletedCount: 0 });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/:id - Delete user account
+router.delete('/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Find and delete the user
+    const user = await User.findByIdAndDelete(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    console.log('✅ User account deleted:', user.email);
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete account error:', error);
     res.status(500).json({ error: error.message });
   }
 });

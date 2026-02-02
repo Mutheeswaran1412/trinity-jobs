@@ -24,7 +24,7 @@ const EmployersPage = ({ onNavigate, user, onLogout }: {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
-                onClick={() => onNavigate && onNavigate('job-posting')}
+                onClick={() => onNavigate && onNavigate('job-posting-selection')}
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
               >
                 Post a Job
@@ -34,6 +34,12 @@ const EmployersPage = ({ onNavigate, user, onLogout }: {
                 className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors"
               >
                 Search Candidates
+              </button>
+              <button 
+                onClick={() => onNavigate && onNavigate('pricing')}
+                className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-colors"
+              >
+                View Pricing
               </button>
             </div>
           </div>

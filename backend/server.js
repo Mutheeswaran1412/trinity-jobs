@@ -5,12 +5,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import session from 'express-session';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
+import passport from './config/passport.js';
+import authRoutes from './routes/auth.js';
 import jobRoutes from './routes/jobs.js';
 import userRoutes from './routes/users.js';
 import usersGetRoutes from './routes/users-get.js';
@@ -29,7 +32,6 @@ import adminJobsRoutes from './routes/adminJobs.js';
 import companyRoutes from './routes/companies.js';
 import companySearchRoutes from './routes/companySearch.js';
 import locationsRoutes from './routes/locations.js';
-import countriesRoutes from './routes/countries.js';
 import pdfRoutes from './routes/pdf.js';
 import resumeVersionRoutes from './routes/resumeVersions.js';
 import aiSuggestionsRoutes from './routes/aiSuggestions.js';
@@ -97,7 +99,9 @@ const io = new Server(httpServer, {
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
-  loadInitialData();
+  console.log('✅ Database connected');
+  // Comment out loadInitialData for faster startup
+  // loadInitialData();
 });
 
 // Socket.io connection
@@ -163,15 +167,27 @@ export async function sendNotification(userId, type, title, message, link = null
 
 app.use(helmet());
 
-// Rate limiting for production security
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Rate limiting - more lenient for development
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
+  max: process.env.NODE_ENV === 'production' ? 100 : 10000, // Much higher limit for dev
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    return process.env.NODE_ENV === 'development' && (req.ip === '127.0.0.1' || req.ip === '::1');
+    return process.env.NODE_ENV === 'development';
   }
 });
 
@@ -202,17 +218,20 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
-// Debug middleware to log all requests
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
+// Debug middleware - only in development
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+  });
+}
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/jobs', jobRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/users/:id', usersGetRoutes);
 // Move applications route before catch-all
@@ -227,7 +246,7 @@ app.use('/api/admin/jobs', adminJobsRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/company', companySearchRoutes);
 app.use('/api/locations', locationsRoutes);
-app.use('/api/countries', countriesRoutes);
+app.use('/api/countries', locationsRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/resume-versions', resumeVersionRoutes);
 app.use('/api/ai-suggestions', aiSuggestionsRoutes);

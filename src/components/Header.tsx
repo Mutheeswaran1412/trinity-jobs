@@ -160,6 +160,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <button onClick={handleCompaniesClick} className="text-white hover:text-gray-300 font-medium transition-colors">
               Companies
             </button>
+            {user?.type !== 'employer' && (
+              <button onClick={() => onNavigate && onNavigate('company-reviews')} className="text-white hover:text-gray-300 font-medium transition-colors">
+                Company Reviews
+              </button>
+            )}
             <div className="relative" ref={careerDropdownRef}>
               <button 
                 onClick={() => setIsCareerDropdownOpen(!isCareerDropdownOpen)}
@@ -266,14 +271,18 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <button 
               onClick={() => {
                 if (user) {
-                  onNavigate && onNavigate('my-jobs');
+                  if (user.type === 'employer') {
+                    onNavigate && onNavigate('job-posting-selection');
+                  } else {
+                    onNavigate && onNavigate('my-jobs');
+                  }
                 } else {
                   onNavigate && onNavigate('role-selection');
                 }
               }}
               className="text-white hover:text-gray-300 font-medium transition-colors"
             >
-              My Jobs
+              {user?.type === 'employer' ? 'Job Posting' : 'My Jobs'}
             </button>
 
           </nav>
@@ -461,12 +470,16 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                           <button 
                             onClick={() => {
                               setIsDropdownOpen(false);
-                              onNavigate && onNavigate('my-jobs');
+                              if (user.type === 'employer') {
+                                onNavigate && onNavigate('job-posting-selection');
+                              } else {
+                                onNavigate && onNavigate('my-jobs');
+                              }
                             }} 
                             className="flex items-center w-full text-left px-3 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                           >
                             <Building className="w-5 h-5 mr-3 text-gray-500" />
-                            My Jobs
+                            {user.type === 'employer' ? 'Job Posting' : 'My Jobs'}
                           </button>
                           
                           <button 
@@ -619,14 +632,18 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <button 
                 onClick={() => {
                   if (user) {
-                    onNavigate && onNavigate('my-jobs');
+                    if (user.type === 'employer') {
+                      onNavigate && onNavigate('job-posting-selection');
+                    } else {
+                      onNavigate && onNavigate('my-jobs');
+                    }
                   } else {
                     onNavigate && onNavigate('role-selection');
                   }
                 }}
                 className="block text-left text-white hover:text-gray-300 font-medium"
               >
-                My Jobs
+                {user?.type === 'employer' ? 'Job Posting' : 'My Jobs'}
               </button>
               <div className="pt-4 border-t border-gray-600 space-y-3">
                 <button onClick={handleEmployersClick} className="block text-left text-white hover:text-gray-300 font-medium">

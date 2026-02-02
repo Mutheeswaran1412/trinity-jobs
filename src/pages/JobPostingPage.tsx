@@ -9,6 +9,8 @@ interface JobPostingPageProps {
   onNavigate: (page: string) => void;
   user?: any;
   onLogout?: () => void;
+  mode?: string;
+  parsedData?: any;
 }
 
 interface JobData {
@@ -20,10 +22,16 @@ interface JobData {
   experienceRange: string;
   country: string;
   language: string;
+  jobCategory: string;
+  priority: string;
+  clientName: string;
+  jobCode: string;
+  reportingManager: string;
   
   // Step 2: Hiring Goals
   hiringTimeline: string;
   numberOfPeople: number;
+  workAuth: string[];
   
   // Step 3: Job Details
   jobType: string[];
@@ -50,30 +58,36 @@ interface JobData {
   companyId: string;
 }
 
-const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLogout }) => {
+const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLogout, mode = 'manual', parsedData }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [jobData, setJobData] = useState<JobData>({
-    jobTitle: '',
+    jobTitle: parsedData?.jobTitle || '',
     locationType: 'In person',
-    jobLocation: '',
+    jobLocation: parsedData?.jobLocation || '',
     expandCandidateSearch: false,
-    experienceRange: '',
+    experienceRange: parsedData?.experienceRange || '',
     country: '',
     language: '',
+    jobCategory: parsedData?.jobCategory || '',
+    priority: parsedData?.priority || 'Medium',
+    clientName: parsedData?.clientName || '',
+    jobCode: `JOB-${Date.now()}`,
+    reportingManager: parsedData?.reportingManager || '',
     hiringTimeline: '',
     numberOfPeople: 0,
-    jobType: [],
+    workAuth: parsedData?.workAuth || [],
+    jobType: parsedData?.jobType || [],
     payType: 'Range',
-    minSalary: '50,000',
-    maxSalary: '80,000',
-    payRate: 'per year',
-    currency: 'USD',
-    benefits: [],
-    jobDescription: '',
-    skills: [],
-    educationLevel: "Bachelor's degree",
+    minSalary: parsedData?.minSalary || '50,000',
+    maxSalary: parsedData?.maxSalary || '80,000',
+    payRate: parsedData?.payRate || 'per year',
+    currency: parsedData?.currency || 'USD',
+    benefits: parsedData?.benefits || [],
+    jobDescription: parsedData?.jobDescription || '',
+    skills: parsedData?.skills || [],
+    educationLevel: parsedData?.educationLevel || "Bachelor's degree",
     certifications: [],
-    companyName: '',
+    companyName: parsedData?.companyName || '',
     companyLogo: '',
     companyId: ''
   });
@@ -116,7 +130,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             setJobPostingCount(userJobs.length);
             
             // Show upgrade modal if limit reached
-            if (userJobs.length >= 4) {
+            if (userJobs.length >= 10) {
               setShowUpgradeModal(true);
             }
           }
@@ -128,6 +142,46 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     
     checkJobPostingLimit();
   }, [user]);
+
+  const updateJobData = (field: keyof JobData, value: any) => {
+    setJobData(prev => ({ ...prev, [field]: value }));
+    
+    // Auto-generate job description when job title is selected
+    if (field === 'jobTitle' && value.length > 2) {
+      setTimeout(() => generateJobDescription(value), 500);
+    }
+  };
+  useEffect(() => {
+    if (parsedData?.companyName && !jobData.companyLogo) {
+      const companies = [
+        { id: '1', name: 'Google', logo: 'https://img.logo.dev/google.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '2', name: 'Microsoft', logo: 'https://img.logo.dev/microsoft.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '3', name: 'Apple', logo: 'https://img.logo.dev/apple.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '4', name: 'Amazon', logo: 'https://img.logo.dev/amazon.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '5', name: 'Meta', logo: 'https://img.logo.dev/meta.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '6', name: 'Trinity Technology Solutions', logo: '/images/zync-logo.svg' },
+        { id: '7', name: 'TCS', logo: 'https://img.logo.dev/tcs.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '8', name: 'Infosys', logo: 'https://img.logo.dev/infosys.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '9', name: 'Wipro', logo: 'https://img.logo.dev/wipro.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '10', name: 'Zoho', logo: 'https://img.logo.dev/zoho.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '11', name: 'IBM', logo: 'https://img.logo.dev/ibm.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '12', name: 'Accenture', logo: 'https://img.logo.dev/accenture.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '13', name: 'Oracle', logo: 'https://img.logo.dev/oracle.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '14', name: 'Salesforce', logo: 'https://img.logo.dev/salesforce.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+        { id: '15', name: 'Adobe', logo: 'https://img.logo.dev/adobe.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' }
+      ];
+      
+      const matchedCompany = companies.find(company => 
+        company.name.toLowerCase().includes(parsedData.companyName.toLowerCase()) ||
+        parsedData.companyName.toLowerCase().includes(company.name.toLowerCase())
+      );
+      
+      if (matchedCompany) {
+        updateJobData('companyLogo', matchedCompany.logo);
+        updateJobData('companyId', matchedCompany.id);
+      }
+    }
+  }, [parsedData]);
 
   // Load countries on component mount
   useEffect(() => {
@@ -146,15 +200,6 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     };
     fetchCountries();
   }, []);
-
-  const updateJobData = (field: keyof JobData, value: any) => {
-    setJobData(prev => ({ ...prev, [field]: value }));
-    
-    // Auto-generate job description when job title is selected
-    if (field === 'jobTitle' && value.length > 2) {
-      setTimeout(() => generateJobDescription(value), 500);
-    }
-  };
 
   // AI-powered job title suggestions
   const handleJobTitleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,16 +482,16 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     }
 
     const companies = [
-      { id: '1', name: 'Google', logo: 'https://logo.clearbit.com/google.com' },
-      { id: '2', name: 'Microsoft', logo: 'https://logo.clearbit.com/microsoft.com' },
-      { id: '3', name: 'Apple', logo: 'https://logo.clearbit.com/apple.com' },
-      { id: '4', name: 'Amazon', logo: 'https://logo.clearbit.com/amazon.com' },
-      { id: '5', name: 'Meta', logo: 'https://logo.clearbit.com/meta.com' },
+      { id: '1', name: 'Google', logo: 'https://img.logo.dev/google.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '2', name: 'Microsoft', logo: 'https://img.logo.dev/microsoft.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '3', name: 'Apple', logo: 'https://img.logo.dev/apple.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '4', name: 'Amazon', logo: 'https://img.logo.dev/amazon.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '5', name: 'Meta', logo: 'https://img.logo.dev/meta.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
       { id: '6', name: 'Trinity Technology Solutions', logo: '/images/zync-logo.svg' },
-      { id: '7', name: 'TCS', logo: 'https://logo.clearbit.com/tcs.com' },
-      { id: '8', name: 'Infosys', logo: 'https://logo.clearbit.com/infosys.com' },
-      { id: '9', name: 'Wipro', logo: 'https://logo.clearbit.com/wipro.com' },
-      { id: '10', name: 'Zoho', logo: 'https://logo.clearbit.com/zoho.com' }
+      { id: '7', name: 'TCS', logo: 'https://img.logo.dev/tcs.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '8', name: 'Infosys', logo: 'https://img.logo.dev/infosys.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '9', name: 'Wipro', logo: 'https://img.logo.dev/wipro.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' },
+      { id: '10', name: 'Zoho', logo: 'https://img.logo.dev/zoho.com?token=pk_cY8JBeWnQR6g5m_ymQhBoQ&size=80' }
     ];
 
     const filtered = companies.filter(company => 
@@ -486,17 +531,20 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       <div className="text-center mb-8">
         <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 p-2">
           <img 
-            src="/images/zync-logo.svg" 
-            alt="ZyncJobs" 
+            src="/images/trinity-logo.webp" 
+            alt="Trinity Technology Solutions" 
             className="w-full h-full object-contain"
           />
         </div>
         <div className="flex justify-between items-center">
           <BackButton 
-            onClick={() => onNavigate('dashboard')}
-            text="Back to Dashboard"
+            onClick={() => mode === 'parse' ? onNavigate('job-parsing') : onNavigate('job-posting-selection')}
+            text={mode === 'parse' ? 'Back to Parser' : 'Back to Selection'}
           />
-          <h1 className="text-3xl font-bold text-gray-800">Add job basics</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            {mode === 'parse' ? 'Review Parsed Job' : 'Add job basics'}
+            {parsedData && <span className="text-sm text-green-600 ml-2">✨ AI Parsed</span>}
+          </h1>
           <button onClick={() => onNavigate('dashboard')} className="text-gray-500 text-2xl hover:text-gray-700">×</button>
         </div>
       </div>
@@ -585,7 +633,21 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
                         className="w-8 h-8 rounded object-contain bg-white border"
                         onError={(e) => {
                           const img = e.target as HTMLImageElement;
-                          img.src = '/images/zync-logo.svg';
+                          // Generate a letter avatar instead of using Trinity logo
+                          const firstLetter = company.name.charAt(0).toUpperCase();
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 32;
+                          canvas.height = 32;
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            ctx.fillStyle = '#3B82F6';
+                            ctx.fillRect(0, 0, 32, 32);
+                            ctx.fillStyle = 'white';
+                            ctx.font = '16px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(firstLetter, 16, 22);
+                            img.src = canvas.toDataURL();
+                          }
                         }}
                       />
                     </div>
@@ -632,20 +694,42 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         </div>
         
         <div>
-          <label className="block text-gray-700 font-medium mb-3">Experience Range *</label>
+          <label className="block text-gray-700 font-medium mb-3">Job Category *</label>
           <select
-            value={jobData.experienceRange}
-            onChange={(e) => updateJobData('experienceRange', e.target.value)}
+            value={jobData.jobCategory || ''}
+            onChange={(e) => updateJobData('jobCategory', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="">Select experience range</option>
-            <option value="0-1 years">0-1 years</option>
-            <option value="1-2 years">1-2 years</option>
-            <option value="2-3 years">2-3 years</option>
-            <option value="3-5 years">3-5 years</option>
-            <option value="5-7 years">5-7 years</option>
-            <option value="7-10 years">7-10 years</option>
-            <option value="10+ years">10+ years</option>
+            <option value="">Select job category</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Software Development">Software Development</option>
+            <option value="Data Science & Analytics">Data Science & Analytics</option>
+            <option value="Sales & Marketing">Sales & Marketing</option>
+            <option value="Finance & Accounting">Finance & Accounting</option>
+            <option value="Human Resources">Human Resources</option>
+            <option value="Operations">Operations</option>
+            <option value="Customer Service">Customer Service</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Education">Education</option>
+            <option value="Legal">Legal</option>
+            <option value="Manufacturing">Manufacturing</option>
+            <option value="Retail">Retail</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-gray-700 font-medium mb-3">Priority Level *</label>
+          <select
+            value={jobData.priority || 'Medium'}
+            onChange={(e) => updateJobData('priority', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="Low">🟢 Low Priority</option>
+            <option value="Medium">🟡 Medium Priority</option>
+            <option value="High">🟠 High Priority</option>
+            <option value="Urgent">🔴 Urgent</option>
           </select>
         </div>
         
@@ -712,21 +796,55 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         </div>
         
         <div>
-          <h3 className="text-gray-700 font-medium mb-2">Expand your candidate search</h3>
-          <p className="text-gray-500 text-sm mb-4">Over 10 million active job seekers are open to relocating.</p>
-          <label className="flex items-start space-x-3">
+          <label className="block text-gray-700 font-medium mb-3">Experience Range *</label>
+          <select
+            value={jobData.experienceRange}
+            onChange={(e) => updateJobData('experienceRange', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Select experience range</option>
+            <option value="0-1 years">0-1 years</option>
+            <option value="1-2 years">1-2 years</option>
+            <option value="2-3 years">2-3 years</option>
+            <option value="3-5 years">3-5 years</option>
+            <option value="5-7 years">5-7 years</option>
+            <option value="7-10 years">7-10 years</option>
+            <option value="10+ years">10+ years</option>
+          </select>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-gray-700 font-medium mb-3">Client Name</label>
             <input
-              type="checkbox"
-              checked={jobData.expandCandidateSearch}
-              onChange={(e) => updateJobData('expandCandidateSearch', e.target.checked)}
-              className="mt-1"
+              type="text"
+              value={jobData.clientName}
+              onChange={(e) => updateJobData('clientName', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g. ABC Corp"
             />
-            <div>
-              <span className="text-gray-700">I'm interested in attracting candidates open to relocation</span>
-              <button className="text-blue-600 ml-2 text-sm underline hover:text-blue-700">How it works</button>
-              <p className="text-gray-500 text-sm mt-1">Marking your interest helps improve our recommendations.</p>
-            </div>
-          </label>
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium mb-3">Job Code</label>
+            <input
+              type="text"
+              value={jobData.jobCode}
+              onChange={(e) => updateJobData('jobCode', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Auto-generated"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-gray-700 font-medium mb-3">Reporting Manager</label>
+          <input
+            type="text"
+            value={jobData.reportingManager}
+            onChange={(e) => updateJobData('reportingManager', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g. John Smith, VP Engineering"
+          />
         </div>
       </div>
       
@@ -744,7 +862,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
 
   const renderStep2 = () => (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Hiring goals</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Hiring goals & Requirements</h1>
       
       <div className="space-y-8">
         <div>
@@ -774,6 +892,56 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             placeholder="Enter number of people to hire"
             className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
+        </div>
+        
+        <div>
+          <label className="block text-gray-700 font-medium mb-3">Work Authorization Required</label>
+          <div className="space-y-2">
+            {[
+              'US Citizen',
+              'Green Card Holder',
+              'H1B Visa',
+              'L1 Visa',
+              'OPT/CPT',
+              'TN Visa',
+              'No Sponsorship Required',
+              'Will Sponsor'
+            ].map((auth) => (
+              <label key={auth} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={(jobData.workAuth || []).includes(auth)}
+                  onChange={(e) => {
+                    const currentAuth = jobData.workAuth || [];
+                    const newAuth = e.target.checked
+                      ? [...currentAuth, auth]
+                      : currentAuth.filter(a => a !== auth);
+                    updateJobData('workAuth', newAuth);
+                  }}
+                  className="rounded"
+                />
+                <span className="text-gray-700">{auth}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-gray-700 font-medium mb-2">Expand your candidate search</h3>
+          <p className="text-gray-500 text-sm mb-4">Over 10 million active job seekers are open to relocating.</p>
+          <label className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              checked={jobData.expandCandidateSearch}
+              onChange={(e) => updateJobData('expandCandidateSearch', e.target.checked)}
+              className="mt-1"
+            />
+            <div>
+              <span className="text-gray-700">I'm interested in attracting candidates open to relocation</span>
+              <button className="text-blue-600 ml-2 text-sm underline hover:text-blue-700">How it works</button>
+              <p className="text-gray-500 text-sm mt-1">Marking your interest helps improve our recommendations.</p>
+            </div>
+          </label>
         </div>
       </div>
       
@@ -1345,13 +1513,13 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     }
 
     // Check job posting limit
-    if (jobPostingCount >= 4) {
+    if (jobPostingCount >= 10) {
       setShowUpgradeModal(true);
       return;
     }
 
     // Get proper company logo
-    const logoUrl = jobData.companyLogo || '/images/zync-logo.svg';
+    const logoUrl = jobData.companyLogo || '/images/trinity-logo.webp';
     
     const jobPostData = {
       jobTitle: jobData.jobTitle,
@@ -1410,8 +1578,14 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
           experienceRange: '',
           country: '',
           language: '',
+          jobCategory: '',
+          priority: 'Medium',
+          clientName: '',
+          jobCode: `JOB-${Date.now()}`,
+          reportingManager: '',
           hiringTimeline: '',
           numberOfPeople: 0,
+          workAuth: [],
           jobType: [],
           payType: 'Range',
           minSalary: '50,000',
@@ -1482,7 +1656,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Free Limit Reached</h3>
               <p className="text-gray-600 mb-6">
-                You've used all 4 free job postings. Upgrade to Professional plan to post unlimited jobs.
+                You've used all 10 free job postings. Upgrade to Professional plan to post unlimited jobs.
               </p>
               <div className="flex space-x-3">
                 <button
@@ -1511,13 +1685,13 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       
       <div className="min-h-screen bg-white">
         {/* Job Posting Limit Warning */}
-        {jobPostingCount >= 3 && jobPostingCount < 4 && (
+        {jobPostingCount >= 8 && jobPostingCount < 10 && (
           <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4">
             <div className="max-w-2xl mx-auto flex items-center justify-between">
               <div className="flex items-center">
                 <span className="text-yellow-600 mr-2">⚠️</span>
                 <span className="text-yellow-800">
-                  You have {4 - jobPostingCount} free job posting{4 - jobPostingCount !== 1 ? 's' : ''} remaining.
+                  You have {10 - jobPostingCount} free job posting{10 - jobPostingCount !== 1 ? 's' : ''} remaining.
                 </span>
               </div>
               <button

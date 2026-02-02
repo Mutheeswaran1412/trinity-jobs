@@ -1,6 +1,6 @@
 To create real meeting links , follow these steps:
 
-🔵 Zoom Real API Setup
+🔵Zoom Real API Setup
 Step 1: Create Zoom App
 Go to marketplace.zoom.us
 

@@ -88,17 +88,85 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
     });
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
+    console.log('🗑️ Delete account clicked');
+    
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      localStorage.removeItem('user');
-      setNotification({
-        type: 'success',
-        message: 'Account deleted successfully',
-        isVisible: true
-      });
-      setTimeout(() => {
-        onNavigate('home');
-      }, 2000);
+      console.log('✅ User confirmed deletion');
+      
+      try {
+        // Get user ID from localStorage
+        const userData = localStorage.getItem('user');
+        console.log('📦 User data from localStorage:', userData);
+        
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          console.log('👤 Parsed user:', parsedUser);
+          
+          const userId = parsedUser.id || parsedUser._id;
+          console.log('🆔 User ID for deletion:', userId);
+          
+          if (userId) {
+            console.log('🌐 Calling delete API...');
+            
+            // Call delete API
+            const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            
+            console.log('📡 API Response status:', response.status);
+            const responseData = await response.json();
+            console.log('📡 API Response data:', responseData);
+            
+            if (response.ok) {
+              console.log('✅ Account deleted from database');
+            } else {
+              console.error('❌ Failed to delete from database:', responseData);
+            }
+          } else {
+            console.error('❌ No user ID found');
+          }
+        } else {
+          console.error('❌ No user data in localStorage');
+        }
+        
+        // Clear localStorage and logout regardless of API call result
+        console.log('🧹 Clearing localStorage...');
+        localStorage.removeItem('user');
+        localStorage.clear(); // Clear everything
+        
+        console.log('👤 Setting user to null...');
+        setUser(null);
+        
+        if (onLogout) {
+          console.log('🚪 Calling onLogout...');
+          onLogout();
+        }
+        
+        setNotification({
+          type: 'success',
+          message: 'Account deleted successfully',
+          isVisible: true
+        });
+        
+        console.log('🏠 Navigating to home in 1 second...');
+        setTimeout(() => {
+          onNavigate('home');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Delete account error:', error);
+        setNotification({
+          type: 'error',
+          message: 'Failed to delete account. Please try again.',
+          isVisible: true
+        });
+      }
+    } else {
+      console.log('❌ User cancelled deletion');
     }
   };
 
@@ -313,9 +381,32 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             </p>
                             <button
                               onClick={handleDeleteAccount}
-                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium"
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium mr-4"
                             >
                               Delete Account
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const userData = localStorage.getItem('user');
+                                if (userData) {
+                                  const parsedUser = JSON.parse(userData);
+                                  const email = parsedUser.email;
+                                  if (email) {
+                                    try {
+                                      const response = await fetch(`http://localhost:5000/api/users/check/${email}`);
+                                      const result = await response.json();
+                                      alert(result.exists ? 
+                                        `Account exists in DB: ${result.user.name} (${result.user.userType})` : 
+                                        'Account NOT found in database - Successfully deleted!');
+                                    } catch (error) {
+                                      alert('Error checking database: ' + error.message);
+                                    }
+                                  }
+                                }
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+                            >
+                              Check DB Status
                             </button>
                           </div>
                         </div>

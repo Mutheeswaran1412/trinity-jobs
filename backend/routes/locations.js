@@ -23,6 +23,11 @@ router.get('/', (req, res) => {
   res.json({ locations: locationsData });
 });
 
+// GET /api/countries - Get all countries (alias for locations)
+router.get('/countries', (req, res) => {
+  res.json({ countries: locationsData });
+});
+
 // GET /api/locations/search/:query - Search locations
 router.get('/search/:query', (req, res) => {
   console.log('Location search called for:', req.params.query);

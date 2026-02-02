@@ -12,6 +12,9 @@ const SearchEngine: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [trending, setTrending] = useState<any[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [allLocations, setAllLocations] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     jobType: [],
     industry: [],
@@ -75,7 +78,22 @@ const SearchEngine: React.FC = () => {
       }
     };
 
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/locations`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.locations && data.locations.length > 0) {
+            setAllLocations(data.locations);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+
     fetchTrending();
+    fetchLocations();
   }, []);
 
   useEffect(() => {
@@ -130,6 +148,25 @@ const SearchEngine: React.FC = () => {
   const selectSuggestion = (suggestion: string) => {
     setSearchTerm(suggestion);
     setShowSuggestions(false);
+  };
+
+  const handleLocationSearch = (value: string) => {
+    setLocation(value);
+    if (value.length > 0) {
+      const filtered = allLocations.filter(loc => 
+        loc.toLowerCase().includes(value.toLowerCase())
+      );
+      setLocationSuggestions(filtered.slice(0, 10));
+      setShowLocationDropdown(true);
+    } else {
+      setLocationSuggestions(allLocations.slice(0, 10));
+      setShowLocationDropdown(true);
+    }
+  };
+
+  const selectLocation = (loc: string) => {
+    setLocation(loc);
+    setShowLocationDropdown(false);
   };
 
   const renderCompanyCard = (company: any) => (
@@ -244,7 +281,7 @@ const SearchEngine: React.FC = () => {
                 value={searchTerm}
                 onChange={handleInputChange}
                 onFocus={() => searchTerm.length >= 2 && setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               {showSuggestions && suggestions.length > 0 && (
@@ -253,7 +290,7 @@ const SearchEngine: React.FC = () => {
                     <button
                       key={index}
                       type="button"
-                      onClick={() => selectSuggestion(suggestion)}
+                      onMouseDown={() => selectSuggestion(suggestion)}
                       className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center"
                     >
                       <Search className="w-4 h-4 text-gray-400 mr-3" />
@@ -270,9 +307,29 @@ const SearchEngine: React.FC = () => {
                 type="text"
                 placeholder="Location"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => handleLocationSearch(e.target.value)}
+                onFocus={() => {
+                  setLocationSuggestions(allLocations.slice(0, 10));
+                  setShowLocationDropdown(true);
+                }}
+                onBlur={() => setTimeout(() => setShowLocationDropdown(false), 300)}
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              {showLocationDropdown && locationSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                  {locationSuggestions.map((loc, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onMouseDown={() => selectLocation(loc)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 flex items-center"
+                    >
+                      <MapPin className="w-4 h-4 text-gray-400 mr-3" />
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             
             <button

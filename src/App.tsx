@@ -9,6 +9,9 @@ import HowItWorks from './components/HowItWorks';
 import TalentedPeople from './components/TalentedPeople';
 import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
+import PWAInstallButton from './components/PWAInstallButton';
+import OfflineIndicator from './components/OfflineIndicator';
+import { PWAManager } from './utils/pwa';
 import LoginPage from './pages/LoginPage';
 import LoginModal from './components/LoginModal';
 import RegisterModal from './components/RegisterModal';
@@ -22,6 +25,7 @@ import EmployersPage from './pages/EmployersPage';
 import JobListingsPage from './pages/JobListingsPage';
 import CompaniesPage from './pages/CompaniesPage';
 import JobHuntingPage from './pages/JobHuntingPage';
+import TokenHandler from './components/TokenHandler';
 
 import ResumeTemplatesPage from './pages/ResumeTemplatesPage';
 import ResumeEditorPage from './pages/ResumeEditorPage';
@@ -34,6 +38,8 @@ import CareerInsightsHubPage from './pages/CareerInsightsHubPage';
 import SalaryReportPage from './pages/SalaryReportPage';
 import CandidateSearchPage from './pages/CandidateSearchPage';
 import JobPostingPage from './pages/JobPostingPage';
+import JobPostingSelectionPage from './pages/JobPostingSelectionPage';
+import JobParsingPage from './pages/JobParsingPage';
 import JobDetailPage from './pages/JobDetailPage';
 import SkillDetailPage from './pages/SkillDetailPage';
 import CareerResources from './components/CareerResources';
@@ -67,6 +73,7 @@ import ResumeUploadWithModeration from './components/ResumeUploadWithModeration'
 import AIScoringDemoPage from './pages/AIScoringDemoPage';
 import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
+import CompanyReviewsPage from './pages/CompanyReviewsPage';
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
 import MobileNavigation from './components/MobileNavigation';
@@ -97,6 +104,19 @@ function App() {
 
   // Initialize user from localStorage on app start
   useEffect(() => {
+    // Initialize PWA
+    PWAManager.registerServiceWorker();
+    PWAManager.requestNotificationPermission();
+    
+    // Check for OAuth callback token first
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      // Handle OAuth callback - don't load from localStorage yet
+      return;
+    }
+    
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
@@ -295,11 +315,25 @@ function App() {
     closeModals();
   };
 
+  // Check for OAuth callback token
+  const urlParams = new URLSearchParams(window.location.search);
+  const oauthToken = urlParams.get('token');
+  
+  if (oauthToken) {
+    return <TokenHandler onLogin={handleLogin} onNavigate={handleNavigation} />;
+  }
+
   const handleLogout = () => {
+    console.log('🚪 App.tsx handleLogout called');
+    console.log('👤 Current user before logout:', user);
+    
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.clear(); // Clear everything
     setCurrentPage('home');
     setNavigationHistory(['home']); // Reset navigation history
+    
+    console.log('✅ App.tsx logout complete - user set to null, navigated to home');
   };
 
   const handleRoleSelection = (role: 'candidate' | 'employer') => {
@@ -337,6 +371,16 @@ function App() {
 
   if (currentPage === 'companies') {
     return <CompaniesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'company-reviews') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <CompanyReviewsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <Footer onNavigate={handleNavigation} />
+      </div>
+    );
   }
 
   if (currentPage === 'job-hunting') {
@@ -490,11 +534,35 @@ function App() {
     return <JobRolePage onNavigate={handleNavigation} jobTitle={currentTopic} />;
   }
 
+  if (currentPage === 'job-posting-selection') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <JobPostingSelectionPage onNavigate={handleNavigation} user={user as any} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'job-parsing') {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <JobParsingPage onNavigate={handleNavigation} user={user as any} />
+      </div>
+    );
+  }
+
   if (currentPage === 'job-posting') {
     return (
       <div className="min-h-screen bg-white">
         <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
-        <JobPostingPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <JobPostingPage 
+          onNavigate={handleNavigation} 
+          user={user as any} 
+          onLogout={handleLogout}
+          mode={currentData?.mode}
+          parsedData={currentData?.parsedData}
+        />
       </div>
     );
   }
@@ -578,7 +646,7 @@ function App() {
     return (
       <div className="min-h-screen bg-white">
         <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
-        <SettingsPage onNavigate={handleNavigation} />
+        <SettingsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
         <Footer onNavigate={handleNavigation} />
       </div>
     );
@@ -728,6 +796,7 @@ function App() {
   return (
     <>
       <APITest />
+      <OfflineIndicator />
       <Notification
         type={notification.type}
         message={notification.message}
@@ -745,6 +814,7 @@ function App() {
         <Footer onNavigate={handleNavigation} />
       <ChatWidget />
       <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
+      <PWAInstallButton />
       
       {/* Modals */}
       <LoginModal 

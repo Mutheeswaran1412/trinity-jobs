@@ -1,3 +1,7 @@
+import express from 'express';
+
+const router = express.Router();
+
 // Debug endpoint to check analytics data
 router.get('/debug/:email', async (req, res) => {
   try {

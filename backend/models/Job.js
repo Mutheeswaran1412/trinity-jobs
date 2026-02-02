@@ -54,7 +54,7 @@ const jobSchema = new mongoose.Schema({
   description: {
     type: String,
     required: [true, 'Job description is required'],
-    maxlength: [2000, 'Description cannot exceed 2000 characters']
+    maxlength: [5000, 'Description cannot exceed 5000 characters']
   },
   experience: {
     type: String,
@@ -157,6 +157,11 @@ const jobSchema = new mongoose.Schema({
   isThirdPartyPosting: {
     type: Boolean,
     default: false // True if posting for a different company
+  },
+  jobCode: {
+    type: String,
+    unique: true,
+    trim: true
   }
 }, {
   timestamps: true

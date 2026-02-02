@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Search, MapPin } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, MapPin, ChevronDown } from "lucide-react";
 import womenImage from '../assets/women.png';
+import { API_ENDPOINTS } from '../config/api';
 
 interface NewHeroProps {
   onNavigate?: (page: string, data?: any) => void;
@@ -10,6 +11,91 @@ interface NewHeroProps {
 const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState('');
+  const [allJobTitles, setAllJobTitles] = useState<string[]>([]);
+  const [allLocations, setAllLocations] = useState<string[]>([]);
+  const [jobSuggestions, setJobSuggestions] = useState<string[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showJobDropdown, setShowJobDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const jobInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Fetch job titles from API
+    const fetchJobTitles = async () => {
+      try {
+        console.log('Fetching job titles from:', `${API_ENDPOINTS.BASE_URL}/api/jobs/titles`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/jobs/titles`);
+        const data = await response.json();
+        console.log('Job titles response:', data);
+        if (data.job_titles && data.job_titles.length > 0) {
+          setAllJobTitles(data.job_titles);
+          setJobSuggestions(data.job_titles.slice(0, 10));
+        }
+      } catch (error) {
+        console.error('Error fetching job titles:', error);
+      }
+    };
+
+    // Fetch locations from API
+    const fetchLocations = async () => {
+      try {
+        console.log('Fetching locations from:', `${API_ENDPOINTS.BASE_URL}/api/locations`);
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/locations`);
+        const data = await response.json();
+        console.log('Locations response:', data);
+        if (data.locations && data.locations.length > 0) {
+          setAllLocations(data.locations);
+          setLocationSuggestions(data.locations.slice(0, 10));
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+    
+    fetchJobTitles();
+    fetchLocations();
+  }, []);
+
+  const handleJobSearch = (value: string) => {
+    setSearchTerm(value);
+    if (value.length > 0) {
+      const filtered = allJobTitles.filter(job => 
+        job.toLowerCase().includes(value.toLowerCase())
+      );
+      setJobSuggestions(filtered.slice(0, 10));
+      setShowJobDropdown(true);
+    } else {
+      setJobSuggestions(allJobTitles.slice(0, 10));
+      setShowJobDropdown(true);
+    }
+  };
+
+  const handleLocationSearch = (value: string) => {
+    console.log('Location search:', value, 'All locations:', allLocations.length);
+    setLocation(value);
+    if (value.length > 0) {
+      const filtered = allLocations.filter(loc => 
+        loc.toLowerCase().includes(value.toLowerCase())
+      );
+      console.log('Filtered locations:', filtered);
+      setLocationSuggestions(filtered.slice(0, 10));
+      setShowLocationDropdown(true);
+    } else {
+      setLocationSuggestions(allLocations.slice(0, 10));
+      setShowLocationDropdown(true);
+    }
+  };
+
+  const selectJob = (job: string) => {
+    setSearchTerm(job);
+    setShowJobDropdown(false);
+  };
+
+  const selectLocation = (loc: string) => {
+    setLocation(loc);
+    setShowLocationDropdown(false);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,26 +153,64 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
                             <Search className="h-5 w-5 text-blue-600" />
                           </div>
                           <input
+                            ref={jobInputRef}
                             type="text"
                             placeholder="Job Title, Keywords"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => handleJobSearch(e.target.value)}
+                            onFocus={() => {
+                              setJobSuggestions(allJobTitles.slice(0, 10));
+                              setShowJobDropdown(true);
+                            }}
+                            onBlur={() => setTimeout(() => setShowJobDropdown(false), 300)}
                             required
                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
+                          {showJobDropdown && jobSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {jobSuggestions.map((job, index) => (
+                                <div
+                                  key={index}
+                                  onMouseDown={() => selectJob(job)}
+                                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  {job}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <MapPin className="h-5 w-5 text-blue-600" />
                           </div>
                           <input
+                            ref={locationInputRef}
                             type="text"
-                            placeholder="City Or Postcode"
+                            placeholder="City Or Country"
                             value={location}
-                            onChange={(e) => setLocation(e.target.value)}
+                            onChange={(e) => handleLocationSearch(e.target.value)}
+                            onFocus={() => {
+                              setLocationSuggestions(allLocations.slice(0, 10));
+                              setShowLocationDropdown(true);
+                            }}
+                            onBlur={() => setTimeout(() => setShowLocationDropdown(false), 300)}
                             required
                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
+                          {showLocationDropdown && locationSuggestions.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {locationSuggestions.map((loc, index) => (
+                                <div
+                                  key={index}
+                                  onMouseDown={() => selectLocation(loc)}
+                                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  {loc}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -149,15 +273,15 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
       </div>
 
       {/* Partners Section */}
-      <div className="bg-white py-12">
+      <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center space-x-12 opacity-60">
-            <span className="text-2xl font-bold text-gray-400">Google</span>
-            <span className="text-2xl font-bold text-gray-400">Microsoft</span>
-            <span className="text-2xl font-bold text-gray-400">Amazon</span>
-            <span className="text-2xl font-bold text-gray-400">Meta</span>
-            <span className="text-2xl font-bold text-gray-400">Apple</span>
-            <span className="text-2xl font-bold text-gray-400">Netflix</span>
+          <div className="flex justify-center items-center space-x-12">
+            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31" alt="Microsoft" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://d1.awsstatic.com/logos/aws-logo-lockups/poweredbyaws/PB_AWS_logo_RGB_REV_SQ.8c88ac215fe4e441dc42865dd6962ed4f444a90d.png" alt="Amazon" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://www.apple.com/ac/structured-data/images/knowledge_graph_logo.png" alt="Apple" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://assets.nflxext.com/ffe/siteui/common/icons/nficon2016.png" alt="Netflix" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </div>

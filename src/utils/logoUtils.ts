@@ -82,7 +82,12 @@ const getCompanyDomain = (companyName: string): string => {
     'aws': 'aws.amazon.com',
     'azure': 'azure.microsoft.com',
     'gcp': 'cloud.google.com',
-    'trinity technology solution': 'trinitetech.com'
+    'trinity technology solution': 'trinitetech.com',
+    'tcs': 'tcs.com',
+    'infosys': 'infosys.com',
+    'wipro': 'wipro.com',
+    'zoho': 'zoho.com',
+    'accenture': 'accenture.com'
   };
   
   // Check for exact matches first

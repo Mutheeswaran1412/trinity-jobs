@@ -183,11 +183,33 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   };
 
   const getDisplayLogo = () => {
+    console.log('getDisplayLogo - companyLogo:', companyLogo);
+    console.log('getDisplayLogo - companyName:', companyName);
+    console.log('getDisplayLogo - user email:', user?.email);
+    
+    // Check if user is from Trinity Technology Solutions
+    if (user?.email && user.email.includes('@trinitetech')) {
+      console.log('Using Trinity logo for trinitetech employee');
+      return '/images/company-logos/trinity-logo.png';
+    }
+    
+    // First try to use company logo from user data
     if (companyLogo && companyLogo.trim() !== '' && !companyLogo.includes('clearbit.com') && !companyLogo.includes('gstatic.com')) {
+      console.log('Using stored company logo:', companyLogo);
       return companyLogo;
     }
     
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(employerName || companyName)}&size=128&background=6366f1&color=ffffff&bold=true`;
+    // Try to get logo from company name using Clearbit
+    if (companyName && companyName.trim() !== '') {
+      const companyDomain = companyName.toLowerCase().replace(/\s+/g, '') + '.com';
+      console.log('Trying Clearbit logo for:', companyDomain);
+      return `https://logo.clearbit.com/${companyDomain}`;
+    }
+    
+    // Fallback to avatar with company name or employer name
+    const displayName = companyName || employerName;
+    console.log('Using fallback avatar for:', displayName);
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=6366f1&color=ffffff&bold=true`;
   };
 
   const getJobCompanyLogo = (job: any) => {
@@ -259,12 +281,13 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             <div className="relative">
               <img
                 src={getDisplayLogo()}
-                alt={employerName}
+                alt={companyName || employerName}
                 className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                 onError={(e) => {
                   const img = e.target as HTMLImageElement;
                   console.log('Logo failed to load, using fallback');
-                  img.src = getFallbackLogo(employerName || companyName);
+                  const displayName = companyName || employerName;
+                  img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=128&background=6366f1&color=ffffff&bold=true`;
                 }}
               />
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -272,7 +295,6 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             <div className="flex-1">
               <p className="font-semibold text-gray-900 text-sm">{employerName}</p>
               <p className="text-xs text-gray-500">{user?.email}</p>
-              <p className="text-xs text-gray-600 font-medium">{companyName}</p>
               {companyWebsite && (
                 <a 
                   href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`}
@@ -342,11 +364,11 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <Briefcase className="w-5 h-5" />
-            <span className="font-medium">My Jobs</span>
+            <span className="font-medium">Posted Jobs</span>
           </button>
 
           <button
-            onClick={() => onNavigate('job-posting')}
+            onClick={() => onNavigate('job-posting-selection')}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <FileText className="w-5 h-5" />
@@ -453,7 +475,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
               <button
-                onClick={() => onNavigate('job-posting')}
+                onClick={() => onNavigate('job-posting-selection')}
                 className="bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-800 transition-colors"
               >
                 Post a Job
@@ -527,7 +549,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
               </div>
 
               {/* Job Posting Limit Warning */}
-              {jobs.length >= 3 && (
+              {jobs.length >= 8 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -536,12 +558,12 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                       </div>
                       <div>
                         <h3 className="text-yellow-800 font-semibold">
-                          {jobs.length >= 4 ? 'Free limit reached' : 'Approaching free limit'}
+                          {jobs.length >= 10 ? 'Free limit reached' : 'Approaching free limit'}
                         </h3>
                         <p className="text-yellow-700 text-sm">
-                          {jobs.length >= 4 
-                            ? 'You\'ve used all 4 free job postings. Upgrade to post more jobs.' 
-                            : `You\'ve used ${jobs.length}/4 free job postings.`
+                          {jobs.length >= 10 
+                            ? 'You\'ve used all 10 free job postings. Upgrade to post more jobs.' 
+                            : `You\'ve used ${jobs.length}/10 free job postings.`
                           }
                         </p>
                       </div>
@@ -550,7 +572,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                       onClick={() => onNavigate('pricing')}
                       className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
                     >
-                      {jobs.length >= 4 ? 'Upgrade Now' : 'View Plans'}
+                      {jobs.length >= 10 ? 'Upgrade Now' : 'View Plans'}
                     </button>
                   </div>
                 </div>
@@ -563,7 +585,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   
                   <div className="space-y-3">
                     <button
-                      onClick={() => onNavigate('job-posting')}
+                      onClick={() => onNavigate('job-posting-selection')}
                       className="w-full flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left"
                     >
                       <Plus className="w-5 h-5 text-blue-600" />
@@ -592,6 +614,14 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                     >
                       <Folder className="w-5 h-5 text-yellow-600" />
                       <span className="font-medium text-gray-900">Manage Applications</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => onNavigate('interviews')}
+                      className="w-full flex items-center space-x-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-left"
+                    >
+                      <MessageSquare className="w-5 h-5 text-orange-600" />
+                      <span className="font-medium text-gray-900">Schedule Interview</span>
                     </button>
                   </div>
                 </div>
@@ -643,7 +673,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No Applications Yet</h3>
                   <p className="text-gray-600 mb-6">Post more jobs to start receiving applications from candidates.</p>
                   <button
-                    onClick={() => onNavigate('job-posting')}
+                    onClick={() => onNavigate('job-posting-selection')}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     Post a Job
@@ -784,6 +814,20 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                             <option value="rejected">Rejected</option>
                             <option value="hired">Hired</option>
                           </select>
+                          <button 
+                            onClick={() => {
+                              // Navigate to interview scheduling with candidate data
+                              onNavigate('interview-schedule', {
+                                candidateName: application.candidateName,
+                                candidateEmail: application.candidateEmail,
+                                jobTitle: application.jobId?.jobTitle || application.jobId?.title,
+                                applicationId: application._id
+                              });
+                            }}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
+                          >
+                            Schedule Interview
+                          </button>
                           <button 
                             onClick={() => onNavigate('candidate-profile')}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"

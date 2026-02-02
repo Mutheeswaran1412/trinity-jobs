@@ -1100,16 +1100,16 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   Browse All Jobs
                 </button>
                 <button
+                  onClick={() => onNavigate('company-reviews')}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+                >
+                  Company Reviews
+                </button>
+                <button
                   onClick={() => onNavigate('skill-assessments')}
                   className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
                 >
                   Take Skill Assessment
-                </button>
-                <button
-                  onClick={() => onNavigate('interviews')}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                >
-                  Schedule Interview
                 </button>
                 <button
                   onClick={() => onNavigate('my-applications')}

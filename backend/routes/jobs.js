@@ -21,6 +21,42 @@ try {
   console.error('Error loading companies data:', error);
 }
 
+// GET /api/jobs/titles - Get all job titles
+router.get('/titles', (req, res) => {
+  try {
+    const titlesPath = path.join(__dirname, '../data/job_titles.json');
+    const rawData = fs.readFileSync(titlesPath, 'utf8');
+    const data = JSON.parse(rawData);
+    res.json({ job_titles: data.job_titles || [] });
+  } catch (error) {
+    console.error('Error loading job titles:', error);
+    res.json({ job_titles: [] });
+  }
+});
+
+// GET /api/jobs/countries - Get all countries
+router.get('/countries', (req, res) => {
+  try {
+    const locationsPath = path.join(__dirname, '../data/locations.json');
+    const rawData = fs.readFileSync(locationsPath, 'utf8');
+    const data = JSON.parse(rawData);
+    res.json({ countries: data.locations || [] });
+  } catch (error) {
+    console.error('Error loading locations:', error);
+    res.json({ countries: [] });
+  }
+});
+
+// Helper function to generate job code
+function generateJobCode(jobTitle, company) {
+  const titleCode = jobTitle.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+  const companyCode = company.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
+  const timestamp = Date.now().toString().slice(-6);
+  const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+  
+  return `${titleCode}${companyCode}${timestamp}${randomNum}`;
+}
+
 // Helper function to get company logo
 function getCompanyLogo(companyName) {
   if (!companyName) return null;
@@ -92,7 +128,7 @@ router.post('/', [
   body('company').notEmpty().withMessage('Company is required'),
   body('location').notEmpty().withMessage('Location is required'),
   body('jobType').isIn(['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internship']),
-  body('description').notEmpty().withMessage('Description is required')
+  body('description').notEmpty().withMessage('Description is required').isLength({ max: 5000 }).withMessage('Description cannot exceed 5000 characters')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -117,7 +153,8 @@ router.post('/', [
       employerCompany: employerCompany,
       experience: req.body.experienceRange || req.body.experience,
       experienceLevel: req.body.experienceRange || req.body.experience,
-      isActive: true
+      isActive: true,
+      jobCode: generateJobCode(req.body.jobTitle, req.body.company)
     };
     
     const job = new Job(jobData);

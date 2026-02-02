@@ -20,7 +20,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   ];
 
   const employerLinks = [
-    { name: "Post a Job", action: () => onNavigate && onNavigate('job-posting') },
+    { name: "Post a Job", action: () => onNavigate && onNavigate('job-posting-selection') },
     { name: "Find Candidates", action: () => onNavigate && onNavigate('candidate-search') },
     { name: "Employer Solutions", action: () => onNavigate && onNavigate('employers') },
     { name: "Hiring Dashboard", action: () => onNavigate && onNavigate('employer-login') },

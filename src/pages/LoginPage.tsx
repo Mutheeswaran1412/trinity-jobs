@@ -61,7 +61,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
       
       if (err instanceof Error) {
         if (err.message.includes('Account not found')) {
-          errorMessage = 'Account not found. Please register first or check your email.';
+          errorMessage = 'Account not found. Please register first.';
+          // Show registration option
+          setTimeout(() => {
+            if (confirm('Account not found. Would you like to create a new account?')) {
+              onNavigate('role-selection');
+            }
+          }, 1000);
         } else if (err.message.includes('Invalid password')) {
           errorMessage = 'Incorrect password. Please try again or reset your password.';
         } else if (err.message.includes('Account is inactive')) {

@@ -206,9 +206,9 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               {showIndustryDropdown && getFilteredIndustries().length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {getFilteredIndustries().map((industry, index) => (
+                  {getFilteredIndustries().map((industry) => (
                     <div
-                      key={`industry-${industry}-${index}`}
+                      key={`industry-${industry}`}
                       onClick={() => handleIndustrySelect(industry)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -233,9 +233,9 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               {showSizeDropdown && getFilteredSizes().length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {getFilteredSizes().map((size, index) => (
+                  {getFilteredSizes().map((size) => (
                     <div
-                      key={`size-${size}-${index}`}
+                      key={`size-${size}`}
                       onClick={() => handleSizeSelect(size)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >
@@ -260,9 +260,9 @@ const CompaniesPage = ({ onNavigate, user, onLogout }: {
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               {showWorkSettingDropdown && getFilteredWorkSettings().length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {getFilteredWorkSettings().map((setting, index) => (
+                  {getFilteredWorkSettings().map((setting) => (
                     <div
-                      key={`setting-${setting}-${index}`}
+                      key={`setting-${setting}`}
                       onClick={() => handleWorkSettingSelect(setting)}
                       className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
                     >

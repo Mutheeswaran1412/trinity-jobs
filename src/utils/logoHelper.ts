@@ -49,7 +49,16 @@ const getCompanyDomain = (companyName: string): string => {
     'airbnb': 'airbnb.com',
     'spotify': 'spotify.com',
     'twitter': 'twitter.com',
-    'linkedin': 'linkedin.com'
+    'linkedin': 'linkedin.com',
+    'ibm': 'ibm.com',
+    'accenture': 'accenture.com',
+    'oracle': 'oracle.com',
+    'salesforce': 'salesforce.com',
+    'adobe': 'adobe.com',
+    'tcs': 'tcs.com',
+    'infosys': 'infosys.com',
+    'wipro': 'wipro.com',
+    'zoho': 'zoho.com'
   };
   
   if (domainMap[name]) {

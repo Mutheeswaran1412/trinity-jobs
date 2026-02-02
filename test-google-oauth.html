@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google OAuth Test - ZyncJobs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-google {
+            background-color: #4285f4;
+            color: white;
+        }
+        .btn-google:hover {
+            background-color: #357ae8;
+        }
+        .btn-employer {
+            background-color: #34a853;
+            color: white;
+        }
+        .btn-employer:hover {
+            background-color: #2d8f47;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+        .credentials {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Google OAuth Test - ZyncJobs</h1>
+        
+        <div class="info">
+            <strong>Test Google OAuth Integration</strong><br>
+            Click the buttons below to test Google OAuth login for different user types.
+        </div>
+
+        <div class="credentials">
+            <strong>Google OAuth Credentials:</strong><br>
+            Client ID: 1035821719106-pjk3coi7nhrdt1mskf408jb378gm2noo.apps.googleusercontent.com<br>
+            Client Secret: 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 (configured)
+        </div>
+
+        <h3>Test OAuth Login:</h3>
+        
+        <a href="http://localhost:5000/api/auth/google?userType=candidate" class="btn btn-google">
+            🔍 Login as Candidate
+        </a>
+        
+        <a href="http://localhost:5000/api/auth/google?userType=employer" class="btn btn-employer">
+            🏢 Login as Employer
+        </a>
+
+        <div class="info">
+            <strong>What happens when you click:</strong><br>
+            1. You'll be redirected to Google's OAuth consent screen<br>
+            2. After granting permission, Google will redirect back to our app<br>
+            3. Our backend will create/login the user and redirect to the frontend<br>
+            4. You should be logged in automatically
+        </div>
+
+        <h3>Backend Status:</h3>
+        <div id="backend-status">Checking backend...</div>
+
+        <h3>OAuth Flow:</h3>
+        <ol>
+            <li>User clicks "Continue with Google"</li>
+            <li>Redirected to: <code>/api/auth/google?userType=candidate</code></li>
+            <li>Google OAuth consent screen</li>
+            <li>Google redirects to: <code>/api/auth/google/callback</code></li>
+            <li>Backend creates JWT token and redirects to frontend</li>
+            <li>Frontend receives token and logs user in</li>
+        </ol>
+    </div>
+
+    <script>
+        // Check if backend is running
+        fetch('http://localhost:5000/api/health')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('backend-status').innerHTML = 
+                    `✅ Backend is running (${data.status}) - Environment: ${data.environment}`;
+            })
+            .catch(error => {
+                document.getElementById('backend-status').innerHTML = 
+                    '❌ Backend is not running. Please start the backend server first.';
+            });
+    </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onNavigate, user, onLogout })
       borderColor: "border-gray-200",
       buttonColor: "bg-gray-600 hover:bg-gray-700",
       features: [
-        { text: "4 Job Postings", included: true },
+        { text: "10 Job Postings", included: true },
         { text: "Basic Job Listing", included: true },
         { text: "Standard Support", included: true },
         { text: "Basic Analytics", included: true },
@@ -91,7 +91,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onNavigate, user, onLogout })
               Choose Your Plan
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Start with 4 free job postings, then upgrade for unlimited access to our powerful hiring tools
+              Start with 10 free job postings, then upgrade for unlimited access to our powerful hiring tools
             </p>
           </div>
 
@@ -140,14 +140,20 @@ const PricingPage: React.FC<PricingPageProps> = ({ onNavigate, user, onLogout })
                   <button
                     onClick={() => {
                       if (plan.name === 'Free') {
-                        onNavigate('employer-register');
+                        if (user) {
+                          // User is already logged in, go to dashboard
+                          onNavigate('dashboard');
+                        } else {
+                          // User not logged in, go to role selection
+                          onNavigate('role-selection');
+                        }
                       } else {
                         alert(`${plan.name} plan coming soon! Contact us for early access.`);
                       }
                     }}
                     className={`w-full ${plan.buttonColor} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
                   >
-                    {plan.name === 'Free' ? 'Get Started Free' : `Choose ${plan.name}`}
+                    {plan.name === 'Free' ? (user ? 'Go to Dashboard' : 'Get Started Free') : `Choose ${plan.name}`}
                   </button>
                 </div>
               );
@@ -161,7 +167,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onNavigate, user, onLogout })
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <div className="bg-white p-6 rounded-lg shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  What happens after 4 free job postings?
+                  What happens after 10 free job postings?
                 </h3>
                 <p className="text-gray-600">
                   You'll need to upgrade to a paid plan to post more jobs. Your existing jobs will remain active.
