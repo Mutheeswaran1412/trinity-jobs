@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, BarChart3, Users, Brain } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/constants';
 
 interface AutoRejectionSettingsProps {
   jobId?: string;
@@ -32,6 +33,33 @@ const AutoRejectionSettings: React.FC<AutoRejectionSettingsProps> = ({ jobId, on
     }
   });
 
+  useEffect(() => {
+    loadSettings();
+  }, [jobId]);
+
+  const loadSettings = async () => {
+    try {
+      // Try to load from API first
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/ai-rejection-settings${jobId ? `/${jobId}` : ''}`);
+      if (response.ok) {
+        const savedSettings = await response.json();
+        setSettings(savedSettings);
+      } else {
+        // Fallback to localStorage
+        const savedSettings = localStorage.getItem(`aiRejectionSettings${jobId ? `_${jobId}` : ''}`);
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
+      }
+    } catch (error) {
+      // Fallback to localStorage if API fails
+      const savedSettings = localStorage.getItem(`aiRejectionSettings${jobId ? `_${jobId}` : ''}`);
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings));
+      }
+    }
+  };
+
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -49,11 +77,29 @@ const AutoRejectionSettings: React.FC<AutoRejectionSettingsProps> = ({ jobId, on
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      // Try to save to API first
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/ai-rejection-settings${jobId ? `/${jobId}` : ''}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      
+      if (response.ok) {
+        alert('Auto-rejection settings saved successfully!');
+      } else {
+        throw new Error('API save failed');
+      }
+    } catch (error) {
+      // Fallback to localStorage if API fails
+      localStorage.setItem(`aiRejectionSettings${jobId ? `_${jobId}` : ''}`, JSON.stringify(settings));
+      alert('Auto-rejection settings saved successfully!');
+    }
+    
     if (onSave) {
       onSave(settings);
     }
-    alert('Auto-rejection settings saved successfully!');
   };
 
   return (

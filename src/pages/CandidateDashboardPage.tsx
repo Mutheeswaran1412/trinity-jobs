@@ -48,7 +48,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
   useEffect(() => {
     const loadUserProfile = async () => {
-      const userData = sessionStorage.getItem('user');
+      const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
       if (userData) {
         try {
           const parsedUser = JSON.parse(userData);
@@ -65,6 +65,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 console.log('Profile data loaded from backend:', profileData);
                 const mergedUser = { ...parsedUser, ...profileData };
                 setUser(mergedUser);
+                // Update localStorage with merged data
+                localStorage.setItem('user', JSON.stringify(mergedUser));
                 calculateProfileCompletion(mergedUser);
                 fetchApplications(mergedUser.email);
                 fetchRecommendations(mergedUser.id || mergedUser._id);
@@ -233,6 +235,13 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
               console.log('Profile photo saved to backend');
               const updatedUser = { ...user, profilePhoto: imageUrl };
               setUser(updatedUser);
+              // Update localStorage immediately
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+            } else {
+              console.log('Backend save failed, saving to localStorage only');
+              const updatedUser = { ...user, profilePhoto: imageUrl };
+              setUser(updatedUser);
+              localStorage.setItem('user', JSON.stringify(updatedUser));
             }
           } catch (err) {
             console.log('Backend save failed:', err);
@@ -422,9 +431,15 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                                 });
                                 if (response.ok) {
                                   console.log('Banner saved to backend');
-                                  // Update user state from database
                                   const updatedUser = { ...user, bannerPhoto: imageUrl };
                                   setUser(updatedUser);
+                                  // Update localStorage immediately
+                                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                                } else {
+                                  console.log('Backend save failed, saving to localStorage only');
+                                  const updatedUser = { ...user, bannerPhoto: imageUrl };
+                                  setUser(updatedUser);
+                                  localStorage.setItem('user', JSON.stringify(updatedUser));
                                 }
                               } catch (err) {
                                 console.log('Backend save failed:', err);
