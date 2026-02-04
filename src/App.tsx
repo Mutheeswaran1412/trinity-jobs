@@ -48,6 +48,7 @@ import EmployerDashboardPage from './pages/EmployerDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import SearchEngine from './components/SearchEngine';
 import BackButton from './components/BackButton';
+import CompanyReviewsPage from './pages/CompanyReviewsPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import CompanyViewPage from './pages/CompanyViewPage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
@@ -57,6 +58,7 @@ import JobRolePage from './pages/JobRolePage';
 import HireTalentPage from './pages/HireTalentPage';
 import JobManagementPage from './pages/JobManagementPage';
 import CandidateResponseDetailPage from './pages/CandidateResponseDetailPageNew';
+import CandidateReviewPage from './pages/CandidateReviewPage';
 import RecruiterActionsPage from './pages/RecruiterActionsPage';
 import SearchAppearancesPage from './pages/SearchAppearancesPage';
 
@@ -74,7 +76,7 @@ import AIScoringDemoPage from './pages/AIScoringDemoPage';
 import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
 import EmployerProfilePage from './pages/EmployerProfilePage';
-import CompanyReviewsPage from './pages/CompanyReviewsPage';
+
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
 import MobileNavigation from './components/MobileNavigation';
@@ -374,6 +376,14 @@ function App() {
     return <CompaniesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
+  if (currentPage === 'company-reviews') {
+    return (
+      <div className="min-h-screen bg-white">
+        <CompanyReviewsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+      </div>
+    );
+  }
+
   if (currentPage === 'employer-profile') {
     return (
       <div className="min-h-screen bg-white">
@@ -388,15 +398,7 @@ function App() {
     );
   }
 
-  if (currentPage === 'company-reviews') {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
-        <CompanyReviewsPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
-        <Footer onNavigate={handleNavigation} />
-      </div>
-    );
-  }
+
 
   if (currentPage === 'job-hunting') {
     return <JobHuntingPage onNavigate={handleNavigation} />;
@@ -596,6 +598,10 @@ function App() {
 
   if (currentPage === 'candidate-response-detail') {
     return <CandidateResponseDetailPage onNavigate={handleNavigation} applicationId={currentData?.application} />;
+  }
+
+  if (currentPage === 'candidate-review') {
+    return <CandidateReviewPage onNavigate={handleNavigation} jobId={currentData?.jobId} />;
   }
 
   if (currentPage === 'recruiter-actions') {

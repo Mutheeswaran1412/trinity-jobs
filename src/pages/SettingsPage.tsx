@@ -209,16 +209,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
               >
                 Account Information
               </button>
-              <button 
-                onClick={() => setActiveTab('Notifications')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'Notifications' 
-                    ? 'border-red-500 text-gray-900' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Notifications
-              </button>
             </div>
           </div>
         </div>
@@ -261,6 +251,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             value={emailForm.newEmail}
                             onChange={(e) => setEmailForm({...emailForm, newEmail: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter new email address"
+                            aria-label="New email address"
                             required
                           />
                         </div>
@@ -273,6 +265,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             value={emailForm.confirmEmail}
                             onChange={(e) => setEmailForm({...emailForm, confirmEmail: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Confirm new email address"
+                            aria-label="Confirm new email address"
                             required
                           />
                         </div>
@@ -315,6 +309,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             value={passwordForm.currentPassword}
                             onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter current password"
+                            aria-label="Current password"
                             required
                           />
                         </div>
@@ -327,6 +323,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             value={passwordForm.newPassword}
                             onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter new password"
+                            aria-label="New password"
                             required
                           />
                         </div>
@@ -339,6 +337,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             value={passwordForm.confirmPassword}
                             onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Confirm new password"
+                            aria-label="Confirm new password"
                             required
                           />
                         </div>
@@ -381,32 +381,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
                             </p>
                             <button
                               onClick={handleDeleteAccount}
-                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium mr-4"
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium"
                             >
                               Delete Account
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const userData = localStorage.getItem('user');
-                                if (userData) {
-                                  const parsedUser = JSON.parse(userData);
-                                  const email = parsedUser.email;
-                                  if (email) {
-                                    try {
-                                      const response = await fetch(`http://localhost:5000/api/users/check/${email}`);
-                                      const result = await response.json();
-                                      alert(result.exists ? 
-                                        `Account exists in DB: ${result.user.name} (${result.user.userType})` : 
-                                        'Account NOT found in database - Successfully deleted!');
-                                    } catch (error) {
-                                      alert('Error checking database: ' + error.message);
-                                    }
-                                  }
-                                }
-                              }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-                            >
-                              Check DB Status
                             </button>
                           </div>
                         </div>
@@ -418,34 +395,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, user: propUser,
             </div>
           )}
 
-          {activeTab === 'Notifications' && (
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Preferences</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Job Alerts</h3>
-                    <p className="text-sm text-gray-500">Receive notifications about new job opportunities</p>
-                  </div>
-                  <input type="checkbox" className="h-4 w-4 text-blue-600" defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Application Updates</h3>
-                    <p className="text-sm text-gray-500">Get notified when employers view your applications</p>
-                  </div>
-                  <input type="checkbox" className="h-4 w-4 text-blue-600" defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Marketing Emails</h3>
-                    <p className="text-sm text-gray-500">Receive career tips and platform updates</p>
-                  </div>
-                  <input type="checkbox" className="h-4 w-4 text-blue-600" />
-                </div>
-              </div>
-            </div>
-          )}
+
         </div>
       </div>
     </>

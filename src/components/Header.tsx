@@ -165,6 +165,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                 Company Reviews
               </button>
             )}
+
             <div className="relative" ref={careerDropdownRef}>
               <button 
                 onClick={() => setIsCareerDropdownOpen(!isCareerDropdownOpen)}
@@ -329,6 +330,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                         <button 
                           onClick={() => setIsDropdownOpen(false)}
                           className="text-gray-400 hover:text-gray-600"
+                          title="Close profile panel"
+                          aria-label="Close profile panel"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -456,16 +459,18 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                             </>
                           )}
                           
-                          <button 
-                            onClick={() => {
-                              setIsDropdownOpen(false);
-                              onNavigate && onNavigate('job-listings');
-                            }} 
-                            className="flex items-center w-full text-left px-3 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <Search className="w-5 h-5 mr-3 text-gray-500" />
-                            Recommended Jobs
-                          </button>
+                          {user.type !== 'employer' && (
+                            <button 
+                              onClick={() => {
+                                setIsDropdownOpen(false);
+                                onNavigate && onNavigate('job-listings');
+                              }} 
+                              className="flex items-center w-full text-left px-3 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <Search className="w-5 h-5 mr-3 text-gray-500" />
+                              Recommended Jobs
+                            </button>
+                          )}
                           
                           <button 
                             onClick={() => {
@@ -576,6 +581,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <button onClick={handleCompaniesClick} className="block text-left text-white hover:text-gray-300 font-medium">
                 Companies
               </button>
+              {user?.type !== 'employer' && (
+                <button onClick={() => onNavigate && onNavigate('company-reviews')} className="block text-left text-white hover:text-gray-300 font-medium">
+                  Company Reviews
+                </button>
+              )}
               <div className="space-y-2">
                 <p className="text-white font-medium">Career Resources</p>
                 <div className="pl-4 space-y-2">

@@ -24,7 +24,36 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [activeMenu, setActiveMenu] = useState('dashboard');
+
+  useEffect(() => {
+    // Mock employer notifications
+    setNotifications([
+      {
+        id: 1,
+        type: 'application',
+        title: 'New application received',
+        message: 'John Doe applied for Software Engineer position',
+        time: '2h ago'
+      },
+      {
+        id: 2,
+        type: 'interview',
+        title: 'Interview scheduled',
+        message: 'Interview with Sarah Smith scheduled for tomorrow',
+        time: '1d ago'
+      },
+      {
+        id: 3,
+        type: 'job',
+        title: 'Job posting approved',
+        message: 'Your React Developer job posting is now live',
+        time: '2d ago'
+      }
+    ]);
+  }, []);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -100,13 +129,6 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
       const userName = userData.name || userData.fullName;
       
       console.log('Using userId:', userId, 'userEmail:', userEmail, 'userName:', userName);
-      
-      // First, let's debug what's in the database
-      const debugRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/dashboard/debug?employerId=${userId || ''}&employerEmail=${userEmail || ''}&userName=${userName || ''}`);
-      if (debugRes.ok) {
-        const debugData = await debugRes.json();
-        console.log('DEBUG - Database contents:', debugData);
-      }
       
       const [jobsRes, appsRes, interviewsRes, statsRes, activityRes] = await Promise.all([
         fetch(API_ENDPOINTS.JOBS),
@@ -429,14 +451,6 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           </button>
 
           <button
-            onClick={() => onNavigate('pricing')}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <CreditCard className="w-5 h-5" />
-            <span className="font-medium">Pricing Plans</span>
-          </button>
-
-          <button
             onClick={() => onNavigate('settings')}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
@@ -446,7 +460,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
 
           <button
             onClick={() => {
-              if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+              if (confirm('Once you delete your account, there is no going back. Please be certain.')) {
                 console.log('Delete account feature coming soon');
               }
             }}
@@ -457,18 +471,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
           </button>
         </nav>
 
-        {/* Profile Complete */}
-        <div className="p-6 border-t border-gray-200">
-          <div className="mb-2">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Profile Complete</span>
-              <span className="font-semibold text-gray-900">87%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-lime-400 h-2 rounded-full" style={{ width: '87%' }}></div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Logout */}
         <div className="p-4 border-t border-gray-200">
@@ -505,10 +508,58 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
               </div>
             </div>
             <div className="flex items-center space-x-4 ml-6">
-              <button type="button" aria-label="Notifications" className="relative p-2 text-gray-600 hover:text-gray-900">
+              <button type="button" aria-label="Notifications" className="relative p-2 text-gray-600 hover:text-gray-900" onClick={() => setShowNotifications(!showNotifications)}>
                 <Bell className="w-6 h-6" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
+              
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <>
+                  <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                    onClick={() => setShowNotifications(false)}
+                  />
+                  <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out">
+                    <div className="p-4 border-b flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                      <button 
+                        type="button"
+                        onClick={() => setShowNotifications(false)}
+                        className="text-gray-400 hover:text-gray-600"
+                        title="Close notifications"
+                        aria-label="Close notifications"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <div className="h-full overflow-y-auto pb-20">
+                      <div className="p-3 text-sm text-gray-500 border-b bg-gray-50">Today</div>
+                      {notifications.map((notification) => (
+                        <div key={notification.id} className="p-4 border-b hover:bg-gray-50 cursor-pointer">
+                          <div className="flex items-start space-x-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold ${
+                              notification.type === 'application' ? 'bg-blue-500' : 
+                              notification.type === 'interview' ? 'bg-green-500' : 'bg-purple-500'
+                            }`}>
+                              {notification.type === 'application' ? 'A' : 
+                               notification.type === 'interview' ? 'I' : 'J'}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 mb-1">{notification.title}</h4>
+                              <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                              <span className="text-xs text-gray-400">{notification.time}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
               <button
                 onClick={() => onNavigate('job-posting-selection')}
                 className="bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-800 transition-colors"
@@ -582,36 +633,6 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                   </div>
                 </div>
               </div>
-
-              {/* Job Posting Limit Warning */}
-              {jobs.length >= 8 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-yellow-600 font-bold">!</span>
-                      </div>
-                      <div>
-                        <h3 className="text-yellow-800 font-semibold">
-                          {jobs.length >= 10 ? 'Free limit reached' : 'Approaching free limit'}
-                        </h3>
-                        <p className="text-yellow-700 text-sm">
-                          {jobs.length >= 10 
-                            ? 'You\'ve used all 10 free job postings. Upgrade to post more jobs.' 
-                            : `You\'ve used ${jobs.length}/10 free job postings.`
-                          }
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => onNavigate('pricing')}
-                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors"
-                    >
-                      {jobs.length >= 10 ? 'Upgrade Now' : 'View Plans'}
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Quick Actions */}
@@ -705,14 +726,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
               ) : applications.length === 0 ? (
                 <div className="text-center py-16">
                   <Users className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Applications Yet</h3>
-                  <p className="text-gray-600 mb-6">Post more jobs to start receiving applications from candidates.</p>
-                  <button
-                    onClick={() => onNavigate('job-posting-selection')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Post a Job
-                  </button>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No posted jobs</h3>
+                  <p className="text-gray-600 mb-6">Try adjusting your search criteria.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -859,6 +874,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                               }
                             }}
                             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            title="Update application status"
                           >
                             <option value="pending">Pending</option>
                             <option value="reviewed">Reviewed</option>
@@ -868,13 +884,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                           </select>
                           <button 
                             onClick={() => {
-                              // Navigate to interview scheduling with candidate data
-                              onNavigate('interview-schedule', {
-                                candidateName: application.candidateName,
-                                candidateEmail: application.candidateEmail,
-                                jobTitle: application.jobId?.jobTitle || application.jobId?.title,
-                                applicationId: application._id
-                              });
+                              // Navigate to interview scheduling
+                              onNavigate('interview-schedule');
                             }}
                             className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors text-sm"
                           >
@@ -996,6 +1007,7 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                               }
                             }}
                             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            title="Update interview status"
                           >
                             <option value="scheduled">Scheduled</option>
                             <option value="completed">Completed</option>

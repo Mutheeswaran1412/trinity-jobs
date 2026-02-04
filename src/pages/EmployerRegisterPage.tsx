@@ -102,9 +102,9 @@ const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ onNavigate,
         companyName: ''
       });
       
-      // Redirect to pricing page after 2 seconds
+      // Redirect to sign-in page after 2 seconds
       setTimeout(() => {
-        onNavigate('pricing');
+        onNavigate('employer-login');
       }, 2000);
       
     } catch (err) {
