@@ -691,23 +691,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                 (user?.type === 'candidate' && activeTab === 'Applied' && appliedJobs.length === 0) ||
                 (user?.type === 'employer' && activeTab === 'Posted Jobs' && postedJobs.length === 0) ||
                 (user?.type === 'employer' && activeTab === 'Applications' && employerApplications.length === 0)) && (
-                <div className="text-center py-16">
-                  <Briefcase className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No {activeTab.toLowerCase()}</h3>
-                  <p className="text-gray-500 mb-6">
-                    {user?.type === 'employer' ? 
-                      'Try adjusting your search criteria.' : 
-                      'Start browsing jobs to build your collection.'
-                    }
-                  </p>
-                  <button
-                    onClick={() => onNavigate('job-posting')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2 mx-auto transition-colors"
-                  >
-                    <span>Post a Job</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <div></div>
               )}
             </>
           )}

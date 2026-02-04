@@ -321,8 +321,213 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           
           {activeTab === 'Profile' && (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Main Profile Content */}
+              {/* Left Sidebar - Quick Links */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold mb-4">Quick links</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Preference</span>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Education</span>
+                      <button 
+                        onClick={() => {
+                          setEditingEducation(null);
+                          setShowEducationModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Key skills</span>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Languages</span>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Projects</span>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Profile summary</span>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-700">Employment</span>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
               <div className="lg:col-span-3">
+                {/* Profile Header Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-start space-x-6">
+                    {/* Profile Picture with Progress Ring */}
+                    <div className="relative">
+                      <div className="relative w-24 h-24">
+                        {/* Progress Ring */}
+                        <svg className="w-24 h-24 transform -rotate-90 absolute" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#e5e7eb"
+                            strokeWidth="2"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#ef4444"
+                            strokeWidth="2"
+                            strokeDasharray={`${completionPercentage}, 100`}
+                          />
+                        </svg>
+                        {/* Profile Photo */}
+                        <div className="absolute inset-2">
+                          {user?.profilePhoto ? (
+                            <img 
+                              src={user.profilePhoto} 
+                              alt="Profile" 
+                              className="w-full h-full rounded-full object-cover cursor-pointer"
+                              onClick={() => setShowPhotoEditor(true)}
+                            />
+                          ) : (
+                            <div 
+                              className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center text-white font-semibold cursor-pointer hover:bg-gray-400 transition-colors"
+                              onClick={() => setShowPhotoEditor(true)}
+                            >
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Percentage */}
+                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                          <span className="text-xs font-semibold text-red-600 bg-white px-1 rounded">{completionPercentage}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Profile Info */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+                            {user?.name || 'Add your name'}
+                          </h1>
+                          <p className="text-gray-600 mb-2">
+                            {user?.title || user?.jobTitle || 'Add your professional title'}
+                          </p>
+                          <p className="text-gray-500 text-sm mb-3">
+                            {user?.education || 'Add your education details'}
+                          </p>
+                          
+                          {/* Contact Info */}
+                          <div className="flex items-center space-x-6 text-sm text-gray-600">
+                            <div className="flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span>{user?.location || 'Chennai'}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                              <span>{user?.phone || '9500366784'}</span>
+                              {user?.phone && <span className="text-green-500">✓</span>}
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              <span>{user?.email || 'Add email'}</span>
+                              {user?.email && <span className="text-green-500">✓</span>}
+                            </div>
+                          </div>
+                          
+                          {/* Action Links */}
+                          <div className="flex items-center space-x-4 mt-3 text-sm">
+                            <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span>Add Gender</span>
+                            </button>
+                            <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8" />
+                              </svg>
+                              <span>Add birthday</span>
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Profile Completion Card */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-sm">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                <span className="text-gray-700">Add details</span>
+                              </div>
+                              <span className="text-green-600 text-xs">↑ 8%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                <span className="text-gray-700">Add details</span>
+                              </div>
+                              <span className="text-green-600 text-xs">↑ 7%</span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                                <span className="text-gray-700">Add competitive exam</span>
+                              </div>
+                              <span className="text-green-600 text-xs">↑ 6%</span>
+                            </div>
+                            <button 
+                              onClick={() => onNavigate('candidate-profile')}
+                              className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Add 13 missing details
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 {/* Basic Recommendations Section */}
                 {recommendations.length > 0 && (
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -672,536 +877,70 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     </div>
                   </div>
                 </div>
-
-                {/* Profile Sections */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* About Me Section */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-6">About Me</h2>
+                {/* Education Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Education</h2>
+                    <button 
+                      onClick={() => {
+                        setEditingEducation(null);
+                        setShowEducationModal(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {user?.educationList && user.educationList.length > 0 ? (
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        {user?.name ? (
-                          <p className="text-gray-900">{user.name}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            Add your name
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Years Experience</label>
-                        {user?.yearsExperience ? (
-                          <p className="text-gray-900">{user.yearsExperience}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            How many years of experience do you have?
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        {user?.email ? (
-                          <p className="text-gray-900">{user.email}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            Add your email address
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        {user?.phone ? (
-                          <p className="text-gray-900">{user.phone}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic flex items-center transition-colors cursor-pointer"
-                          >
-                            Do you want to add a phone number?
-                            <Info className="w-4 h-4 ml-1 text-gray-400" />
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                        {user?.location ? (
-                          <p className="text-gray-900">{user.location}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            Where are you currently located?
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Work Authorization</label>
-                        {user?.workAuthorization ? (
-                          <p className="text-gray-900">{user.workAuthorization.replace('-', ' ').toUpperCase()}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            What is your work authorization status?
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Security Clearance</label>
-                        {user?.securityClearance && user.securityClearance !== 'none' ? (
-                          <p className="text-gray-900">{user.securityClearance.replace('-', '/').toUpperCase()}</p>
-                        ) : (
-                          <button 
-                            onClick={() => onNavigate('candidate-profile')}
-                            className="text-blue-600 hover:text-blue-800 hover:underline italic transition-colors cursor-pointer"
-                          >
-                            Do you have any security clearances?
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Work Experience Section */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-6">Work Experience</h2>
-                    {user?.experience || user?.workExperience ? (
-                      <div className="p-4">
-                        <div className="text-gray-900 whitespace-pre-line">
-                          {user?.experience || user?.workExperience}
+                      {user.educationList.map((edu: any, index: number) => (
+                        <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
+                          <h3 className="font-semibold text-gray-900">{edu.degree} from {edu.school}</h3>
+                          <p className="text-gray-500 text-sm">Graduated in {edu.endYear || 'Present'}, {edu.fieldOfStudy || 'Full Time'}</p>
                         </div>
-                        <button 
-                          onClick={() => onNavigate('candidate-profile')}
-                          className="mt-4 text-blue-600 hover:text-blue-800 hover:underline text-sm transition-colors cursor-pointer"
-                        >
-                          Edit work experience
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <p className="text-gray-600 font-medium mb-2">Add relevant work experience</p>
-                        <p className="text-sm text-gray-500 mb-6">
-                          Give employers a glimpse of your work history.
-                        </p>
-                        <button 
-                          onClick={() => onNavigate('candidate-profile')}
-                          className="border border-blue-600 text-blue-600 hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700 px-6 py-2 rounded-full font-medium flex items-center mx-auto transition-all cursor-pointer"
-                        >
-                          <span className="text-xl mr-2">+</span>
-                          Add work experience
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Resume Section */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
-                  <h2 className="text-xl font-semibold text-gray-700 mb-6">Resume</h2>
-                  {user?.resume ? (
-                    <div className="p-4">
-                      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{user.resume.name || 'Resume.pdf'}</p>
-                            <p className="text-sm text-gray-500">Uploaded {user.resume.uploadDate || 'recently'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => {
-                              console.log('Resume data:', user.resume);
-                              console.log('Resume keys:', Object.keys(user.resume || {}));
-                              
-                              if (!user.resume) {
-                                setNotification({
-                                  type: 'error',
-                                  message: 'No resume found. Please upload a resume first.',
-                                  isVisible: true
-                                });
-                                return;
-                              }
-                              
-                              // Handle different resume data formats
-                              let resumeUrl = '';
-                              
-                              if (user.resume.filename) {
-                                // New format with filename from upload API
-                                resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/${user.resume.filename}`;
-                              } else if (user.resume.url) {
-                                // Direct URL format
-                                resumeUrl = user.resume.url.startsWith('http') 
-                                  ? user.resume.url 
-                                  : `${API_ENDPOINTS.BASE_URL}${user.resume.url}`;
-                              } else if (user.resume.path) {
-                                // Path format
-                                resumeUrl = user.resume.path.startsWith('http') 
-                                  ? user.resume.path 
-                                  : `${API_ENDPOINTS.BASE_URL}${user.resume.path}`;
-                              } else if (typeof user.resume === 'string') {
-                                // String format (legacy)
-                                resumeUrl = user.resume.startsWith('http') 
-                                  ? user.resume 
-                                  : `${API_ENDPOINTS.BASE_URL}/uploads/${user.resume}`;
-                              } else {
-                                // Test with existing file
-                                resumeUrl = `${API_ENDPOINTS.BASE_URL}/uploads/resume-1768241848606-544295216.pdf`;
-                              }
-                              
-                              console.log('Opening resume URL:', resumeUrl);
-                              
-                              if (resumeUrl) {
-                                // Open in new tab
-                                window.open(resumeUrl, '_blank', 'noopener,noreferrer');
-                              } else {
-                                setNotification({
-                                  type: 'error',
-                                  message: 'Resume file not found. Please re-upload your resume.',
-                                  isVisible: true
-                                });
-                              }
-                            }}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          >
-                            View
-                          </button>
-                          <button 
-                            onClick={async () => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = '.pdf,.doc,.docx';
-                              input.onchange = async (e) => {
-                                const file = (e.target as HTMLInputElement).files?.[0];
-                                if (file) {
-                                  try {
-                                    // Upload new resume
-                                    const uploadFormData = new FormData();
-                                    uploadFormData.append('resume', file);
-                                    
-                                    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/upload/resume`, {
-                                      method: 'POST',
-                                      body: uploadFormData
-                                    });
-                                    
-                                    if (!response.ok) {
-                                      throw new Error('Upload failed');
-                                    }
-                                    
-                                    const uploadResult = await response.json();
-                                    
-                                    const updatedUser = { 
-                                      ...user, 
-                                      resume: { 
-                                        name: file.name,
-                                        filename: uploadResult.filename,
-                                        url: uploadResult.fileUrl,
-                                        uploadDate: new Date().toLocaleDateString() 
-                                      } 
-                                    };
-                                    setUser(updatedUser);
-                                    
-                                    // Save to backend profile
-                                    if (user?.email) {
-                                      try {
-                                        await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
-                                          method: 'POST',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ 
-                                            email: user.email, 
-                                            userId: user.id || user._id,
-                                            resume: updatedUser.resume
-                                          })
-                                        });
-                                      } catch (err) {
-                                        console.log('Backend save failed:', err);
-                                      }
-                                    }
-                                    
-                                    setNotification({
-                                      type: 'success',
-                                      message: 'Resume updated successfully!',
-                                      isVisible: true
-                                    });
-                                  } catch (error) {
-                                    console.error('Upload error:', error);
-                                    setNotification({
-                                      type: 'error',
-                                      message: 'Failed to upload resume. Please try again.',
-                                      isVisible: true
-                                    });
-                                  }
-                                }
-                              };
-                              input.click();
-                            }}
-                            className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-                          >
-                            Replace
-                          </button>
-                          <button 
-                            onClick={() => {
-                              const updatedUser = { ...user };
-                              delete updatedUser.resume;
-                              setUser(updatedUser);
-                              
-                              // Remove from backend
-                              if (user?.email) {
-                                fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ 
-                                    email: user.email, 
-                                    userId: user.id || user._id,
-                                    resume: null
-                                  })
-                                });
-                              }
-                              
-                              calculateProfileCompletion(updatedUser);
-                              setNotification({
-                                type: 'success',
-                                message: 'Resume removed successfully!',
-                                isVisible: true
-                              });
-                            }}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <div className="text-gray-400 mb-4">
-                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-600 font-medium mb-2">Upload your resume</p>
-                      <p className="text-sm text-gray-500 mb-6">
-                        Upload your resume to help employers find you and apply to jobs faster.
-                      </p>
-                      <button 
-                        onClick={() => setShowResumeModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium flex items-center mx-auto transition-colors cursor-pointer"
-                      >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        Upload Resume (AI Moderated)
-                      </button>
-                      <p className="text-xs text-gray-400 mt-2">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
-                      <div className="mt-4">
-                        <button 
-                          onClick={() => onNavigate('resume-parser')}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium flex items-center mx-auto transition-colors cursor-pointer"
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Resume Parser Tool
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-gray-500">Add your education details</p>
                   )}
                 </div>
 
-                {/* Education and Skills Sections */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                  {/* Education Section */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-gray-700">Education</h2>
-                      <button 
-                        onClick={() => {
-                          setEditingEducation(null);
-                          setShowEducationModal(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-                      >
-                        <span className="text-lg mr-1">+</span>
-                        Add Education
-                      </button>
+                {/* Key Skills Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Key skills</h2>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  {user?.skills && user.skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {user.skills.map((skill: string, index: number) => (
+                        <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
+                          {skill}
+                        </span>
+                      ))}
                     </div>
-                    {user?.educationList && user.educationList.length > 0 ? (
-                      <div className="space-y-4">
-                        {user.educationList.map((edu: any, index: number) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900">{edu.school}</h3>
-                                <p className="text-gray-600">{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</p>
-                                <p className="text-sm text-gray-500">{edu.startYear} - {edu.endYear || 'Present'}</p>
-                                {edu.description && (
-                                  <p className="text-sm text-gray-600 mt-2">{edu.description}</p>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-2 ml-4">
-                                <button 
-                                  onClick={() => {
-                                    setEditingEducation({ ...edu, index });
-                                    setShowEducationModal(true);
-                                  }}
-                                  className="text-gray-400 hover:text-blue-600 p-1"
-                                  title="Edit education"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    const updatedEducationList = user.educationList.filter((_: any, i: number) => i !== index);
-                                    const updatedUser = { ...user, educationList: updatedEducationList };
-                                    setUser(updatedUser);
-                                    
-                                    // Save to backend
-                                    if (user?.email) {
-                                      fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ 
-                                          email: user.email, 
-                                          userId: user.id || user._id,
-                                          educationList: updatedEducationList
-                                        })
-                                      });
-                                    }
-                                    
-                                    setNotification({
-                                      type: 'success',
-                                      message: 'Education removed successfully!',
-                                      isVisible: true
-                                    });
-                                  }}
-                                  className="text-gray-400 hover:text-red-600 p-1"
-                                  title="Delete education"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <div className="text-gray-400 mb-4">
-                          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                        </div>
-                        <p className="text-gray-600 font-medium mb-2">Add your education</p>
-                        <p className="text-sm text-gray-500 mb-6">
-                          Add any formal education or professional qualifications to help employers understand your background.
-                        </p>
-                        <button 
-                          onClick={() => {
-                            setEditingEducation(null);
-                            setShowEducationModal(true);
-                          }}
-                          className="border border-blue-600 text-blue-600 hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700 px-6 py-2 rounded-full font-medium flex items-center mx-auto transition-all cursor-pointer"
-                        >
-                          <span className="text-xl mr-2">+</span>
-                          Add Education
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Skills Section */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-6">Skills</h2>
-                    {user?.skills && user.skills.length > 0 ? (
-                      <div className="p-4">
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {user.skills.map((skill: string, index: number) => (
-                            <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                        <button 
-                          onClick={() => onNavigate('candidate-profile')}
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm transition-colors cursor-pointer"
-                        >
-                          Edit skills
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <div className="text-gray-400 mb-4">
-                          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                        </div>
-                        <p className="text-gray-600 font-medium mb-2">Showcase your skills</p>
-                        <p className="text-sm text-gray-500 mb-4">
-                          List at least five skills to help us match you with the right roles.
-                        </p>
-                        <button 
-                          onClick={() => onNavigate('candidate-profile')}
-                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors cursor-pointer"
-                        >
-                          Add Skills
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  ) : (
+                    <p className="text-gray-500">Add your key skills</p>
+                  )}
                 </div>
-                
-                {/* Portfolio Links Section */}
-                <LinksPortfolio 
-                  user={user} 
-                  onUpdateUser={(updatedUser) => {
-                    setUser(updatedUser);
-                    // Save to backend immediately
-                    if (user?.email) {
-                      fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                          email: user.email, 
-                          userId: user.id || user._id,
-                          ...updatedUser
-                        })
-                      });
-                    }
-                  }} 
-                />
-              </div>
-              
-              {/* Sidebar */}
-              <div className="space-y-6">
+
+                {/* Languages Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Languages</h2>
+                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-gray-500">Talk about the languages that you can speak, read or write</p>
+                </div>
+
                 {/* AI Job Recommendations */}
                 {user?.skills && user.skills.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <Star className="h-5 w-5 text-yellow-500" />
                       AI Job Recommendations
@@ -1215,70 +954,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     />
                   </div>
                 )}
-                
-                {/* Trending Jobs */}
-                {trending.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-orange-500" />
-                      Trending Jobs
-                    </h3>
-                    <div className="space-y-3">
-                      {trending.map((job: any) => (
-                        <div key={job._id} className="border-l-2 border-orange-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded" onClick={() => onNavigate(`job-detail/${job._id}`)}>
-                          <h4 className="font-medium text-sm">{job.jobTitle}</h4>
-                          <p className="text-xs text-gray-600">{job.company}</p>
-                          <p className="text-xs text-gray-500">{job.views} views</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 pt-4 border-t">
-                      <button 
-                        onClick={() => onNavigate('job-listings')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        View All Trending →
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Quick Actions */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => onNavigate('job-listings')}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                    >
-                      Browse All Jobs
-                    </button>
-                    <button
-                      onClick={() => onNavigate('company-reviews')}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                    >
-                      Company Reviews
-                    </button>
-                    <button
-                      onClick={() => onNavigate('skill-assessments')}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                    >
-                      Take Skill Assessment
-                    </button>
-                    <button
-                      onClick={() => onNavigate('my-applications')}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                    >
-                      My Applications
-                    </button>
-                    <button
-                      onClick={() => onNavigate('candidate-profile')}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
-                    >
-                      Update Profile
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           )}

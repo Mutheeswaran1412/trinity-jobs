@@ -120,34 +120,64 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
 
   // Helper functions to extract information
   const extractJobTitle = (text: string): string => {
+    // Enhanced patterns for better job title extraction
     const titlePatterns = [
-      /^([^\n\r]+?)\s*[-–—]\s*(?:URGENT|HIGH|PRIORITY|HIRING)/i,
-      /job title[:\s-]+([^\n\r]+)/i,
-      /position[:\s-]+([^\n\r]+)/i,
-      /role[:\s-]+([^\n\r]+)/i,
-      /we are looking for[:\sa-z]*[:\s-]*([^\n\r]+)/i,
-      /hiring[:\sa-z]*[:\s-]*([^\n\r]+)/i,
-      /join us as[:\sa-z]*[:\s-]*([^\n\r]+)/i,
-      /seeking[:\sa-z]*[:\s-]*([^\n\r]+)/i,
-      /opening for[:\sa-z]*[:\s-]*([^\n\r]+)/i,
-      /vacancy for[:\sa-z]*[:\s-]*([^\n\r]+)/i
+      // Explicit job title labels
+      /(?:job\s+title|position|role|vacancy|opening)\s*[:\-]\s*([^\n\r]+)/i,
+      // Hiring patterns with better context
+      /(?:we\s+are\s+(?:hiring|looking\s+for|seeking)|hiring|seeking|recruiting)\s+(?:a|an|for)?\s*([^\n\r,]+?)\s*(?:to|for|at|in|with|who|that|\.|,|$)/i,
+      // Join us patterns
+      /join\s+(?:us|our\s+team)\s+as\s+(?:a|an)?\s*([^\n\r,]+?)\s*(?:to|for|at|in|with|\.|,|$)/i,
+      // First line before separators or urgency text
+      /^([^\n\r]+?)\s*(?:-{2,}|–|—|\||at\s+[A-Z]|@|\(|urgent|asap|immediate|apply|hiring|wanted|needed|location|salary|experience)/i,
+      // Job title with level prefixes
+      /(?:^|\n)\s*(?:senior|sr\.?|junior|jr\.?|lead|principal|staff|chief|head\s+of|director\s+of)?\s*([^\n\r]+?)\s*(?:engineer|developer|analyst|scientist|manager|director|architect|consultant|specialist|coordinator|administrator|designer|writer|marketer|representative|associate|assistant|intern|trainee)\b/i,
+      // Common job patterns
+      /(?:^|\n)\s*([^\n\r]*(?:software|web|mobile|frontend|backend|full.?stack|data|machine\s+learning|ai|devops|cloud|security|qa|test|product|project|program|technical|engineering)[^\n\r]*(?:engineer|developer|analyst|scientist|manager|director|architect))/i
     ];
 
     for (const pattern of titlePatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
-        let title = match[1].trim().replace(/[\-\|\–\—]/g, '').trim();
-        if (title.length > 3 && title.length < 80) {
-          return title;
+        let title = match[1].trim();
+        
+        // Enhanced cleaning
+        title = title.replace(/[\-\|\–\—].*$/g, '').trim();
+        title = title.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        title = title.replace(/\s*\[[^\]]*\]\s*/g, ' ').trim();
+        title = title.replace(/\s+/g, ' ');
+        title = title.replace(/^[\-\*•\d+\.\)\s]+/, '').trim();
+        
+        // Enhanced validation
+        const invalidKeywords = ['immediate', 'asap', 'apply', 'urgent', 'preferred', 'http', 'www', 'email', 'phone', 'contact', 'location', 'salary', 'benefits', 'company', 'about', 'description', 'requirements', 'qualifications', 'responsibilities', 'duties', 'skills', 'experience', 'education', 'degree'];
+        const hasInvalidKeyword = invalidKeywords.some(keyword => title.toLowerCase().includes(keyword));
+        
+        if (title.length > 3 && title.length < 100 && !hasInvalidKeyword && !title.includes('@') && !/^\d+$/.test(title)) {
+          // Additional validation for job-related terms
+          const jobTerms = /(?:engineer|developer|analyst|scientist|manager|director|architect|consultant|specialist|coordinator|administrator|designer|writer|marketer|representative|associate|assistant|intern|trainee|software|web|mobile|frontend|backend|full.?stack|data|machine\s+learning|ai|devops|cloud|security|qa|test|product|project|program|technical|sales|marketing|hr|finance|accounting|legal|operations|support|customer\s+service)/i;
+          if (jobTerms.test(title)) {
+            return title;
+          }
         }
       }
     }
 
-    // Try to extract from first line
-    const firstLine = text.split('\n')[0].trim();
-    if (firstLine.length > 5 && firstLine.length < 80 && 
-        !firstLine.includes('http') && !firstLine.includes('@')) {
-      return firstLine.replace(/\s*[-–—].*$/g, '').trim();
+    // Enhanced fallback with better line analysis
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+    for (let i = 0; i < Math.min(5, lines.length); i++) {
+      const cleanLine = lines[i].trim().replace(/^[\-\*•\d+\.\)\s]+/, '').trim();
+      
+      if (cleanLine.length > 5 && cleanLine.length < 100) {
+        const invalidKeywords = ['immediate', 'asap', 'apply', 'urgent', 'preferred', 'http', 'www', 'email', 'phone', 'contact', 'we are', 'company', 'about', 'description', 'location', 'salary', 'benefits'];
+        const hasInvalidKeyword = invalidKeywords.some(keyword => cleanLine.toLowerCase().includes(keyword));
+        
+        if (!hasInvalidKeyword && !cleanLine.includes('@') && !/^\d+$/.test(cleanLine)) {
+          const jobTerms = /(?:engineer|developer|analyst|scientist|manager|director|architect|consultant|specialist|coordinator|administrator|designer|writer|marketer|representative|associate|assistant|intern|trainee|software|web|mobile|frontend|backend|full.?stack|data|machine\s+learning|ai|devops|cloud|security|qa|test|product|project|program|technical|sales|marketing|hr|finance|accounting|legal|operations|support|customer\s+service)/i;
+          if (jobTerms.test(cleanLine)) {
+            return cleanLine.replace(/\s*[-–—].*$/g, '').trim();
+          }
+        }
+      }
     }
 
     return 'Software Developer';
@@ -155,24 +185,117 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
 
   const extractCompanyName = (text: string): string => {
     const companyPatterns = [
-      /company[:\s-]+([^\n\r]+)/i,
-      /organization[:\s-]+([^\n\r]+)/i,
-      /employer[:\s-]+([^\n\r]+)/i,
-      /at\s+([A-Z][a-zA-Z\s&\.\-]+)(?:\s|,|\.|!|$)/,
-      /join\s+([A-Z][a-zA-Z\s&\.\-]+)(?:\s|,|\.|!|$)/i,
-      /work\s+(?:at|for|with)\s+([A-Z][a-zA-Z\s&\.\-]+)(?:\s|,|\.|!|$)/i,
-      /([A-Z][a-zA-Z\s&\.\-]+)\s+is\s+(?:looking|seeking|hiring)/i,
-      /about\s+([A-Z][a-zA-Z\s&\.\-]+)[:\n]/i
+      // Direct company mentions with better context
+      /(?:company|organization|employer|client|firm)\s*[:\-]\s*([^\n\r,\.!]+)/i,
+      // "At Company" patterns - most reliable
+      /\bat\s+([A-Z][a-zA-Z0-9\s&\.\-,']+?)(?:\s*[,\.!]|\s+(?:we|is|are|the|in|on|as|to|for|and|or|but|located|based|offers|provides|seeks|looking|hiring|where))/,
+      // "Join Company" patterns
+      /join\s+(?:the\s+team\s+at\s+)?([A-Z][a-zA-Z0-9\s&\.\-,']+?)(?:\s*[,\.!]|\s+(?:as|to|for|and|or|team|where|in|today))/i,
+      // "Work at/for Company" patterns
+      /work\s+(?:at|for|with)\s+([A-Z][a-zA-Z0-9\s&\.\-,']+?)(?:\s*[,\.!]|\s+(?:as|to|for|and|or|in|where|today))/i,
+      // "Company is hiring/looking" patterns
+      /([A-Z][a-zA-Z0-9\s&\.\-,']{2,40})\s+(?:is|are)\s+(?:looking|seeking|hiring|recruiting|searching)/i,
+      // About Company section
+      /about\s+([A-Z][a-zA-Z0-9\s&\.\-,']+?)\s*[:\n]/i,
+      // Company in parentheses
+      /\(([A-Z][a-zA-Z0-9\s&\.\-,']{3,40})\)/,
+      // Leading company with job separator
+      /^([A-Z][a-zA-Z0-9\s&\.\-,']{3,40})\s*[-–—]\s*(?:job|career|opportunity|position|role|hiring)/i,
+      // Email domain extraction as fallback
+      /@([a-zA-Z0-9\-]+)\.(?:com|org|net|edu|gov)/i,
+      // "We are Company" patterns
+      /we\s+are\s+([A-Z][a-zA-Z0-9\s&\.\-,']{3,40})(?:\s*[,\.!]|\s+(?:and|a|an|the))/i,
+      // Company name before location
+      /([A-Z][a-zA-Z0-9\s&\.\-,']{3,40})\s*[-–—]\s*(?:remote|hybrid|onsite|[A-Z][a-z]+,\s*[A-Z]{2})/i,
+      // "Company seeks" or "Company needs" patterns
+      /([A-Z][a-zA-Z0-9\s&\.\-,']{3,40})\s+(?:seeks|needs|requires|wants)\s+(?:a|an)?\s*[a-z]/i
     ];
 
     for (const pattern of companyPatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
-        let company = match[1].trim().replace(/[\-\|\–\—].*/g, '').trim();
-        // Filter out common non-company words
-        if (company.length > 2 && company.length < 50 && 
-            !['the team', 'our team', 'us', 'we', 'this role', 'this position'].includes(company.toLowerCase())) {
+        let company = match[1].trim();
+        
+        // Clean up company name
+        company = company.replace(/[\-\|–—].*$/g, '').trim();
+        company = company.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        company = company.replace(/\s+/g, ' ');
+        company = company.replace(/[,\.!]+$/, '').trim();
+        company = company.replace(/^(?:the|a|an)\s+/i, '').trim();
+        
+        // Enhanced validation - exclude common non-company phrases
+        const invalidWords = [
+          'team', 'role', 'position', 'job', 'opportunity', 'career', 'hiring', 'looking', 'seeking', 'recruiting',
+          'candidate', 'applicant', 'resume', 'cv', 'experience', 'skills', 'requirements', 'qualifications',
+          'responsibilities', 'duties', 'benefits', 'salary', 'compensation', 'location', 'remote', 'office',
+          'work', 'employment', 'full time', 'part time', 'contract', 'temporary', 'permanent', 'immediate',
+          'urgent', 'asap', 'apply', 'application', 'interview', 'contact', 'email', 'phone', 'address',
+          'description', 'about', 'company', 'organization', 'employer', 'client', 'firm', 'business',
+          'industry', 'sector', 'field', 'department', 'division', 'unit', 'group', 'project', 'program',
+          'software', 'technology', 'tech', 'development', 'engineering', 'design', 'marketing', 'sales',
+          'finance', 'accounting', 'hr', 'human resources', 'operations', 'management', 'administration',
+          'support', 'service', 'customer', 'client', 'user', 'product', 'solution', 'platform', 'system',
+          'application', 'website', 'web', 'mobile', 'app', 'database', 'server', 'cloud', 'network',
+          'security', 'data', 'analytics', 'analysis', 'research', 'testing', 'quality', 'assurance',
+          'years', 'year', 'month', 'week', 'day', 'time', 'hour', 'minute', 'second'
+        ];
+        
+        // Check if company name contains invalid words
+        const companyWords = company.toLowerCase().split(/\s+/);
+        const hasInvalidWord = invalidWords.some(invalidWord => 
+          companyWords.some(companyWord => 
+            companyWord === invalidWord || 
+            companyWord.includes(invalidWord) ||
+            invalidWord.includes(companyWord)
+          )
+        );
+        
+        // Additional validation checks
+        const isValid = company.length >= 2 && company.length <= 50 && 
+                       !hasInvalidWord &&
+                       !/^\d+$/.test(company) && // Not just numbers
+                       !company.includes('@') && // Not email
+                       !company.toLowerCase().includes('http') && // Not URL
+                       !/^[a-z]/.test(company) && // Should start with capital
+                       !/^[^a-zA-Z]/.test(company) && // Should start with letter
+                       company.split(/\s+/).length <= 6 && // Not too many words
+                       !/^(?:we|our|the|this|that|it|they|you|your|my|me|i|am|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|can|must|shall)$/i.test(company); // Not pronouns/common words
+        
+        if (isValid) {
+          // Special handling for email domains
+          if (pattern.source.includes('@')) {
+            company = company.charAt(0).toUpperCase() + company.slice(1);
+          }
           return company;
+        }
+      }
+    }
+
+    // Enhanced fallback: Look for capitalized words that might be company names
+    const lines = text.split('\n').slice(0, 5); // Check first 5 lines
+    for (const line of lines) {
+      // Look for patterns like "CompanyName - Job Title" or "CompanyName | Job Title"
+      const separatorMatch = line.match(/^([A-Z][a-zA-Z0-9\s&\.\-,']{2,30})\s*[-|–—]\s*[A-Z]/i);
+      if (separatorMatch && separatorMatch[1]) {
+        const potential = separatorMatch[1].trim();
+        const invalidWords = ['Job', 'Position', 'Role', 'Hiring', 'Looking', 'Seeking', 'Apply', 'Immediate', 'Urgent', 'ASAP', 'Career', 'Opportunity'];
+        if (!invalidWords.some(word => potential.includes(word)) && potential.length >= 3 && potential.length <= 30) {
+          return potential;
+        }
+      }
+      
+      // Look for standalone capitalized company names
+      const words = line.trim().split(/\s+/);
+      for (let i = 0; i < words.length - 1; i++) {
+        const potential = words.slice(i, Math.min(i + 3, words.length)).join(' ');
+        if (/^[A-Z][a-zA-Z0-9\s&\.\-,']{2,30}$/.test(potential)) {
+          const cleanPotential = potential.replace(/[,\.!]+$/, '').trim();
+          if (cleanPotential.length >= 3 && cleanPotential.length <= 30) {
+            const invalidWords = ['Job', 'Position', 'Role', 'Hiring', 'Looking', 'Seeking', 'Apply', 'Immediate', 'Urgent', 'ASAP', 'We', 'Our', 'The', 'This', 'That'];
+            if (!invalidWords.some(word => cleanPotential.includes(word))) {
+              return cleanPotential;
+            }
+          }
         }
       }
     }
@@ -182,34 +305,80 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
 
   const extractLocation = (text: string): string => {
     const locationPatterns = [
-      /location[:\s-]+([^\n\r\(]+)/i,
-      /based in[:\s-]+([^\n\r\(]+)/i,
-      /office[:\s-]+([^\n\r\(]+)/i,
-      /work from[:\s-]+([^\n\r\(]+)/i,
-      /workplace[:\s-]+([^\n\r\(]+)/i,
-      /address[:\s-]+([^\n\r\(]+)/i,
-      /(Seattle,\s*WA|New York,\s*NY|San Francisco,\s*CA|Austin,\s*TX|Chicago,\s*IL|Boston,\s*MA|Los Angeles,\s*CA|Denver,\s*CO|Atlanta,\s*GA|Dallas,\s*TX)/i,
-      /(remote|hybrid|on-site|work from home|wfh)/i,
-      /([A-Z][a-z]+,\s*[A-Z][A-Z])/,  // City, State
-      /([A-Z][a-z]+,\s*[A-Z][a-z]+)/  // City, Country
+      // Explicit location labels
+      /(?:location|based\s+in|office|workplace|address|city|state|country)\s*[:\-]\s*([^\n\r\(,]+)/i,
+      // Work from patterns
+      /work\s+from\s+([^\n\r\(,]+)/i,
+      // Located in patterns
+      /located\s+in\s+([^\n\r\(,]+)/i,
+      // Major US cities with states
+      /((?:New York|Los Angeles|Chicago|Houston|Phoenix|Philadelphia|San Antonio|San Diego|Dallas|San Jose|Austin|Jacksonville|Fort Worth|Columbus|Charlotte|San Francisco|Indianapolis|Seattle|Denver|Washington|Boston|El Paso|Nashville|Detroit|Oklahoma City|Portland|Las Vegas|Memphis|Louisville|Baltimore|Milwaukee|Albuquerque|Tucson|Fresno|Sacramento|Kansas City|Long Beach|Mesa|Atlanta|Colorado Springs|Virginia Beach|Raleigh|Omaha|Miami|Oakland|Minneapolis|Tulsa|Wichita|New Orleans|Arlington|Cleveland|Tampa|Bakersfield|Aurora|Honolulu|Anaheim|Santa Ana|Corpus Christi|Riverside|Lexington|Stockton|Toledo|St. Paul|Newark|Greensboro|Plano|Henderson|Lincoln|Buffalo|Jersey City|Chula Vista|Fort Wayne|Orlando|St. Petersburg|Chandler|Laredo|Norfolk|Durham|Madison|Lubbock|Irvine|Winston-Salem|Glendale|Garland|Hialeah|Reno|Chesapeake|Gilbert|Baton Rouge|Irving|Scottsdale|North Las Vegas|Fremont|Boise|Richmond|San Bernardino|Birmingham|Spokane|Rochester|Des Moines|Modesto|Fayetteville|Tacoma|Oxnard|Fontana|Columbus|Montgomery|Moreno Valley|Shreveport|Aurora|Yonkers|Akron|Huntington Beach|Little Rock|Augusta|Amarillo|Glendale|Mobile|Grand Rapids|Salt Lake City|Tallahassee|Huntsville|Grand Prairie|Knoxville|Worcester|Newport News|Brownsville|Overland Park|Santa Clarita|Providence|Garden Grove|Chattanooga|Oceanside|Jackson|Fort Lauderdale|Santa Rosa|Rancho Cucamonga|Port St. Lucie|Tempe|Ontario|Vancouver|Cape Coral|Sioux Falls|Springfield|Peoria|Pembroke Pines|Elk Grove|Salem|Lancaster|Corona|Eugene|Palmdale|Salinas|Springfield|Pasadena|Fort Collins|Hayward|Pomona|Cary|Rockford|Alexandria|Escondido|McKinney|Kansas City|Joliet|Sunnyvale|Torrance|Bridgeport|Lakewood|Hollywood|Paterson|Naperville|Syracuse|Mesquite|Dayton|Savannah|Clarksville|Orange|Pasadena|Fullerton|Killeen|Frisco|Hampton|McAllen|Warren|Bellevue|West Valley City|Columbia|Olathe|Sterling Heights|New Haven|Miramar|Waco|Thousand Oaks|Cedar Rapids|Charleston|Sioux City|Round Rock|Rialto|Davenport|Miami Gardens|Burbank|Richardson|Pompano Beach|North Charleston|Broken Arrow|Boulder|West Palm Beach|Surprise|Thornton|League City|Dearborn|Roseville|Palmdale|Salinas|Beaumont|Brownsville|Independence|Murfreesboro|Ann Arbor|Fargo|Wilmington|Abilene|Odessa|Columbia|Pearland|Huntington Beach|Temecula|Richardson|Carrollton|Lewisville|Victorville|Santa Maria|Berkeley|Topeka|Norman|Elgin|Columbia|Clearwater|Westminster|Billings|Lowell|Stamford|Fontana|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Evansville|Fort Wayne|Provo|Charleston|Springfield|Lakewood|Peoria|High Point|Waterbury|Pompano Beach|West Jordan|Antioch|Everett|West Palm Beach|Centennial|Lowell|Richardson|Broken Arrow|Inglewood|Sandy Springs|Jurupa Valley|Hillsboro|Waterbury|Santa Clara|Costa Mesa|Miami Gardens|Concord|Peoria|Downey|Roseville|Thornton|Manchester|Allentown|Elgin|Sterling Heights|West Valley City|Columbia|Surprise|Sunnyvale|Clarksville|Roseville|Peoria|Inglewood|Evansville|Salem|Santa Clara|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina|Pearland|Victorville|Santa Maria|Berkeley|Topeka|Norman|Columbia|Clearwater|Billings|Lowell|Stamford|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Fort Wayne|Provo|Charleston|Springfield|Lakewood|High Point|Waterbury|West Jordan|Antioch|Everett|Centennial|Richardson|Broken Arrow|Sandy Springs|Jurupa Valley|Hillsboro|Santa Clara|Costa Mesa|Concord|Downey|Thornton|Manchester|Elgin|Sterling Heights|West Valley City|Surprise|Sunnyvale|Clarksville|Inglewood|Evansville|Salem|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina|Pearland|Victorville|Santa Maria|Berkeley|Topeka|Norman|Columbia|Clearwater|Billings|Lowell|Stamford|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Fort Wayne|Provo|Charleston|Springfield|Lakewood|High Point|Waterbury|West Jordan|Antioch|Everett|Centennial|Richardson|Broken Arrow|Sandy Springs|Jurupa Valley|Hillsboro|Santa Clara|Costa Mesa|Concord|Downey|Thornton|Manchester|Elgin|Sterling Heights|West Valley City|Surprise|Sunnyvale|Clarksville|Inglewood|Evansville|Salem|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina|Pearland|Victorville|Santa Maria|Berkeley|Topeka|Norman|Columbia|Clearwater|Billings|Lowell|Stamford|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Fort Wayne|Provo|Charleston|Springfield|Lakewood|High Point|Waterbury|West Jordan|Antioch|Everett|Centennial|Richardson|Broken Arrow|Sandy Springs|Jurupa Valley|Hillsboro|Santa Clara|Costa Mesa|Concord|Downey|Thornton|Manchester|Elgin|Sterling Heights|West Valley City|Surprise|Sunnyvale|Clarksville|Inglewood|Evansville|Salem|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina|Pearland|Victorville|Santa Maria|Berkeley|Topeka|Norman|Columbia|Clearwater|Billings|Lowell|Stamford|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Fort Wayne|Provo|Charleston|Springfield|Lakewood|High Point|Waterbury|West Jordan|Antioch|Everett|Centennial|Richardson|Broken Arrow|Sandy Springs|Jurupa Valley|Hillsboro|Santa Clara|Costa Mesa|Concord|Downey|Thornton|Manchester|Elgin|Sterling Heights|West Valley City|Surprise|Sunnyvale|Clarksville|Inglewood|Evansville|Salem|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina|Pearland|Victorville|Santa Maria|Berkeley|Topeka|Norman|Columbia|Clearwater|Billings|Lowell|Stamford|Cedar Rapids|Meridian|Arvada|Allentown|Cambridge|Lansing|Fort Wayne|Provo|Charleston|Springfield|Lakewood|High Point|Waterbury|West Jordan|Antioch|Everett|Centennial|Richardson|Broken Arrow|Sandy Springs|Jurupa Valley|Hillsboro|Santa Clara|Costa Mesa|Concord|Downey|Thornton|Manchester|Elgin|Sterling Heights|West Valley City|Surprise|Sunnyvale|Clarksville|Inglewood|Evansville|Salem|Thousand Oaks|Vallejo|El Monte|Abilene|Beaumont|Carrollton|Dearborn|Westminster|West Covina)(?:,\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming))?)/i,
+      // International cities
+      /(London|Paris|Berlin|Madrid|Rome|Amsterdam|Vienna|Brussels|Prague|Warsaw|Budapest|Stockholm|Copenhagen|Oslo|Helsinki|Dublin|Zurich|Geneva|Barcelona|Milan|Munich|Hamburg|Frankfurt|Cologne|Stuttgart|Düsseldorf|Leipzig|Dresden|Hannover|Nuremberg|Dortmund|Essen|Bremen|Duisburg|Bochum|Wuppertal|Bielefeld|Bonn|Münster|Karlsruhe|Mannheim|Augsburg|Wiesbaden|Gelsenkirchen|Mönchengladbach|Braunschweig|Chemnitz|Kiel|Aachen|Halle|Magdeburg|Freiburg|Krefeld|Lübeck|Oberhausen|Erfurt|Mainz|Rostock|Kassel|Hagen|Hamm|Saarbrücken|Mülheim|Potsdam|Ludwigshafen|Oldenburg|Leverkusen|Osnabrück|Solingen|Heidelberg|Herne|Neuss|Darmstadt|Paderborn|Regensburg|Ingolstadt|Würzburg|Fürth|Wolfsburg|Offenbach|Ulm|Heilbronn|Pforzheim|Göttingen|Bottrop|Trier|Recklinghausen|Reutlingen|Bremerhaven|Koblenz|Bergisch Gladbach|Jena|Remscheid|Erlangen|Moers|Siegen|Hildesheim|Salzgitter)(?:,\s*(?:UK|United Kingdom|Germany|France|Spain|Italy|Netherlands|Austria|Belgium|Czech Republic|Poland|Hungary|Sweden|Denmark|Norway|Finland|Ireland|Switzerland))?/i,
+      // Work arrangement patterns
+      /(remote|hybrid|on-site|work from home|wfh|distributed|anywhere|flexible location)/i,
+      // City, State patterns
+      /([A-Z][a-z]+,\s*[A-Z]{2})/,
+      // City, Country patterns
+      /([A-Z][a-z]+,\s*[A-Z][a-z]+)/,
+      // Zip code patterns
+      /([A-Z][a-z\s]+)\s+\d{5}(?:-\d{4})?/
     ];
 
     for (const pattern of locationPatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
-        let location = match[1].trim().replace(/[\-\|\–\—].*/g, '').trim();
-        if (location.length > 2 && location.length < 50) {
+        let location = match[1].trim();
+        
+        // Clean up location
+        location = location.replace(/[\-\|\–\—].*$/g, '').trim();
+        location = location.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        location = location.replace(/\s+/g, ' ');
+        location = location.replace(/[,\.!]+$/, '').trim();
+        
+        if (location.length > 2 && location.length < 60) {
+          // Capitalize first letter if needed
+          location = location.charAt(0).toUpperCase() + location.slice(1);
           return location;
         }
       }
     }
 
-    // Check for remote work indicators
-    if (/remote|work from home|wfh|distributed|anywhere/i.test(text)) {
+    // Enhanced remote work detection
+    const remotePatterns = [
+      /remote/i,
+      /work from home/i,
+      /wfh/i,
+      /distributed/i,
+      /anywhere/i,
+      /location independent/i,
+      /virtual/i,
+      /telecommute/i
+    ];
+    
+    const hybridPatterns = [
+      /hybrid/i,
+      /flexible location/i,
+      /remote and office/i,
+      /office and remote/i
+    ];
+    
+    const onsitePatterns = [
+      /on-site/i,
+      /onsite/i,
+      /in-office/i,
+      /office based/i,
+      /office location/i
+    ];
+
+    if (remotePatterns.some(pattern => pattern.test(text))) {
       return 'Remote';
     }
-    if (/hybrid/i.test(text)) {
+    if (hybridPatterns.some(pattern => pattern.test(text))) {
       return 'Hybrid';
+    }
+    if (onsitePatterns.some(pattern => pattern.test(text))) {
+      return 'On-site';
     }
 
     return 'Remote';
@@ -237,41 +406,79 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
 
   const extractExperience = (text: string): string => {
     const expPatterns = [
-      /experience\s+required[:\s-]+(\d+[\s-]\d+|\d+\+?)\s*years?/i,
+      // Range patterns
+      /(?:experience|exp)\s*(?:required|needed)?[:\s-]*(\d+)[\s-]+(\d+)\s*years?/i,
       /(\d+)[\s-]+(\d+)\s*years?\s*(?:of\s*)?(?:experience|exp)/i,
+      /(\d+)\s*(?:to|-|–|—)\s*(\d+)\s*years?/i,
+      // Single number patterns
+      /(?:minimum|at\s+least|min\.?)\s*(\d+)\s*years?/i,
       /(\d+)\+?\s*years?\s*(?:of\s*)?(?:experience|exp)/i,
-      /(?:experience|exp)[:\s-]+(\d+[\s-]\d+|\d+\+?)\s*years?/i,
-      /minimum\s+(\d+)\s*years?/i,
-      /at least\s+(\d+)\s*years?/i,
-      /(\d+)\s*to\s*(\d+)\s*years?/i,
-      /(entry.level|junior|senior|lead|principal)/i,
-      /(fresher|fresh graduate|new grad)/i
+      /(?:experience|exp)\s*(?:required|needed)?[:\s-]*(\d+)\+?\s*years?/i,
+      // Level-based patterns
+      /(entry.level|junior|mid.level|senior|lead|principal|staff|chief)/i,
+      /(fresher|fresh\s+graduate|new\s+grad|recent\s+graduate)/i,
+      // Years of experience in context
+      /with\s+(\d+)[\s-]+(\d+)\s*years?/i,
+      /having\s+(\d+)\s*years?/i,
+      // Plus patterns
+      /(\d+)\+\s*years?/i
     ];
 
     for (const pattern of expPatterns) {
       const match = text.match(pattern);
       if (match) {
+        // Handle range patterns
         if (match[1] && match[2] && !isNaN(parseInt(match[1])) && !isNaN(parseInt(match[2]))) {
-          return `${match[1]}-${match[2]} years`;
-        } else if (match[1] && !isNaN(parseInt(match[1]))) {
+          const min = parseInt(match[1]);
+          const max = parseInt(match[2]);
+          if (min <= max && min >= 0 && max <= 20) {
+            return `${min}-${max} years`;
+          }
+        }
+        // Handle single number patterns
+        else if (match[1] && !isNaN(parseInt(match[1]))) {
           const years = parseInt(match[1]);
-          if (years >= 10) return '10+ years';
-          if (years >= 7) return '7-10 years';
-          if (years >= 5) return '5-7 years';
-          if (years >= 3) return '3-5 years';
-          if (years >= 2) return '2-3 years';
-          if (years >= 1) return '1-2 years';
-          return '0-1 years';
-        } else if (match[1]) {
-          const level = match[1].toLowerCase();
-          if (level.includes('entry') || level.includes('junior') || level.includes('fresher') || level.includes('fresh')) {
+          if (years >= 0 && years <= 20) {
+            if (years >= 15) return '15+ years';
+            if (years >= 10) return '10-15 years';
+            if (years >= 8) return '8-10 years';
+            if (years >= 5) return '5-8 years';
+            if (years >= 3) return '3-5 years';
+            if (years >= 2) return '2-3 years';
+            if (years >= 1) return '1-2 years';
+            return '0-1 years';
+          }
+        }
+        // Handle level-based patterns
+        else if (match[1]) {
+          const level = match[1].toLowerCase().replace(/[\s\.-]/g, '');
+          if (level.includes('entry') || level.includes('junior') || level.includes('fresher') || level.includes('fresh') || level.includes('new') || level.includes('recent')) {
             return '0-2 years';
+          } else if (level.includes('mid') || level.includes('intermediate')) {
+            return '3-5 years';
           } else if (level.includes('senior')) {
             return '5-8 years';
-          } else if (level.includes('lead') || level.includes('principal')) {
+          } else if (level.includes('lead') || level.includes('principal') || level.includes('staff') || level.includes('chief')) {
             return '8+ years';
           }
         }
+      }
+    }
+
+    // Additional context-based detection
+    const contextPatterns = [
+      { pattern: /no\s+experience\s+required/i, experience: '0-1 years' },
+      { pattern: /entry\s+level/i, experience: '0-2 years' },
+      { pattern: /beginner/i, experience: '0-1 years' },
+      { pattern: /intermediate/i, experience: '2-5 years' },
+      { pattern: /experienced/i, experience: '5+ years' },
+      { pattern: /expert/i, experience: '8+ years' },
+      { pattern: /seasoned/i, experience: '10+ years' }
+    ];
+
+    for (const { pattern, experience } of contextPatterns) {
+      if (pattern.test(text)) {
+        return experience;
       }
     }
 
@@ -281,92 +488,233 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
   const extractSkills = (text: string): string[] => {
     const commonSkills = [
       // Programming Languages
-      'JavaScript', 'Python', 'Java', 'TypeScript', 'PHP', 'C#', 'C++', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin', 'Scala', 'R', 'MATLAB', 'Perl', 'Objective-C',
-      // Frontend
-      'React', 'Angular', 'Vue.js', 'HTML', 'CSS', 'SCSS', 'SASS', 'Bootstrap', 'Tailwind CSS', 'jQuery', 'Webpack', 'Vite',
-      // Backend
-      'Node.js', 'Express.js', 'Django', 'Flask', 'Spring', 'Laravel', 'Rails', 'ASP.NET', 'FastAPI', 'NestJS',
-      // Mobile
-      'React Native', 'Flutter', 'iOS', 'Android', 'Xamarin', 'Ionic',
+      'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin', 'Scala', 'R', 'MATLAB', 'Perl', 'Objective-C', 'Dart', 'Elixir', 'Haskell', 'Clojure', 'F#', 'VB.NET', 'COBOL', 'Fortran', 'Assembly', 'Shell', 'Bash', 'PowerShell',
+      // Frontend Technologies
+      'React', 'Angular', 'Vue.js', 'Svelte', 'Next.js', 'Nuxt.js', 'HTML', 'HTML5', 'CSS', 'CSS3', 'SCSS', 'SASS', 'Less', 'Bootstrap', 'Tailwind CSS', 'Material-UI', 'Ant Design', 'Chakra UI', 'jQuery', 'Webpack', 'Vite', 'Parcel', 'Rollup', 'Gulp', 'Grunt',
+      // Backend Technologies
+      'Node.js', 'Express.js', 'Django', 'Flask', 'FastAPI', 'Spring', 'Spring Boot', 'Laravel', 'Symfony', 'Rails', 'Ruby on Rails', 'ASP.NET', 'ASP.NET Core', 'NestJS', 'Koa.js', 'Hapi.js', 'Gin', 'Echo', 'Fiber',
+      // Mobile Development
+      'React Native', 'Flutter', 'iOS', 'Android', 'Xamarin', 'Ionic', 'Cordova', 'PhoneGap', 'Unity', 'Unreal Engine',
       // Databases
-      'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Elasticsearch', 'Cassandra', 'DynamoDB', 'Oracle', 'SQLite',
+      'SQL', 'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Elasticsearch', 'Cassandra', 'DynamoDB', 'Oracle', 'SQLite', 'MariaDB', 'CouchDB', 'Neo4j', 'InfluxDB', 'TimescaleDB', 'Snowflake', 'BigQuery',
       // Cloud & DevOps
-      'AWS', 'Azure', 'Google Cloud', 'GCP', 'Docker', 'Kubernetes', 'Jenkins', 'CI/CD', 'Terraform', 'Ansible', 'Chef', 'Puppet',
-      // Tools & Others
-      'Git', 'GitHub', 'GitLab', 'Jira', 'Confluence', 'Slack', 'REST API', 'GraphQL', 'Microservices', 'Agile', 'Scrum', 'TDD', 'BDD',
+      'AWS', 'Azure', 'Google Cloud', 'GCP', 'Docker', 'Kubernetes', 'Jenkins', 'CI/CD', 'Terraform', 'Ansible', 'Chef', 'Puppet', 'Vagrant', 'GitLab CI', 'GitHub Actions', 'CircleCI', 'Travis CI', 'Helm', 'Istio', 'Prometheus', 'Grafana', 'ELK Stack', 'Splunk',
+      // Version Control & Tools
+      'Git', 'GitHub', 'GitLab', 'Bitbucket', 'SVN', 'Mercurial', 'Jira', 'Confluence', 'Slack', 'Microsoft Teams', 'Trello', 'Asana', 'Notion',
+      // APIs & Protocols
+      'REST API', 'GraphQL', 'SOAP', 'gRPC', 'WebSocket', 'HTTP', 'HTTPS', 'TCP/IP', 'UDP', 'OAuth', 'JWT', 'OpenAPI', 'Swagger',
+      // Architecture & Patterns
+      'Microservices', 'Monolith', 'SOA', 'MVC', 'MVP', 'MVVM', 'Clean Architecture', 'Hexagonal Architecture', 'Event-Driven Architecture', 'CQRS', 'Event Sourcing', 'Domain-Driven Design', 'DDD',
+      // Testing
+      'Unit Testing', 'Integration Testing', 'E2E Testing', 'TDD', 'BDD', 'Jest', 'Mocha', 'Chai', 'Jasmine', 'Cypress', 'Selenium', 'Playwright', 'Puppeteer', 'TestNG', 'JUnit', 'PyTest', 'RSpec',
       // Data & Analytics
-      'Machine Learning', 'AI', 'Data Science', 'Pandas', 'NumPy', 'TensorFlow', 'PyTorch', 'Tableau', 'Power BI',
-      // Business Skills
-      'Project Management', 'Leadership', 'Communication', 'Problem Solving', 'Team Management', 'Analytical Thinking'
+      'Machine Learning', 'Deep Learning', 'AI', 'Data Science', 'Data Analysis', 'Big Data', 'ETL', 'Data Mining', 'Statistics', 'Pandas', 'NumPy', 'SciPy', 'Scikit-learn', 'TensorFlow', 'PyTorch', 'Keras', 'OpenCV', 'NLTK', 'spaCy', 'Tableau', 'Power BI', 'Looker', 'D3.js', 'Apache Spark', 'Hadoop', 'Kafka', 'Airflow',
+      // Security
+      'Cybersecurity', 'Information Security', 'Network Security', 'Application Security', 'Penetration Testing', 'Vulnerability Assessment', 'OWASP', 'SSL/TLS', 'Encryption', 'PKI', 'SIEM', 'SOC', 'Incident Response',
+      // Business & Soft Skills
+      'Project Management', 'Agile', 'Scrum', 'Kanban', 'Lean', 'Six Sigma', 'Leadership', 'Team Management', 'Communication', 'Problem Solving', 'Critical Thinking', 'Analytical Thinking', 'Strategic Planning', 'Business Analysis', 'Requirements Gathering', 'Stakeholder Management', 'Risk Management', 'Change Management',
+      // Design
+      'UI/UX Design', 'User Experience', 'User Interface', 'Figma', 'Sketch', 'Adobe XD', 'InVision', 'Zeplin', 'Photoshop', 'Illustrator', 'After Effects', 'Wireframing', 'Prototyping', 'Design Systems', 'Accessibility', 'Responsive Design',
+      // Marketing & Sales
+      'Digital Marketing', 'SEO', 'SEM', 'Social Media Marketing', 'Content Marketing', 'Email Marketing', 'Marketing Automation', 'Google Analytics', 'Google Ads', 'Facebook Ads', 'LinkedIn Ads', 'CRM', 'Salesforce', 'HubSpot', 'Lead Generation', 'Sales Funnel',
+      // Finance & Accounting
+      'Financial Analysis', 'Financial Modeling', 'Budgeting', 'Forecasting', 'Accounting', 'Bookkeeping', 'Tax Preparation', 'Audit', 'Compliance', 'Risk Assessment', 'Excel', 'QuickBooks', 'SAP', 'Oracle Financials',
+      // HR & Recruitment
+      'Human Resources', 'Talent Acquisition', 'Recruitment', 'Employee Relations', 'Performance Management', 'Training and Development', 'Compensation and Benefits', 'HR Analytics', 'HRIS', 'Workday', 'BambooHR',
+      // Operations
+      'Operations Management', 'Supply Chain Management', 'Logistics', 'Inventory Management', 'Quality Assurance', 'Process Improvement', 'Lean Manufacturing', 'Six Sigma', 'ERP', 'SAP', 'Oracle ERP'
     ];
 
-    const foundSkills = [];
+    const foundSkills = new Set<string>();
     const lowerText = text.toLowerCase();
 
-    // First pass - exact matches
+    // Enhanced skill detection with context awareness
     for (const skill of commonSkills) {
       const skillLower = skill.toLowerCase();
-      if (lowerText.includes(skillLower)) {
-        // Check if it's a whole word match or part of a compound word
-        const regex = new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        if (regex.test(text) || skillLower.includes('.') || skillLower.includes('#')) {
-          foundSkills.push(skill);
+      
+      // Create regex patterns for better matching
+      const patterns = [
+        // Exact word boundary match
+        new RegExp(`\\b${skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
+        // Handle special cases with dots, slashes, etc.
+        new RegExp(skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\./g, '\\.?').replace(/\\\//g, '\\/?'), 'i'),
+        // Handle variations with spaces and hyphens
+        new RegExp(skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s\\-]?'), 'i')
+      ];
+      
+      for (const pattern of patterns) {
+        if (pattern.test(text)) {
+          foundSkills.add(skill);
+          break;
         }
       }
     }
 
-    // Second pass - look for skills in requirements/qualifications sections
-    const skillSections = text.match(/(?:requirements?|qualifications?|skills?|technologies?|tools?)[:\s]*([\s\S]*?)(?:\n\n|$)/gi);
-    if (skillSections) {
-      for (const section of skillSections) {
-        for (const skill of commonSkills) {
-          if (!foundSkills.includes(skill) && section.toLowerCase().includes(skill.toLowerCase())) {
-            foundSkills.push(skill);
+    // Enhanced section-based extraction
+    const skillSections = [
+      /(?:required\s+)?(?:skills?|technologies?|tools?|tech\s+stack|technical\s+skills?)\s*[:\-]?([\s\S]*?)(?=(?:\n\s*\n|requirements?|qualifications?|responsibilities?|benefits?|about\s+(?:us|the\s+role)|$))/gi,
+      /(?:requirements?|qualifications?)\s*[:\-]?([\s\S]*?)(?=(?:\n\s*\n|responsibilities?|benefits?|about\s+(?:us|the\s+role)|$))/gi,
+      /(?:must\s+have|should\s+have|nice\s+to\s+have)\s*[:\-]?([\s\S]*?)(?=(?:\n\s*\n|requirements?|qualifications?|responsibilities?|benefits?|about\s+(?:us|the\s+role)|$))/gi,
+      /(?:experience\s+(?:with|in))\s*[:\-]?([\s\S]*?)(?=(?:\n\s*\n|requirements?|qualifications?|responsibilities?|benefits?|about\s+(?:us|the\s+role)|$))/gi
+    ];
+
+    for (const sectionPattern of skillSections) {
+      const matches = [...text.matchAll(sectionPattern)];
+      for (const match of matches) {
+        if (match[1]) {
+          const section = match[1];
+          
+          // Extract skills from bullet points
+          const bulletPoints = section.match(/(?:^|\n)\s*[•\-\*\d+\.)\s]+([^\n]+)/gm);
+          if (bulletPoints) {
+            for (const point of bulletPoints) {
+              const cleanPoint = point.replace(/^\s*[•\-\*\d+\.)\s]+/, '').trim();
+              for (const skill of commonSkills) {
+                if (cleanPoint.toLowerCase().includes(skill.toLowerCase())) {
+                  foundSkills.add(skill);
+                }
+              }
+            }
+          }
+          
+          // Extract skills from comma-separated lists
+          const commaSeparated = section.split(/[,;\n]/);
+          for (const item of commaSeparated) {
+            const cleanItem = item.trim();
+            if (cleanItem.length > 2 && cleanItem.length < 50) {
+              for (const skill of commonSkills) {
+                if (cleanItem.toLowerCase().includes(skill.toLowerCase())) {
+                  foundSkills.add(skill);
+                }
+              }
+            }
           }
         }
       }
     }
 
-    // Remove duplicates and limit to 10 skills
-    const uniqueSkills = [...new Set(foundSkills)];
-    return uniqueSkills.length > 0 ? uniqueSkills.slice(0, 10) : ['JavaScript', 'React', 'Node.js'];
+    // Extract programming languages and frameworks from context
+    const techPatterns = [
+      /(?:proficient|experienced|skilled)\s+(?:in|with)\s+([^\n\.]+)/gi,
+      /(?:knowledge|experience)\s+(?:of|in|with)\s+([^\n\.]+)/gi,
+      /(?:using|working\s+with)\s+([^\n\.]+)/gi,
+      /(?:\d+\+?\s*years?)\s+(?:of\s+)?(?:experience\s+)?(?:in|with)\s+([^\n\.]+)/gi
+    ];
+
+    for (const pattern of techPatterns) {
+      const matches = [...text.matchAll(pattern)];
+      for (const match of matches) {
+        if (match[1]) {
+          const techList = match[1];
+          for (const skill of commonSkills) {
+            if (techList.toLowerCase().includes(skill.toLowerCase())) {
+              foundSkills.add(skill);
+            }
+          }
+        }
+      }
+    }
+
+    // Convert Set to Array and prioritize by relevance
+    const skillsArray = Array.from(foundSkills);
+    
+    // Sort skills by priority (programming languages first, then frameworks, etc.)
+    const priorityOrder = [
+      'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin',
+      'React', 'Angular', 'Vue.js', 'Node.js', 'Django', 'Flask', 'Spring', 'Laravel',
+      'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes',
+      'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis'
+    ];
+    
+    const sortedSkills = skillsArray.sort((a, b) => {
+      const aIndex = priorityOrder.indexOf(a);
+      const bIndex = priorityOrder.indexOf(b);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      } else if (aIndex !== -1) {
+        return -1;
+      } else if (bIndex !== -1) {
+        return 1;
+      } else {
+        return a.localeCompare(b);
+      }
+    });
+
+    // Return top 12 skills or default skills if none found
+    return sortedSkills.length > 0 ? sortedSkills.slice(0, 12) : ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'];
   };
 
   const extractSalary = (text: string) => {
     const salaryPatterns = [
-      // Range patterns
-      /\$([\d,]+)\s*[-–—to]\s*\$?([\d,]+)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly)?/gi,
-      /([\d,]+)\s*[-–—to]\s*([\d,]+)\s*(?:USD|INR|EUR|GBP|CAD)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly)?/gi,
-      /salary[:\s]*\$?([\d,]+)\s*[-–—to]\s*\$?([\d,]+)/gi,
-      /compensation[:\s]*\$?([\d,]+)\s*[-–—to]\s*\$?([\d,]+)/gi,
+      // Enhanced range patterns with better currency detection
+      /(?:salary|compensation|pay|wage|income|package)\s*[:\-]?\s*\$?([\d,]+(?:\.\d{2})?)\s*[-–—to]\s*\$?([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      /\$([\d,]+(?:\.\d{2})?)\s*[-–—to]\s*\$?([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      /([\d,]+(?:\.\d{2})?)\s*[-–—to]\s*([\d,]+(?:\.\d{2})?)\s*(?:USD|INR|EUR|GBP|CAD|AUD|SGD)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      // K notation patterns
+      /\$?([\d,]+(?:\.\d{1,2})?)k\s*[-–—to]\s*\$?([\d,]+(?:\.\d{1,2})?)k\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      // LPA patterns (Lakhs Per Annum) - Indian salary format
+      /([\d.]+)\s*[-–—to]\s*([\d.]+)\s*(?:lpa|lakhs?\s+per\s+annum|lakhs?)/gi,
+      /([\d.]+)\s*(?:lpa|lakhs?\s+per\s+annum|lakhs?)/gi,
+      // CTC patterns (Cost to Company) - Indian format
+      /(?:ctc|cost\s+to\s+company)\s*[:\-]?\s*₹?([\d,]+(?:\.\d{2})?)\s*[-–—to]\s*₹?([\d,]+(?:\.\d{2})?)\s*(?:lpa|lakhs?)?/gi,
       // Single amount patterns
-      /\$([\d,]+)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly)/gi,
-      /([\d,]+)\s*(?:USD|INR|EUR|GBP|CAD)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly)/gi,
-      // LPA patterns (Lakhs Per Annum)
-      /([\d.]+)\s*[-–—to]\s*([\d.]+)\s*LPA/gi,
-      /([\d.]+)\s*LPA/gi
+      /(?:salary|compensation|pay|wage|income|package)\s*[:\-]?\s*\$([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      /\$([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      /([\d,]+(?:\.\d{2})?)\s*(?:USD|INR|EUR|GBP|CAD|AUD|SGD)\s*(per\s+year|annually|yearly|per\s+month|monthly|per\s+hour|hourly|pa|p\.a\.)?/gi,
+      // Up to patterns
+      /up\s+to\s+\$?([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?/gi,
+      // Starting from patterns
+      /starting\s+(?:from|at)\s+\$?([\d,]+(?:\.\d{2})?)\s*(?:k|thousand)?/gi,
+      // Competitive salary indicators
+      /competitive\s+(?:salary|compensation|package)/gi
     ];
 
     let minSalary = '';
     let maxSalary = '';
     let currency = 'USD';
     let payRate = 'per year';
+    let isCompetitive = false;
+
+    // Check for competitive salary first
+    if (/competitive\s+(?:salary|compensation|package)/gi.test(text)) {
+      isCompetitive = true;
+    }
 
     for (const pattern of salaryPatterns) {
       const matches = [...text.matchAll(pattern)];
       for (const match of matches) {
+        if (match[0].toLowerCase().includes('competitive')) {
+          continue; // Skip competitive salary matches for now
+        }
+
         if (match[1] && match[2]) {
           // Range found
-          minSalary = match[1].replace(/,/g, '');
-          maxSalary = match[2].replace(/,/g, '');
+          let min = parseFloat(match[1].replace(/,/g, ''));
+          let max = parseFloat(match[2].replace(/,/g, ''));
           
-          // Check for LPA
-          if (text.toLowerCase().includes('lpa')) {
-            currency = 'INR';
-            minSalary = (parseFloat(minSalary) * 100000).toString();
-            maxSalary = (parseFloat(maxSalary) * 100000).toString();
+          // Handle K notation
+          if (match[0].toLowerCase().includes('k') || match[0].toLowerCase().includes('thousand')) {
+            min *= 1000;
+            max *= 1000;
           }
           
+          // Handle LPA (Lakhs Per Annum)
+          if (match[0].toLowerCase().includes('lpa') || match[0].toLowerCase().includes('lakh')) {
+            currency = 'INR';
+            min *= 100000;
+            max *= 100000;
+          }
+          
+          // Ensure min is less than max
+          if (min > max) {
+            [min, max] = [max, min];
+          }
+          
+          minSalary = min.toString();
+          maxSalary = max.toString();
+          
+          // Determine pay rate
           if (match[3]) {
             const rate = match[3].toLowerCase();
             if (rate.includes('month')) payRate = 'per month';
@@ -376,16 +724,32 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
           break;
         } else if (match[1]) {
           // Single amount
-          const amount = match[1].replace(/,/g, '');
-          if (text.toLowerCase().includes('lpa')) {
-            currency = 'INR';
-            minSalary = (parseFloat(amount) * 100000 * 0.8).toString();
-            maxSalary = (parseFloat(amount) * 100000 * 1.2).toString();
-          } else {
-            minSalary = (parseFloat(amount) * 0.9).toString();
-            maxSalary = (parseFloat(amount) * 1.1).toString();
+          let amount = parseFloat(match[1].replace(/,/g, ''));
+          
+          // Handle K notation
+          if (match[0].toLowerCase().includes('k') || match[0].toLowerCase().includes('thousand')) {
+            amount *= 1000;
           }
           
+          // Handle LPA
+          if (match[0].toLowerCase().includes('lpa') || match[0].toLowerCase().includes('lakh')) {
+            currency = 'INR';
+            amount *= 100000;
+          }
+          
+          // Create range from single amount
+          if (match[0].toLowerCase().includes('up to')) {
+            minSalary = (amount * 0.7).toString();
+            maxSalary = amount.toString();
+          } else if (match[0].toLowerCase().includes('starting')) {
+            minSalary = amount.toString();
+            maxSalary = (amount * 1.3).toString();
+          } else {
+            minSalary = (amount * 0.9).toString();
+            maxSalary = (amount * 1.1).toString();
+          }
+          
+          // Determine pay rate
           if (match[2]) {
             const rate = match[2].toLowerCase();
             if (rate.includes('month')) payRate = 'per month';
@@ -398,20 +762,86 @@ const JobParsingPage: React.FC<JobParsingPageProps> = ({ onNavigate, user }) => 
       if (minSalary && maxSalary) break;
     }
 
-    // Detect currency from text
-    if (text.includes('₹') || text.toLowerCase().includes('inr') || text.toLowerCase().includes('rupee')) {
-      currency = 'INR';
-    } else if (text.includes('€') || text.toLowerCase().includes('eur') || text.toLowerCase().includes('euro')) {
-      currency = 'EUR';
-    } else if (text.includes('£') || text.toLowerCase().includes('gbp') || text.toLowerCase().includes('pound')) {
-      currency = 'GBP';
+    // Enhanced currency detection
+    const currencyPatterns = [
+      { pattern: /₹|INR|rupees?|lakhs?|crores?/i, currency: 'INR' },
+      { pattern: /€|EUR|euros?/i, currency: 'EUR' },
+      { pattern: /£|GBP|pounds?/i, currency: 'GBP' },
+      { pattern: /CAD|canadian\s+dollars?/i, currency: 'CAD' },
+      { pattern: /AUD|australian\s+dollars?/i, currency: 'AUD' },
+      { pattern: /SGD|singapore\s+dollars?/i, currency: 'SGD' },
+      { pattern: /\$|USD|dollars?/i, currency: 'USD' }
+    ];
+
+    for (const { pattern, currency: curr } of currencyPatterns) {
+      if (pattern.test(text)) {
+        currency = curr;
+        break;
+      }
+    }
+
+    // Default salary ranges based on common patterns
+    if (!minSalary || !maxSalary) {
+      if (isCompetitive) {
+        // Set competitive salary ranges based on currency
+        switch (currency) {
+          case 'INR':
+            minSalary = '600000';
+            maxSalary = '1200000';
+            break;
+          case 'EUR':
+            minSalary = '45000';
+            maxSalary = '75000';
+            break;
+          case 'GBP':
+            minSalary = '40000';
+            maxSalary = '70000';
+            break;
+          default:
+            minSalary = '60000';
+            maxSalary = '100000';
+        }
+      } else {
+        // Default ranges
+        switch (currency) {
+          case 'INR':
+            minSalary = '500000';
+            maxSalary = '800000';
+            break;
+          case 'EUR':
+            minSalary = '40000';
+            maxSalary = '65000';
+            break;
+          case 'GBP':
+            minSalary = '35000';
+            maxSalary = '60000';
+            break;
+          default:
+            minSalary = '50000';
+            maxSalary = '80000';
+        }
+      }
+    }
+
+    // Validate and format salary values
+    const minNum = parseInt(minSalary);
+    const maxNum = parseInt(maxSalary);
+    
+    // Ensure reasonable salary ranges
+    if (minNum > 0 && maxNum > 0 && minNum <= maxNum) {
+      return {
+        min: minSalary,
+        max: maxSalary,
+        currency,
+        payRate
+      };
     }
 
     return {
-      min: minSalary || '50000',
-      max: maxSalary || '80000',
-      currency,
-      payRate
+      min: '50000',
+      max: '80000',
+      currency: 'USD',
+      payRate: 'per year'
     };
   };
 

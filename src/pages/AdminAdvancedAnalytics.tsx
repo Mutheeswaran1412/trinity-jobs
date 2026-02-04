@@ -82,6 +82,7 @@ const AdminAdvancedAnalytics: React.FC<AdminAdvancedAnalyticsProps> = ({ onNavig
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
             className="border rounded px-3 py-2"
+            title="Select time range for analytics"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

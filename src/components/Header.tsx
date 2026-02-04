@@ -160,9 +160,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <button onClick={handleCompaniesClick} className="text-white hover:text-gray-300 font-medium transition-colors">
               Companies
             </button>
-            <button onClick={() => onNavigate && onNavigate('company-reviews')} className="text-white hover:text-gray-300 font-medium transition-colors">
-              Company Reviews
-            </button>
+            {user?.type !== 'employer' && (
+              <button onClick={() => onNavigate && onNavigate('company-reviews')} className="text-white hover:text-gray-300 font-medium transition-colors">
+                Company Reviews
+              </button>
+            )}
 
             <div className="relative" ref={careerDropdownRef}>
               <button 
@@ -577,9 +579,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <button onClick={handleCompaniesClick} className="block text-left text-white hover:text-gray-300 font-medium">
                 Companies
               </button>
-              <button onClick={() => onNavigate && onNavigate('company-reviews')} className="block text-left text-white hover:text-gray-300 font-medium">
-                Company Reviews
-              </button>
+              {user?.type !== 'employer' && (
+                <button onClick={() => onNavigate && onNavigate('company-reviews')} className="block text-left text-white hover:text-gray-300 font-medium">
+                  Company Reviews
+                </button>
+              )}
               <div className="space-y-2">
                 <p className="text-white font-medium">Career Resources</p>
                 <div className="pl-4 space-y-2">

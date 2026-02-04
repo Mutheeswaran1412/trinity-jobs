@@ -43,7 +43,7 @@ import JobParsingPage from './pages/JobParsingPage';
 import JobDetailPage from './pages/JobDetailPage';
 import SkillDetailPage from './pages/SkillDetailPage';
 import CareerResources from './components/CareerResources';
-import CandidateDashboardPage from './pages/CandidateDashboardPage';
+import CandidateDashboardPage from './pages/CandidateDashboardPageNew';
 import EmployerDashboardPage from './pages/EmployerDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import SearchEngine from './components/SearchEngine';
