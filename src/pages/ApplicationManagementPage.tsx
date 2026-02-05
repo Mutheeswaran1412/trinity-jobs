@@ -281,6 +281,7 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
                             value={application.status}
                             onChange={(e) => updateApplicationStatus(application._id, e.target.value)}
                             className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                            aria-label={`Update status for ${application.candidateName}'s application`}
                           >
                             <option value="pending">Pending</option>
                             <option value="reviewed">Reviewed</option>

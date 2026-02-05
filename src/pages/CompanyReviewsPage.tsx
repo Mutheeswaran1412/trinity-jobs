@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ThumbsUp, ThumbsDown, Building, Users, TrendingUp, MessageSquare } from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
 import { API_ENDPOINTS } from '../config/constants';
 
@@ -111,13 +113,16 @@ const CompanyReviewsPage: React.FC<CompanyReviewsPageProps> = ({ onNavigate, use
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton 
-          onClick={() => onNavigate('home')}
-          text="Back to Home"
-          className="mb-6"
-        />
+        {!selectedCompany && (
+          <BackButton 
+            onClick={() => onNavigate('home')}
+            text="Back to Home"
+            className="mb-6"
+          />
+        )}
 
         {!selectedCompany ? (
           <>
@@ -184,7 +189,7 @@ const CompanyReviewsPage: React.FC<CompanyReviewsPageProps> = ({ onNavigate, use
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gray-900">{getAverageRating(reviews)}</div>
-                  <div className="flex justify-center mb-2">{renderStars(parseFloat(getAverageRating(reviews)), 'w-5 h-5')}</div>
+                  <div className="flex justify-center mb-2">{renderStars(parseFloat(getAverageRating(reviews)) || 0, 'w-5 h-5')}</div>
                   <div className="text-sm text-gray-600">{reviews.length} reviews</div>
                 </div>
                 <div className="text-center">
@@ -357,7 +362,8 @@ const CompanyReviewsPage: React.FC<CompanyReviewsPageProps> = ({ onNavigate, use
           </>
         )}
       </div>
-    </div>
+      <Footer onNavigate={onNavigate} />
+    </>
   );
 };
 

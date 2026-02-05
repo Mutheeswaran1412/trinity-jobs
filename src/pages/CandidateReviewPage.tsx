@@ -246,8 +246,11 @@ const CandidateReviewPage: React.FC<CandidateReviewPageProps> = ({ onNavigate, j
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">{selectedCandidate.name}</h2>
                 <button
+                  type="button"
                   onClick={() => setSelectedCandidate(null)}
                   className="text-gray-500 hover:text-gray-700"
+                  title="Close modal"
+                  aria-label="Close modal"
                 >
                   ✕
                 </button>

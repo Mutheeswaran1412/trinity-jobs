@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from '../config/env';
 
 interface HeaderProps {
   onNavigate?: (page: string) => void;
-  user?: {name: string, type: 'candidate' | 'employer'} | null;
+  user?: {name: string, type: 'candidate' | 'employer' | 'admin'} | null;
   onLogout?: () => void;
 }
 

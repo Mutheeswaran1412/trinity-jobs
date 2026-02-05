@@ -494,10 +494,8 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
           {/* Header */}
           <div className="mb-6">
             <BackButton 
-              variant="inline"
-              label="Back"
-              fallbackPage="dashboard"
-              onNavigate={onNavigate}
+              onClick={() => onNavigate && onNavigate('dashboard')}
+              text="Back"
               className="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors mb-4"
             />
             <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -631,6 +629,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       value={formData.yearsExperience}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Years of experience"
                     >
                       <option value="">Select experience</option>
                       <option value="0-1">0-1 years</option>
@@ -647,6 +646,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       value={formData.workAuthorization}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Work authorization status"
                     >
                       <option value="">Select status</option>
                       <option value="us-citizen">US Citizen</option>
@@ -663,6 +663,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       value={formData.securityClearance}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Security clearance level"
                     >
                       <option value="">Select clearance</option>
                       <option value="none">No Clearance</option>
@@ -687,10 +688,11 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Resume</label>
+                    <label htmlFor="resume-upload" className="block text-sm font-medium text-gray-700 mb-2">Upload Resume</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <input
+                        id="resume-upload"
                         type="file"
                         accept=".pdf,.doc,.docx"
                         onChange={handleFileUpload}
@@ -749,6 +751,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                           }}
                           placeholder="Type skills (e.g., React, Python, AWS)..."
                           className="w-full border-none outline-none text-sm bg-transparent"
+                          aria-label="Add skills to your profile"
                         />
                       </div>
                       {showSuggestions && skillSuggestions.length > 0 && (
@@ -898,6 +901,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       value={formData.jobType}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Job type preference"
                     >
                       <option value="">Select job type</option>
                       <option value="full-time">Full Time</option>
