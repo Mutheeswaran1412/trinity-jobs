@@ -81,6 +81,7 @@ import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
 import MobileNavigation from './components/MobileNavigation';
 import SkillAssessment from './components/SkillAssessment';
+import SkillAssessmentPage from './pages/SkillAssessmentPage';
 import InterviewScheduling from './components/InterviewScheduling';
 import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
@@ -770,6 +771,10 @@ function App() {
 
   if (currentPage === 'features') {
     return <FeaturesPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
+  }
+
+  if (currentPage === 'skill-assessment') {
+    return <SkillAssessmentPage onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />;
   }
 
   if (currentPage === 'skill-assessments') {

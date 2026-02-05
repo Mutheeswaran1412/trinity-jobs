@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
 import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS as ENV_API } from '../config/env';
 
 interface CandidateResponseDetailPageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -87,6 +88,7 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
             keySkills: candidateProfile?.skills || [],
             coverLetter: firstApp.coverLetter || 'No cover letter provided',
             resume: firstApp.resumeUrl || candidateProfile?.resume?.url || candidateProfile?.resume?.filename || 'No resume attached',
+            resumeData: firstApp.resumeData || candidateProfile?.resume || null,
             department: 'Not specified',
             role: candidateProfile?.title || candidateProfile?.jobTitle || 'Not specified',
             industry: 'Not specified',
@@ -457,6 +459,49 @@ ${candidate.company}`;
                       <div className="mt-3 text-sm text-gray-700">
                         <span className="text-gray-500">Cover Letter:</span>
                         <div className="mt-1">{currentCandidate.coverLetter || 'Applied using Quick Apply with saved resume'}</div>
+                      </div>
+                      
+                      <div className="mt-3 text-sm text-gray-700">
+                        <span className="text-gray-500">Resume:</span>
+                        <div className="mt-1">
+                          {currentCandidate.resumeUrl || currentCandidate.resumeData ? (
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => {
+                                  const resumeData = currentCandidate.resumeData;
+                                  const resumeUrl = currentCandidate.resumeUrl;
+                                  
+                                  // Try different resume access methods
+                                  if (resumeData?.url && resumeData.url.startsWith('http')) {
+                                    window.open(resumeData.url, '_blank');
+                                  } else if (resumeUrl && resumeUrl.startsWith('http')) {
+                                    window.open(resumeUrl, '_blank');
+                                  } else if (resumeData?.filename) {
+                                    // Try to construct URL from filename
+                                    const fileUrl = `${ENV_API.BASE_URL}/uploads/${resumeData.filename}`;
+                                    window.open(fileUrl, '_blank');
+                                  } else {
+                                    // Show resume information
+                                    const resumeName = resumeData?.name || resumeData?.filename || resumeUrl || 'Resume';
+                                    const uploadDate = resumeData?.uploadDate ? new Date(resumeData.uploadDate).toLocaleDateString() : 'Unknown';
+                                    const status = resumeData?.status || 'Available';
+                                    
+                                    alert(`Resume Information:\n\nName: ${resumeName}\nUpload Date: ${uploadDate}\nStatus: ${status}\n\nNote: Resume was uploaded by candidate during application process.`);
+                                  }
+                                }}
+                                className="text-blue-600 hover:text-blue-800 underline cursor-pointer flex items-center space-x-1"
+                              >
+                                <span>📄</span>
+                                <span>View Resume</span>
+                              </button>
+                              <span className="text-gray-500 text-xs">
+                                ({currentCandidate.resumeData?.name || currentCandidate.resumeUrl || 'Resume file'})
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">No resume attached</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

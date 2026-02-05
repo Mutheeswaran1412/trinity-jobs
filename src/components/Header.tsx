@@ -222,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                       <button 
                         onClick={() => {
                           setIsCareerDropdownOpen(false);
-                          onNavigate && onNavigate('skill-assessments');
+                          onNavigate && onNavigate('skill-assessment');
                         }}
                         className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                       >
@@ -580,6 +580,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               </button>
               <button onClick={handleCompaniesClick} className="block text-left text-white hover:text-gray-300 font-medium">
                 Companies
+              </button>
+              <button onClick={() => onNavigate && onNavigate('skill-assessment')} className="block text-left text-white hover:text-gray-300 font-medium">
+                Skill Assessments
               </button>
               {user?.type !== 'employer' && (
                 <button onClick={() => onNavigate && onNavigate('company-reviews')} className="block text-left text-white hover:text-gray-300 font-medium">

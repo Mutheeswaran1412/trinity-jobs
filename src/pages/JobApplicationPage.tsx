@@ -475,10 +475,14 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                     
                     // Get resume URL from various possible sources
                     let resumeUrl = '';
+                    let resumeData = null;
+                    
                     if (applicationData.resumeUrl) {
                       resumeUrl = applicationData.resumeUrl;
                     } else if (userData?.resume) {
                       const resume = userData.resume;
+                      resumeData = resume; // Store the full resume object
+                      
                       // For resume uploaded via modal (has status field)
                       if (resume.status) {
                         resumeUrl = `resume_${resume.name || 'uploaded'}`;
@@ -507,6 +511,7 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                       candidateEmail: userData.email,
                       candidatePhone: userData.phone || '',
                       resumeUrl: resumeUrl,
+                      resumeData: resumeData, // Include full resume data
                       workAuthorization: applicationData.workAuthorization,
                       coverLetter: applicationData.coverLetterFile ? 'Cover letter attached' : 'No cover letter'
                     };

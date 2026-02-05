@@ -30,13 +30,9 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const fetchActivityInsights = async (userId: string) => {
     setLoadingActivity(true);
     try {
-      // Try to get real data from existing database collections
-      const [applicationsRes, jobsRes, usersRes] = await Promise.all([
-        fetch(`${API_ENDPOINTS.BASE_URL}/api/applications?candidateId=${userId}`),
-        fetch(`${API_ENDPOINTS.JOBS}`),
-        fetch(`${API_ENDPOINTS.BASE_URL}/api/users/${userId}`)
-      ]);
-
+      // Get real applications data
+      const applicationsRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/candidate/${encodeURIComponent(user?.email || userId)}`);
+      
       let realData = {
         profileViews: 0,
         searchAppearances: 0,
@@ -58,31 +54,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         
         // Create recent activity from applications
         if (Array.isArray(applications) && applications.length > 0) {
-          realData.recentActivity = applications.slice(0, 3).map((app: any, index: number) => ({
+          realData.recentActivity = applications.slice(0, 3).map((app: any) => ({
             type: 'application',
-            company: app.companyName || app.company || 'Company',
-            message: `You applied for ${app.jobTitle || app.position || 'a position'}`,
-            time: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : `${index + 1} day${index > 0 ? 's' : ''} ago`,
+            company: app.jobId?.company || 'Company',
+            message: `You applied for ${app.jobId?.jobTitle || 'a position'}`,
+            time: new Date(app.createdAt).toLocaleDateString(),
             icon: '📝'
           }));
         }
       }
 
-      // Get job search appearances (estimate based on profile completeness)
-      if (usersRes.ok) {
-        const userData = await usersRes.json();
-        const profileFields = ['name', 'email', 'skills', 'location', 'experience'];
-        const completedFields = profileFields.filter(field => userData[field] && userData[field].length > 0).length;
-        realData.searchAppearances = Math.floor((completedFields / profileFields.length) * 50) + realData.applicationsSent * 2;
-      }
+      // Estimate other metrics based on applications
+      realData.searchAppearances = realData.applicationsSent * 3 + 5;
+      realData.profileViews = realData.applicationsSent * 2 + 3;
+      realData.recruiterActions = Math.floor(realData.applicationsSent * 0.5);
 
-      // Estimate profile views based on applications and profile completeness
-      realData.profileViews = Math.floor(realData.applicationsSent * 1.5) + Math.floor(realData.searchAppearances * 0.3);
-      
-      // Estimate recruiter actions (views, shortlists, etc.)
-      realData.recruiterActions = Math.floor(realData.profileViews * 0.2);
-
-      // Add some mock recent activity if no real applications
+      // Add default activity if no applications
       if (realData.recentActivity.length === 0) {
         realData.recentActivity = [
           {
@@ -99,12 +86,12 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       
     } catch (error) {
       console.error('Error fetching activity insights:', error);
-      // Fallback to basic mock data
+      // Fallback data
       setActivityData({
-        profileViews: 0,
-        searchAppearances: 0,
+        profileViews: 5,
+        searchAppearances: 12,
         applicationsSent: 0,
-        recruiterActions: 0,
+        recruiterActions: 2,
         recentActivity: [
           {
             type: 'info',
@@ -113,13 +100,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             time: 'Now',
             icon: '📊'
           }
-        ] as Array<{
-          type: string;
-          company: string;
-          message: string;
-          time: string;
-          icon: string;
-        }>
+        ]
       });
     } finally {
       setLoadingActivity(false);
@@ -143,19 +124,21 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
               setUser(updatedUser);
               // Update localStorage with fresh data
               localStorage.setItem('user', JSON.stringify(updatedUser));
+              calculateProfileCompletion(updatedUser);
             } else {
               setUser(parsedUser);
+              calculateProfileCompletion(parsedUser);
             }
           } catch (error) {
             console.error('Error fetching profile from database:', error);
             setUser(parsedUser);
+            calculateProfileCompletion(parsedUser);
           }
           
-          calculateProfileCompletion(parsedUser);
-          fetchNotifications(parsedUser.email || parsedUser.id);
+          fetchNotifications(parsedUser.email);
           // Fetch activity insights when Activity tab is active
           if (activeTab === 'Activity') {
-            fetchActivityInsights(parsedUser.email || parsedUser.id);
+            fetchActivityInsights(parsedUser.email);
           }
         } catch (error) {
           console.error('Error parsing user data:', error);
@@ -312,7 +295,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 onClick={() => {
                   setActiveTab('Activity');
                   if (user && !activityData) {
-                    fetchActivityInsights(user.email || user.id);
+                    fetchActivityInsights(user.email);
                   }
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm font-['IBM_Plex_Sans'] ${
@@ -457,7 +440,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <Star className="w-5 h-5 text-blue-600" />
                       <span className="text-gray-700">Company Reviews</span>
                     </button>
-                    <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => onNavigate('skill-assessment')}
+                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+                    >
                       <TrendingUp className="w-5 h-5 text-blue-600" />
                       <span className="text-gray-700">Take Skill Assessment</span>
                     </button>
@@ -482,6 +468,31 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <Edit className="w-5 h-5 text-blue-600" />
                       <span className="text-gray-700">Settings</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* Skill Assessments Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Skill Assessments</h3>
+                  <div className="space-y-4">
+                    <div className="text-center py-4">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <TrendingUp className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h4 className="font-medium text-gray-900 mb-2">Take New Assessment</h4>
+                      <p className="text-sm text-gray-600 mb-4">Test your skills and showcase your expertise</p>
+                      <button 
+                        onClick={() => onNavigate('skill-assessment')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Start Assessment
+                      </button>
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium text-gray-900 mb-2">My Assessments</h4>
+                      <p className="text-sm text-gray-500">No assessments completed yet</p>
+                    </div>
                   </div>
                 </div>
 

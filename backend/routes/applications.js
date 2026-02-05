@@ -20,7 +20,7 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl, isQuickApply = false } = req.body;
+    const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl, resumeData, isQuickApply = false } = req.body;
 
     // Check for duplicate application (allow reapply if withdrawn)
     const existingApplication = await Application.findOne({ jobId, candidateEmail });
@@ -45,6 +45,7 @@ router.post('/', [
       employerEmail: job.employerEmail || '',
       coverLetter: coverLetter || '',
       resumeUrl: resumeUrl || '',
+      resumeData: resumeData || null,
       status: 'applied',
       isQuickApply,
       timeline: [{

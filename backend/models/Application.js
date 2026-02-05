@@ -26,6 +26,14 @@ const applicationSchema = new mongoose.Schema({
   employerEmail: String,
   coverLetter: String,
   resumeUrl: String,
+  resumeData: {
+    name: String,
+    filename: String,
+    url: String,
+    path: String,
+    status: String,
+    uploadDate: Date
+  },
   status: {
     type: String,
     enum: ['applied', 'reviewed', 'shortlisted', 'hired', 'rejected', 'withdrawn'],
