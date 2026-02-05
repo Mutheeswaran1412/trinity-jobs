@@ -156,11 +156,11 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
           <div className="absolute bottom-20 left-20 w-64 h-64 bg-blue-200 rounded-full opacity-30"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
             {/* Left Content */}
-            <div className="space-y-8 -mt-16">
+            <div className="space-y-8 -mt-8">
               <div className="space-y-6">
                 <h5 className="text-blue-600 font-semibold text-lg">
                   We Have 208,000+ Live Jobs
@@ -282,15 +282,15 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
 
               <div className="relative">
                 {/* Dotted Circle Background */}
-                <div className="absolute inset-0 flex items-center justify-center -mt-16">
-                  <div className="w-[26rem] h-[26rem] border-2 border-dashed border-gray-800 rounded-full opacity-50 animate-spin" style={{animationDuration: '20s'}}></div>
-                  <div className="w-[38rem] h-[38rem] border-2 border-dashed border-gray-800 rounded-full opacity-40 absolute animate-spin" style={{animationDuration: '30s', animationDirection: 'reverse'}}></div>
+                <div className="absolute inset-0 flex items-center justify-center -mt-12">
+                  <div className="w-[22rem] h-[22rem] border-2 border-dashed border-gray-800 rounded-full opacity-50 animate-spin" style={{animationDuration: '20s'}}></div>
+                  <div className="w-[33rem] h-[33rem] border-2 border-dashed border-gray-800 rounded-full opacity-40 absolute animate-spin" style={{animationDuration: '30s', animationDirection: 'reverse'}}></div>
                 </div>
                 
                 <img
                   src="/images/women.png"
                   alt="Professional woman"
-                  className="w-[32rem] h-[38rem] mx-auto object-contain relative z-10 -mt-6"
+                  className="w-[26rem] h-[32rem] mx-auto object-contain relative z-10 -mt-12"
                 />
               </div>
           </div>

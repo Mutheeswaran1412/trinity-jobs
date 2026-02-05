@@ -4,10 +4,17 @@ export const getCompanyLogo = (companyName: string): string => {
   
   console.log('Getting logo for company:', companyName);
   
-  // Check if company name contains 'trinity' or 'zync' (case insensitive)
-  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+  // Check if company name contains 'trinity' (case insensitive)
+  if (companyName.toLowerCase().includes('trinity')) {
+    // Use the Trinity Technology logo
+    console.log('Trinity Technology detected, using Trinity logo');
+    return '/images/trinity-logo.png';
+  }
+  
+  // Check if company name contains 'zync' (case insensitive)
+  if (companyName.toLowerCase().includes('zync')) {
     // Use the ZyncJobs logo
-    console.log('ZyncJobs/Trinity detected, using ZyncJobs logo');
+    console.log('ZyncJobs detected, using ZyncJobs logo');
     return '/images/zyncjobs-logo.png';
   }
   
@@ -76,8 +83,13 @@ const getCompanyDomain = (companyName: string): string => {
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
   
-  // Special ZyncJobs/Trinity handling - force ZyncJobs logo everywhere
-  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+  // Special Trinity Technology handling - use Trinity logo
+  if (companyName.toLowerCase().includes('trinity')) {
+    return '/images/trinity-logo.png';
+  }
+  
+  // Special ZyncJobs handling - use ZyncJobs logo
+  if (companyName.toLowerCase().includes('zync')) {
     return '/images/zyncjobs-logo.png';
   }
   

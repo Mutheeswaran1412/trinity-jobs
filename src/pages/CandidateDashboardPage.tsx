@@ -387,7 +387,7 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                                     onNavigate('job-listings');
                                   } else if (notification.jobId) {
                                     setShowNotifications(false);
-                                    onNavigate('job-detail', { jobId: notification.jobId });
+                                    onNavigate('job-listings');
                                   }
                                 }}
                                 className="text-blue-600 hover:text-blue-800 text-sm font-medium px-4 py-2 border border-blue-600 rounded-lg"

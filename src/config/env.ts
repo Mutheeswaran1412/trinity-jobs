@@ -56,6 +56,12 @@ export const API_ENDPOINTS = {
   SUGGEST_JOB_TITLES: `${config.API_URL}/api/suggest-job-titles`,
   SUGGEST_LOCATIONS: `${config.API_URL}/api/suggest-locations`,
   
+  // Meetings
+  MEETINGS: `${config.API_URL}/api/meetings`,
+  
+  // Interviews
+  INTERVIEWS: `${config.API_URL}/api/interviews`,
+  
   // User
   PROFILE: `${config.API_URL}/api/profile`,
   USERS: `${config.API_URL}/api/users`,

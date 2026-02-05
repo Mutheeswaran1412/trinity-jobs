@@ -1,11 +1,10 @@
 import express from 'express';
 import { meetingService } from '../services/meetingService.js';
-import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Create meeting (supports both Zoom and Google Meet)
-router.post('/create', authenticateToken, async (req, res) => {
+router.post('/create', async (req, res) => {
   try {
     const { platform, topic, start_time, duration, description } = req.body;
     
@@ -31,7 +30,7 @@ router.post('/create', authenticateToken, async (req, res) => {
 });
 
 // Create Zoom meeting (legacy endpoint)
-router.post('/zoom/create', authenticateToken, async (req, res) => {
+router.post('/zoom/create', async (req, res) => {
   try {
     const { scheduledDate, duration, topic, start_time } = req.body;
     
@@ -48,7 +47,7 @@ router.post('/zoom/create', authenticateToken, async (req, res) => {
 });
 
 // Create Google Meet (legacy endpoint)
-router.post('/google-meet/create', authenticateToken, async (req, res) => {
+router.post('/google-meet/create', async (req, res) => {
   try {
     const { scheduledDate, duration, summary, start_time } = req.body;
     

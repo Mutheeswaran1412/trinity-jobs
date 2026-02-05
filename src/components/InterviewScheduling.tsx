@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Video, Phone, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import BackButton from './BackButton';
+import { API_ENDPOINTS } from '../config/env';
 
 const InterviewScheduling = () => {
   const [interviews, setInterviews] = useState([]);
@@ -23,33 +24,47 @@ const InterviewScheduling = () => {
   const fetchInterviews = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/interviews/my-interviews', {
+      const response = await fetch(`${API_ENDPOINTS.INTERVIEWS}/my-interviews`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await response.json();
-      setInterviews(data);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInterviews(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch interviews:', response.status);
+        setInterviews([]);
+      }
     } catch (error) {
       console.error('Error fetching interviews:', error);
+      setInterviews([]);
     }
   };
 
   const fetchAvailableSlots = async (date) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/interviews/available-slots?date=${date}`, {
+      const response = await fetch(`${API_ENDPOINTS.INTERVIEWS}/available-slots?date=${date}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await response.json();
-      setAvailableSlots(data);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableSlots(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch slots:', response.status);
+        setAvailableSlots([]);
+      }
     } catch (error) {
       console.error('Error fetching slots:', error);
+      setAvailableSlots([]);
     }
   };
 
   const scheduleInterview = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/interviews/schedule', {
+      const response = await fetch(`${API_ENDPOINTS.INTERVIEWS}/schedule`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +97,7 @@ const InterviewScheduling = () => {
 
   const generateZoomLink = async () => {
     try {
-      const response = await fetch('/api/meetings/create', {
+      const response = await fetch(`${API_ENDPOINTS.MEETINGS}/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +114,8 @@ const InterviewScheduling = () => {
       
       const result = await response.json();
       if (result.success) {
-        setFormData({ ...formData, meetingLink: result.meeting.joinUrl });
+        const meetingLink = result.meeting.join_url || result.meeting.joinUrl;
+        setFormData({ ...formData, meetingLink });
         alert('Zoom meeting created successfully!');
       } else {
         alert('Error: ' + (result.error || result.message));
@@ -111,7 +127,7 @@ const InterviewScheduling = () => {
 
   const generateGoogleMeetLink = async () => {
     try {
-      const response = await fetch('/api/meetings/create', {
+      const response = await fetch(`${API_ENDPOINTS.MEETINGS}/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +144,8 @@ const InterviewScheduling = () => {
       
       const result = await response.json();
       if (result.success) {
-        setFormData({ ...formData, meetingLink: result.meeting.joinUrl });
+        const meetingLink = result.meeting.join_url || result.meeting.meetLink;
+        setFormData({ ...formData, meetingLink });
         alert('Google Meet created successfully!');
       } else {
         alert('Error: ' + (result.error || result.message));
@@ -141,7 +158,7 @@ const InterviewScheduling = () => {
   const confirmInterview = async (interviewId) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/interviews/${interviewId}/confirm`, {
+      await fetch(`${API_ENDPOINTS.INTERVIEWS}/${interviewId}/confirm`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -154,7 +171,7 @@ const InterviewScheduling = () => {
   const rescheduleInterview = async (interviewId, newDate) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/interviews/${interviewId}/reschedule`, {
+      await fetch(`${API_ENDPOINTS.INTERVIEWS}/${interviewId}/reschedule`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

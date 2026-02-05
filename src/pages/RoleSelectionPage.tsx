@@ -22,7 +22,7 @@ const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onNavigate, user,
     <div className="min-h-screen bg-gray-50">
       <Header onNavigate={onNavigate} user={user} onLogout={onLogout} />
       
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)] px-4 py-12">
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-4 py-12">
         <div className="max-w-4xl w-full">
           {/* Header Section */}
           <div className="text-center mb-12">
