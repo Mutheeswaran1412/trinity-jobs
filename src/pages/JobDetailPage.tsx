@@ -316,6 +316,52 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
     }
   };
 
+  const handleReapply = async () => {
+    try {
+      if (!user?.email) {
+        alert('User email not found. Please login again.');
+        return;
+      }
+
+      // Find the withdrawn application and update it directly
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/candidate/${encodeURIComponent(user.email)}`);
+      if (response.ok) {
+        const applications = await response.json();
+        const withdrawnApp = applications.find(app => 
+          app.jobId._id === (job._id || jobId) && app.status === 'withdrawn'
+        );
+        
+        if (withdrawnApp) {
+          // Update the application status back to applied
+          const updateResponse = await fetch(`${API_ENDPOINTS.APPLICATIONS}/${withdrawnApp._id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              status: 'applied',
+              note: 'Reapplied to position after withdrawal',
+              updatedBy: user.name || user.fullName || 'Candidate'
+            })
+          });
+          
+          if (updateResponse.ok) {
+            setHasApplied(true);
+            setApplicationStatus('applied');
+            alert('Successfully reapplied to the job!');
+          } else {
+            alert('Failed to reapply. Please try again.');
+          }
+        } else {
+          alert('No withdrawn application found for this job.');
+        }
+      } else {
+        alert('Failed to find your applications. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error reapplying:', error);
+      alert('Failed to reapply. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -431,10 +477,20 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               {user?.type !== 'employer' && user?.userType !== 'employer' && (
                 <div className="flex items-center space-x-3">
                   {hasApplied ? (
-                    <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-6 py-3 rounded-lg font-semibold">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Applied ({applicationStatus})</span>
-                    </div>
+                    applicationStatus === 'withdrawn' ? (
+                      <button 
+                        onClick={handleReapply}
+                        className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center space-x-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Reapply</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-6 py-3 rounded-lg font-semibold">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Applied ({applicationStatus === 'withdrawn' ? 'நீங்கள் திரும்பப் பெற்றுள்ளீர்கள்' : applicationStatus})</span>
+                      </div>
+                    )
                   ) : (
                     <>
                       {/* Quick Apply Button - Always show for logged in users */}
@@ -767,10 +823,20 @@ const JobDetailPage: React.FC<JobDetailPageProps> = ({ onNavigate, jobTitle, job
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex flex-col space-y-3">
                   {hasApplied ? (
-                    <div className="flex items-center justify-center space-x-2 bg-green-100 text-green-800 py-3 rounded-lg font-semibold">
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Applied ({applicationStatus})</span>
-                    </div>
+                    applicationStatus === 'withdrawn' ? (
+                      <button 
+                        onClick={handleReapply}
+                        className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Reapply</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-center space-x-2 bg-green-100 text-green-800 py-3 rounded-lg font-semibold">
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Applied ({applicationStatus === 'withdrawn' ? 'நீங்கள் திரும்பப் பெற்றுள்ளீர்கள்' : applicationStatus})</span>
+                      </div>
+                    )
                   ) : (
                     <>
                       {/* Quick Apply Button */}

@@ -1,5 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -38,10 +39,46 @@ router.post('/save', async (req, res) => {
       return res.status(400).json({ error: 'userId or email required' });
     }
     
+    // Save to Profile collection
     const profile = await Profile.findOneAndUpdate(
       { $or: [{ userId }, { email }] },
       { userId, email, ...profileData, updatedAt: new Date() },
       { upsert: true, new: true }
+    );
+    
+    // Also update User collection with key fields
+    await User.findOneAndUpdate(
+      { $or: [{ _id: userId }, { email }] },
+      {
+        $set: {
+          name: profileData.name,
+          phone: profileData.phone,
+          location: profileData.location,
+          title: profileData.title,
+          'profile.skills': profileData.skills,
+          'profile.experienceYears': profileData.yearsExperience,
+          'profile.bio': profileData.experience,
+          'profile.resumeData': profileData.resume,
+          // Add comprehensive fields
+          profileSummary: profileData.profileSummary,
+          employment: profileData.employment,
+          projects: profileData.projects,
+          internships: profileData.internships,
+          languages: profileData.languages,
+          certifications: profileData.certifications,
+          awards: profileData.awards,
+          clubsCommittees: profileData.clubsCommittees,
+          competitiveExams: profileData.competitiveExams,
+          academicAchievements: profileData.academicAchievements,
+          birthday: profileData.birthday,
+          gender: profileData.gender,
+          college: profileData.college,
+          degree: profileData.degree,
+          profilePhoto: profileData.profilePhoto,
+          profileFrame: profileData.profileFrame
+        }
+      },
+      { upsert: false }
     );
     
     console.log('Profile saved successfully:', profile._id);

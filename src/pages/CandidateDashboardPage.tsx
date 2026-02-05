@@ -42,7 +42,13 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         searchAppearances: 0,
         applicationsSent: 0,
         recruiterActions: 0,
-        recentActivity: []
+        recentActivity: [] as Array<{
+          type: string;
+          company: string;
+          message: string;
+          time: string;
+          icon: string;
+        }>
       };
 
       // Get applications count from database
@@ -107,7 +113,13 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             time: 'Now',
             icon: '📊'
           }
-        ]
+        ] as Array<{
+          type: string;
+          company: string;
+          message: string;
+          time: string;
+          icon: string;
+        }>
       });
     } finally {
       setLoadingActivity(false);
@@ -120,7 +132,25 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       if (userData) {
         try {
           const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
+          
+          // Fetch fresh data from database
+          try {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/${parsedUser.email}`);
+            if (response.ok) {
+              const profileData = await response.json();
+              // Merge database data with localStorage data
+              const updatedUser = { ...parsedUser, ...profileData };
+              setUser(updatedUser);
+              // Update localStorage with fresh data
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+            } else {
+              setUser(parsedUser);
+            }
+          } catch (error) {
+            console.error('Error fetching profile from database:', error);
+            setUser(parsedUser);
+          }
+          
           calculateProfileCompletion(parsedUser);
           fetchNotifications(parsedUser.email || parsedUser.id);
           // Fetch activity insights when Activity tab is active
@@ -302,6 +332,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 bg-white rounded-full shadow-lg border text-gray-600 hover:text-gray-800 transition-colors"
+            aria-label="View notifications"
+            title="View notifications"
           >
             <Bell className="w-5 h-5" />
             {notifications.length > 0 && (
@@ -338,6 +370,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 <button 
                   onClick={() => setShowNotifications(false)}
                   className="text-gray-400 hover:text-gray-600"
+                  aria-label="Close notifications"
+                  title="Close notifications"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -633,17 +667,23 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           
                           {/* Action Links */}
                           <div className="flex items-center space-x-4 text-sm">
-                            <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                            <button 
+                              onClick={() => onNavigate('candidate-profile')}
+                              className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                            >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
-                              <span>Add Gender</span>
+                              <span>{user?.gender || 'Add Gender'}</span>
                             </button>
-                            <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                            <button 
+                              onClick={() => onNavigate('candidate-profile')}
+                              className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                            >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8" />
                               </svg>
-                              <span>Add birthday</span>
+                              <span>{user?.birthday || 'Add birthday'}</span>
                             </button>
                           </div>
                         </div>
@@ -777,11 +817,11 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       onClick={() => onNavigate('candidate-profile')}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {user?.languages ? 'Edit' : 'Add'}
+                      {user?.languages && user.languages.length > 0 ? 'Edit' : 'Add'}
                     </button>
                   </div>
-                  {user?.languages ? (
-                    <p className="text-gray-700">{user.languages}</p>
+                  {user?.languages && user.languages.length > 0 ? (
+                    <p className="text-gray-700">{Array.isArray(user.languages) ? user.languages.join(', ') : user.languages}</p>
                   ) : (
                     <p className="text-gray-500">Talk about the languages that you can speak, read or write</p>
                   )}
@@ -795,10 +835,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       onClick={() => onNavigate('candidate-profile')}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {user?.profileSummary ? 'Edit' : 'Add'}
+                      {user?.profileSummary && user.profileSummary.trim() ? 'Edit' : 'Add'}
                     </button>
                   </div>
-                  {user?.profileSummary ? (
+                  {user?.profileSummary && user.profileSummary.trim() ? (
                     <p className="text-gray-700">{user.profileSummary}</p>
                   ) : (
                     <p className="text-gray-500">Your Profile Summary should mention the highlights of your career and education, what your professional interests are, and what kind of a career you are looking for. Write a meaningful summary of more than 50 characters.</p>
@@ -878,10 +918,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           onClick={() => onNavigate('candidate-profile')}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.certifications ? 'Edit' : 'Add'}
+                          {user?.certifications && user.certifications.trim() ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.certifications ? (
+                      {user?.certifications && user.certifications.trim() ? (
                         <p className="text-gray-700 whitespace-pre-line">{user.certifications}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any certified courses that you completed</p>
@@ -896,10 +936,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           onClick={() => onNavigate('candidate-profile')}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.awards ? 'Edit' : 'Add'}
+                          {user?.awards && user.awards.trim() ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.awards ? (
+                      {user?.awards && user.awards.trim() ? (
                         <p className="text-gray-700 whitespace-pre-line">{user.awards}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any special recognitions that you received that makes you proud</p>
@@ -914,10 +954,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           onClick={() => onNavigate('candidate-profile')}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.clubsCommittees ? 'Edit' : 'Add'}
+                          {user?.clubsCommittees && user.clubsCommittees.trim() ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.clubsCommittees ? (
+                      {user?.clubsCommittees && user.clubsCommittees.trim() ? (
                         <p className="text-gray-700 whitespace-pre-line">{user.clubsCommittees}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Add details of position of responsibilities that you have held</p>
@@ -932,10 +972,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           onClick={() => onNavigate('candidate-profile')}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.competitiveExams ? 'Edit' : 'Add'}
+                          {user?.competitiveExams && user.competitiveExams.trim() ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.competitiveExams ? (
+                      {user?.competitiveExams && user.competitiveExams.trim() ? (
                         <p className="text-gray-700 whitespace-pre-line">{user.competitiveExams}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any competitive exam that you appeared for and the rank received</p>
@@ -950,10 +990,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           onClick={() => onNavigate('candidate-profile')}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.academicAchievements ? 'Edit' : 'Add'}
+                          {user?.academicAchievements && user.academicAchievements.trim() ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.academicAchievements ? (
+                      {user?.academicAchievements && user.academicAchievements.trim() ? (
                         <p className="text-gray-700 whitespace-pre-line">{user.academicAchievements}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any academic achievement whether in college or school that deserves a mention</p>

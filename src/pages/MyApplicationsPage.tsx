@@ -140,6 +140,38 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
     }
   };
 
+  const handleReapply = async (application: Application) => {
+    try {
+      if (!application.candidateEmail) {
+        alert('Candidate email not found. Please try again.');
+        return;
+      }
+
+      // Update the application status back to applied using existing endpoint
+      const response = await fetch(`${API_ENDPOINTS.APPLICATIONS}/${application._id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'applied',
+          note: 'Reapplied to position after withdrawal',
+          updatedBy: application.candidateName
+        })
+      });
+
+      if (response.ok) {
+        await fetchMyApplications();
+        alert('Successfully reapplied to the job!');
+      } else {
+        const errorText = await response.text();
+        console.error('Reapply error:', errorText);
+        alert('Failed to reapply. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error reapplying:', error);
+      alert('Failed to reapply. Please try again.');
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'applied': return <Clock className="w-4 h-4 text-blue-500" />;
@@ -171,7 +203,7 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
       case 'shortlisted': return 'Congratulations! You\'ve been shortlisted';
       case 'hired': return 'Congratulations! You got the job';
       case 'rejected': return 'Application was not selected';
-      case 'withdrawn': return 'You withdrew this application';
+      case 'withdrawn': return 'நீங்கள் இந்த விண்ணப்பத்தை திரும்பப் பெற்றுள்ளீர்கள்';
       default: return 'Status unknown';
     }
   };
@@ -523,6 +555,16 @@ const MyApplicationsPage: React.FC<MyApplicationsPageProps> = ({ onNavigate, use
                             >
                               <X className="w-4 h-4" />
                               <span>Withdraw</span>
+                            </button>
+                          )}
+                          
+                          {application.status === 'withdrawn' && (
+                            <button
+                              onClick={() => handleReapply(application)}
+                              className="flex items-center justify-center space-x-1 px-3 py-2 border border-green-300 text-green-600 text-sm rounded hover:bg-green-50 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Reapply</span>
                             </button>
                           )}
                         </div>

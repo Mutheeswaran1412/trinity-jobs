@@ -22,9 +22,9 @@ router.post('/', [
 
     const { jobId, candidateName, candidateEmail, candidatePhone, coverLetter, candidateId, resumeUrl, isQuickApply = false } = req.body;
 
-    // Check for duplicate application
+    // Check for duplicate application (allow reapply if withdrawn)
     const existingApplication = await Application.findOne({ jobId, candidateEmail });
-    if (existingApplication) {
+    if (existingApplication && existingApplication.status !== 'withdrawn') {
       return res.status(400).json({ error: 'You have already applied for this job' });
     }
 
@@ -267,8 +267,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-export default router;
-
 // POST /api/applications/quick-apply - Quick apply to job
 router.post('/quick-apply', [
   body('jobId').notEmpty().withMessage('Job ID is required'),
@@ -311,6 +309,52 @@ router.post('/quick-apply', [
 
     await application.save();
     res.json({ message: 'Quick apply successful!', application });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/applications/reapply - Reapply to a job after withdrawal
+router.post('/reapply', [
+  body('jobId').notEmpty().withMessage('Job ID is required'),
+  body('candidateEmail').isEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { jobId, candidateEmail } = req.body;
+    
+    // Find the withdrawn application
+    const withdrawnApp = await Application.findOne({ 
+      jobId, 
+      candidateEmail, 
+      status: 'withdrawn' 
+    });
+    
+    if (!withdrawnApp) {
+      return res.status(404).json({ error: 'No withdrawn application found for this job' });
+    }
+
+    // Reset application status to applied
+    withdrawnApp.status = 'applied';
+    withdrawnApp.withdrawnAt = undefined;
+    withdrawnApp.withdrawalReason = undefined;
+    withdrawnApp.timeline.push({
+      status: 'applied',
+      date: new Date(),
+      note: 'Reapplied to position after withdrawal',
+      updatedBy: withdrawnApp.candidateName
+    });
+    
+    await withdrawnApp.save();
+    
+    res.json({ 
+      message: 'Successfully reapplied to the job!',
+      application: withdrawnApp
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -361,3 +405,5 @@ router.get('/:id/timeline', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+export default router;

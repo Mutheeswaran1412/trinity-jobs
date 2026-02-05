@@ -126,7 +126,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
     competitiveExams: '',
     employment: '',
     academicAchievements: '',
-    languages: ''
+    languages: '',
+    gender: '',
+    birthday: ''
   });
 
   const [skillInput, setSkillInput] = useState('');
@@ -440,7 +442,9 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         jobType: formData.jobType,
         resume: formData.resume,
         companyName: formData.companyName,
-        roleTitle: formData.roleTitle
+        roleTitle: formData.roleTitle,
+        gender: formData.gender,
+        birthday: formData.birthday
       };
       
       // Update localStorage
@@ -622,6 +626,32 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       name="phone"
                       placeholder="09500366784"
                       value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Select gender"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Birthday</label>
+                    <input
+                      type="date"
+                      name="birthday"
+                      value={formData.birthday}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />

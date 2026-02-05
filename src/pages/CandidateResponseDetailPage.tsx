@@ -45,7 +45,7 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
       
       if (response.ok) {
         setStatus(newStatus);
-        setApplication(prev => ({ ...prev, status: newStatus }));
+        setApplication((prev: any) => ({ ...prev, status: newStatus }));
         alert(`Application ${newStatus} successfully!`);
       }
     } catch (error) {
@@ -169,26 +169,44 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
                 onClick={handleEmailContact}
                 className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
                 title="Send Email"
+                aria-label="Send Email"
               >
                 <Mail className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="Share"
+                aria-label="Share"
+              >
                 <Share className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="Download"
+                aria-label="Download"
+              >
                 <Download className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="Delete"
+                aria-label="Delete"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
               <button 
                 onClick={handleWhatsAppContact}
                 className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
                 title="WhatsApp"
+                aria-label="WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded">
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                title="View File"
+                aria-label="View File"
+              >
                 <FileText className="w-4 h-4" />
               </button>
             </div>
@@ -241,6 +259,8 @@ const CandidateResponseDetailPage: React.FC<CandidateResponseDetailPageProps> = 
                       value={status}
                       onChange={(e) => updateStatus(e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Change application status"
+                      title="Change application status"
                     >
                       <option value="pending">Status</option>
                       <option value="reviewed">Reviewed</option>
