@@ -139,29 +139,32 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
   }, [user]);
 
   return (
-    <header className="bg-gray-900 shadow-lg sticky top-0 z-50">
+    <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-3">
-          {/* Logo */}
           <div className="flex-shrink-0">
             <button 
               onClick={() => onNavigate && onNavigate('home')}
-              className="bg-red-600 text-white px-4 py-2 rounded font-bold text-xl hover:bg-red-700 transition-colors cursor-pointer"
+              className="flex items-center cursor-pointer"
             >
-              ZyncJobs
+              <img 
+                src="/images/zyncjobs-logo.png" 
+                alt="ZyncJobs" 
+                className="h-20 w-auto"
+              />
             </button>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 flex-1 justify-start ml-8">
-            <button onClick={handleFindJobsClick} className="text-white hover:text-gray-300 font-medium transition-colors">
+            <button onClick={handleFindJobsClick} className="text-gray-900 hover:text-gray-600 font-medium transition-colors">
               {user?.type === 'employer' ? 'Candidate Search' : 'Job Search'}
             </button>
-            <button onClick={handleCompaniesClick} className="text-white hover:text-gray-300 font-medium transition-colors">
+            <button onClick={handleCompaniesClick} className="text-gray-900 hover:text-gray-600 font-medium transition-colors">
               Companies
             </button>
             {user?.type !== 'employer' && (
-              <button onClick={() => onNavigate && onNavigate('company-reviews')} className="text-white hover:text-gray-300 font-medium transition-colors">
+              <button onClick={() => onNavigate && onNavigate('company-reviews')} className="text-gray-900 hover:text-gray-600 font-medium transition-colors">
                 Company Reviews
               </button>
             )}
@@ -169,7 +172,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <div className="relative" ref={careerDropdownRef}>
               <button 
                 onClick={() => setIsCareerDropdownOpen(!isCareerDropdownOpen)}
-                className="flex items-center space-x-1 text-white hover:text-gray-300 font-medium transition-colors"
+                className="flex items-center space-x-1 text-gray-900 hover:text-gray-600 font-medium transition-colors"
               >
                 <span>Career Resources</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${isCareerDropdownOpen ? 'rotate-180' : ''}`} />
@@ -281,7 +284,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                   onNavigate && onNavigate('role-selection');
                 }
               }}
-              className="text-white hover:text-gray-300 font-medium transition-colors"
+              className="text-gray-900 hover:text-gray-600 font-medium transition-colors"
             >
               {user?.type === 'employer' ? 'Job Posting' : 'My Jobs'}
             </button>
@@ -294,7 +297,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
             <div className="relative">
               <button 
                 onClick={handleEmployersClick}
-                className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
+                className="flex items-center space-x-1 text-gray-900 hover:text-gray-600 transition-colors"
               >
                 <span>For Employers</span>
                 <ChevronDown className="w-4 h-4" />
@@ -306,7 +309,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-2 text-white hover:text-gray-300 transition-colors"
+                  className="flex items-center space-x-2 text-gray-900 hover:text-gray-600 transition-colors"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold text-sm">
@@ -538,7 +541,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
+                  className="flex items-center space-x-1 text-gray-900 hover:text-gray-600 transition-colors"
                 >
                   <span>Login/Register</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -564,7 +567,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
           <div className="md:hidden flex-shrink-0">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:text-gray-300 transition-colors"
+              className="text-gray-900 hover:text-gray-600 transition-colors"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

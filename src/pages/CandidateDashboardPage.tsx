@@ -380,7 +380,18 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             <h4 className="font-medium text-gray-900 mb-1">{notification.title}</h4>
                             <p className="text-sm text-gray-600 mb-3">{notification.message}</p>
                             {notification.actionText && (
-                              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium px-4 py-2 border border-blue-600 rounded-lg">
+                              <button 
+                                onClick={() => {
+                                  if (notification.actionText === 'View Jobs' || notification.actionText === 'View Job') {
+                                    setShowNotifications(false);
+                                    onNavigate('job-listings');
+                                  } else if (notification.jobId) {
+                                    setShowNotifications(false);
+                                    onNavigate('job-detail', { jobId: notification.jobId });
+                                  }
+                                }}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium px-4 py-2 border border-blue-600 rounded-lg"
+                              >
                                 {notification.actionText}
                               </button>
                             )}

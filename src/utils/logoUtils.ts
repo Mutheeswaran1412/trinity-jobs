@@ -1,10 +1,9 @@
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return '/images/zync-logo.svg';
+  if (!companyName) return '/images/zyncjobs-logo.png';
   
-  // Check if company name contains 'trinity' (case insensitive) - use Trinity logo with fallback
-  if (companyName.toLowerCase().includes('trinity')) {
-    // Use Trinity PNG logo from company-logos folder
-    return '/images/company-logos/trinity-logo.png';
+  // Check if company name contains 'trinity' or 'zync' (case insensitive)
+  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+    return '/images/zyncjobs-logo.png';
   }
   
   // Clean company name for file lookup
@@ -109,9 +108,9 @@ const getCompanyDomain = (companyName: string): string => {
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
   
-  // Special handling for Trinity - ensure we return the correct path
-  if (companyName.toLowerCase().includes('trinity')) {
-    return '/images/company-logos/trinity-logo.png';
+  // Special handling for ZyncJobs/Trinity - ensure we return the correct path
+  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+    return '/images/zyncjobs-logo.png';
   }
   
   // Use the updated getCompanyLogo function

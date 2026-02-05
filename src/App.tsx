@@ -77,6 +77,7 @@ import ApplicationManagementPage from './pages/ApplicationManagementPage';
 
 import EmployerProfilePage from './pages/EmployerProfilePage';
 
+import MeetingTest from './components/MeetingTest';
 import ChatWidget from './components/ChatWidget';
 import Notification from './components/Notification';
 import MobileNavigation from './components/MobileNavigation';
@@ -184,7 +185,7 @@ function App() {
 
     
     // Check authentication for employer-only pages (removed job-posting for testing)
-    const employerPages = ['employers', 'candidate-search', 'hire-talent'];
+    const employerPages = ['employers', 'candidate-search', 'hire-talent', 'interviews'];
     if (employerPages.includes(page)) {
       if (!user) {
         // Not logged in, navigate to role selection page
@@ -784,6 +785,18 @@ function App() {
         <SkillAssessment />
         <Footer onNavigate={handleNavigation} />
         <MobileNavigation onNavigate={handleNavigation} currentPage={currentPage} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'meeting-test') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
+        <div className="py-8">
+          <MeetingTest />
+        </div>
+        <Footer onNavigate={handleNavigation} />
       </div>
     );
   }

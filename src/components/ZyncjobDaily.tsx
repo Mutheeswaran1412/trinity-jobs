@@ -13,7 +13,7 @@ const ZyncjobDaily: React.FC<ZyncjobDailyProps> = ({ onNavigate }) => {
       date: "Jan 15, 2025",
       category: "Trending Skills",
       bgColor: "bg-white",
-      image: "./images/AI-Skills-in-Highest-Demand-for-2025.jpg"
+      image: "/images/AI-Skills-in-Highest-Demand-for-2025.jpg"
     },
     {
       title: "Remote Work Trends in Tech Industry",
@@ -21,7 +21,7 @@ const ZyncjobDaily: React.FC<ZyncjobDailyProps> = ({ onNavigate }) => {
       date: "Jan 14, 2025", 
       category: "Market Trends",
       bgColor: "bg-white",
-      image: "./images/market.jpg"
+      image: "/images/market.jpg"
     },
     {
       title: "Salary Negotiation Tips for Developers",
@@ -29,7 +29,7 @@ const ZyncjobDaily: React.FC<ZyncjobDailyProps> = ({ onNavigate }) => {
       date: "Jan 13, 2025",
       category: "Career Advice",
       bgColor: "bg-white",
-      image: "./images/salary.jpg"
+      image: "/images/salary.jpg"
     }
   ];
 

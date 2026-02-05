@@ -10,7 +10,6 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       connectTimeoutMS: 30000,
-      bufferMaxEntries: 0,
       retryWrites: true,
       w: 'majority'
     });

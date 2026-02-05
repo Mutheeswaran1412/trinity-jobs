@@ -82,25 +82,27 @@ const InterviewScheduling = () => {
 
   const generateZoomLink = async () => {
     try {
-      const response = await fetch('/api/meetings/zoom/create', {
+      const response = await fetch('/api/meetings/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          scheduledDate: formData.scheduledDate,
+          platform: 'zoom',
+          topic: 'Interview Meeting',
+          start_time: formData.scheduledDate,
           duration: formData.duration,
-          topic: 'Interview Meeting'
+          description: 'Interview meeting scheduled via ZyncJobs'
         })
       });
       
       const result = await response.json();
       if (result.success) {
-        setFormData({ ...formData, meetingLink: result.meetingUrl });
+        setFormData({ ...formData, meetingLink: result.meeting.joinUrl });
         alert('Zoom meeting created successfully!');
       } else {
-        alert('Error: ' + result.error);
+        alert('Error: ' + (result.error || result.message));
       }
     } catch (error) {
       alert('Error creating Zoom meeting: ' + error.message);
@@ -109,25 +111,27 @@ const InterviewScheduling = () => {
 
   const generateGoogleMeetLink = async () => {
     try {
-      const response = await fetch('/api/meetings/google-meet/create', {
+      const response = await fetch('/api/meetings/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          scheduledDate: formData.scheduledDate,
+          platform: 'googlemeet',
+          topic: 'Interview Meeting',
+          start_time: formData.scheduledDate,
           duration: formData.duration,
-          summary: 'Interview Meeting'
+          description: 'Interview meeting scheduled via ZyncJobs'
         })
       });
       
       const result = await response.json();
       if (result.success) {
-        setFormData({ ...formData, meetingLink: result.meetingUrl });
+        setFormData({ ...formData, meetingLink: result.meeting.joinUrl });
         alert('Google Meet created successfully!');
       } else {
-        alert('Error: ' + result.error);
+        alert('Error: ' + (result.error || result.message));
       }
     } catch (error) {
       alert('Error creating Google Meet: ' + error.message);

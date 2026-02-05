@@ -8,24 +8,24 @@ const Testimonials = () => {
       author: "John D.",
       role: "IT Analyst",
       rating: 5,
-      backgroundImage: "./images/market.jpg",
-      profileImage: "./images/AIpicture.jpg"
+      backgroundImage: "/images/market.jpg",
+      profileImage: "/images/AIpicture.jpg"
     },
     {
       quote: "Exceptionally easy. Impressive algorithm for suggesting related jobs.",
       author: "Jon A.",
       role: "Software Engineer", 
       rating: 5,
-      backgroundImage: "./images/salary.jpg",
-      profileImage: "./images/AIpicture.jpg"
+      backgroundImage: "/images/salary.jpg",
+      profileImage: "/images/AIpicture.jpg"
     },
     {
       quote: "One of the best databases out there to find IT candidates.",
       author: "ASGN Inc",
       role: "Recruiting Team",
       rating: 5,
-      backgroundImage: "./images/analyst.jpg",
-      profileImage: "./images/AIpicture.jpg"
+      backgroundImage: "/images/analyst.jpg",
+      profileImage: "/images/AIpicture.jpg"
     }
   ];
 

@@ -1,14 +1,14 @@
 // Logo helper that works for both local and Vercel deployment
 export const getCompanyLogo = (companyName: string): string => {
-  if (!companyName) return '/images/zync-logo.svg';
+  if (!companyName) return '/images/zyncjobs-logo.png';
   
   console.log('Getting logo for company:', companyName);
   
-  // Check if company name contains 'trinity' (case insensitive)
-  if (companyName.toLowerCase().includes('trinity')) {
-    // Use the correct Trinity logo path - this will work everywhere
-    console.log('Trinity detected, using PNG logo');
-    return '/images/company-logos/trinity-logo.png';
+  // Check if company name contains 'trinity' or 'zync' (case insensitive)
+  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+    // Use the ZyncJobs logo
+    console.log('ZyncJobs/Trinity detected, using ZyncJobs logo');
+    return '/images/zyncjobs-logo.png';
   }
   
   // Try to get domain from company name for Clearbit
@@ -76,9 +76,9 @@ const getCompanyDomain = (companyName: string): string => {
 export const getSafeCompanyLogo = (job: any): string => {
   const companyName = job.company || job.companyName || 'ZyncJobs';
   
-  // Special Trinity handling - force Trinity logo everywhere
-  if (companyName.toLowerCase().includes('trinity')) {
-    return '/images/company-logos/trinity-logo.png';
+  // Special ZyncJobs/Trinity handling - force ZyncJobs logo everywhere
+  if (companyName.toLowerCase().includes('trinity') || companyName.toLowerCase().includes('zync')) {
+    return '/images/zyncjobs-logo.png';
   }
   
   return getCompanyLogo(companyName);

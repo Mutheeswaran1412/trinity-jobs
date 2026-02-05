@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, ChevronDown } from "lucide-react";
-import womenImage from '../assets/women.png';
 import { API_ENDPOINTS } from '../config/api';
 
 interface NewHeroProps {
@@ -161,7 +160,7 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             
             {/* Left Content */}
-            <div className="space-y-8">
+            <div className="space-y-8 -mt-16">
               <div className="space-y-6">
                 <h5 className="text-blue-600 font-semibold text-lg">
                   We Have 208,000+ Live Jobs
@@ -281,26 +280,19 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
               </div>
             </div>
 
-            {/* Right Content - Image */}
-            <div className="relative">
-              {/* Dotted Circle Background */}
-              <div className="absolute inset-0 flex items-center justify-center -mt-8">
-                <div className="w-[26rem] h-[26rem] border-2 border-dashed border-gray-800 rounded-full opacity-50 animate-spin" style={{animationDuration: '20s'}}></div>
-                <div className="w-[38rem] h-[38rem] border-2 border-dashed border-gray-800 rounded-full opacity-40 absolute animate-spin" style={{animationDuration: '30s', animationDirection: 'reverse'}}></div>
+              <div className="relative">
+                {/* Dotted Circle Background */}
+                <div className="absolute inset-0 flex items-center justify-center -mt-16">
+                  <div className="w-[26rem] h-[26rem] border-2 border-dashed border-gray-800 rounded-full opacity-50 animate-spin" style={{animationDuration: '20s'}}></div>
+                  <div className="w-[38rem] h-[38rem] border-2 border-dashed border-gray-800 rounded-full opacity-40 absolute animate-spin" style={{animationDuration: '30s', animationDirection: 'reverse'}}></div>
+                </div>
+                
+                <img
+                  src="/images/women.png"
+                  alt="Professional woman"
+                  className="w-[32rem] h-[38rem] mx-auto object-contain relative z-10 -mt-6"
+                />
               </div>
-              
-              <img
-                src={womenImage}
-                alt="Professional woman"
-                className="w-[30rem] h-[36rem] mx-auto object-contain relative z-10"
-                onError={(e) => {
-                  console.error('Image failed to load:', e);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              
-
-            </div>
           </div>
         </div>
       </div>

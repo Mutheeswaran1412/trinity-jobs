@@ -12,7 +12,12 @@ interface Notification {
   createdAt: string;
 }
 
-export default function NotificationBell({ userId }: { userId: string }) {
+interface NotificationBellProps {
+  userId: string;
+  onNavigate?: (page: string, data?: any) => void;
+}
+
+export default function NotificationBell({ userId, onNavigate }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -54,6 +59,22 @@ export default function NotificationBell({ userId }: { userId: string }) {
     }
   };
 
+  const handleNotificationClick = (notif: Notification) => {
+    if (!notif.read) {
+      markAsRead(notif._id);
+    }
+    
+    if (notif.link && onNavigate) {
+      if (notif.link === 'job-listings' || notif.message.includes('job recommendations')) {
+        onNavigate('job-listings');
+      } else {
+        onNavigate(notif.link);
+      }
+    }
+    
+    setShowDropdown(false);
+  };
+
   return (
     <div className="relative">
       <button
@@ -85,7 +106,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
             notifications.map((notif) => (
               <div
                 key={notif._id}
-                onClick={() => !notif.read && markAsRead(notif._id)}
+                onClick={() => handleNotificationClick(notif)}
                 className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${!notif.read ? 'bg-blue-50' : ''}`}
               >
                 <div className="flex justify-between items-start">
