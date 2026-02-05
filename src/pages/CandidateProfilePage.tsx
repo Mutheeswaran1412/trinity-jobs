@@ -116,7 +116,17 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
     workAuthorization: '',
     securityClearance: '',
     companyName: '',
-    roleTitle: ''
+    roleTitle: '',
+    // New comprehensive fields
+    profileSummary: '',
+    internships: '',
+    projects: '',
+    awards: '',
+    clubsCommittees: '',
+    competitiveExams: '',
+    employment: '',
+    academicAchievements: '',
+    languages: ''
   });
 
   const [skillInput, setSkillInput] = useState('');
@@ -148,12 +158,12 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         return;
       }
       
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      // Validate file type - Updated to match Naukri formats
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/rtf'];
       if (!allowedTypes.includes(file.type)) {
         setNotification({
           type: 'error',
-          message: 'Only PDF, DOC, and DOCX files are allowed',
+          message: 'Only PDF, DOC, DOCX, RTF files are allowed',
           isVisible: true
         });
         return;
@@ -440,13 +450,32 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         fullName: formData.fullName,
         companyName: formData.companyName,
         roleTitle: formData.roleTitle,
+        // Add all comprehensive profile fields
+        profileSummary: formData.profileSummary,
+        employment: formData.employment,
+        projects: formData.projects,
+        internships: formData.internships,
+        languages: formData.languages,
+        awards: formData.awards,
+        clubsCommittees: formData.clubsCommittees,
+        competitiveExams: formData.competitiveExams,
+        academicAchievements: formData.academicAchievements,
         profile: {
           ...existingUser.profile,
           skills: formData.skills,
           experience: formData.yearsExperience,
           bio: formData.experience,
           companyName: formData.companyName,
-          roleTitle: formData.roleTitle
+          roleTitle: formData.roleTitle,
+          profileSummary: formData.profileSummary,
+          employment: formData.employment,
+          projects: formData.projects,
+          internships: formData.internships,
+          languages: formData.languages,
+          awards: formData.awards,
+          clubsCommittees: formData.clubsCommittees,
+          competitiveExams: formData.competitiveExams,
+          academicAchievements: formData.academicAchievements
         }
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -526,6 +555,32 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Summary Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                      <User className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Profile Summary</h2>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">Your Profile Summary should mention the highlights of your career and education, what your professional interests are, and what kind of a career you are looking for. Write a meaningful summary of more than 50 characters.</p>
+                  <textarea
+                    name="profileSummary"
+                    placeholder="Write a compelling profile summary that highlights your key achievements, skills, and career aspirations..."
+                    value={formData.profileSummary}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Personal Information Card */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6">
@@ -689,18 +744,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="resume-upload" className="block text-sm font-medium text-gray-700 mb-2">Upload Resume</label>
+                    <p className="text-sm text-gray-600 mb-3">Your resume is the first impression you make on potential employers. Craft it carefully to secure your desired job or internship.</p>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <input
                         id="resume-upload"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.doc,.docx,.rtf"
                         onChange={handleFileUpload}
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
-                      <p className="text-sm text-gray-500 mt-2">No file chosen</p>
+                      <p className="text-sm text-gray-500 mt-2">{formData.resume ? (formData.resume as any).name : 'No file chosen'}</p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">Accepted formats: PDF, DOC, DOCX (Max 5MB)</p>
+                    <p className="text-sm text-gray-500 mt-2">Supported formats: doc, docx, rtf, pdf, up to 2MB</p>
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800 font-medium mb-2">Our AI checks for:</p>
@@ -921,7 +977,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                   <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
                     <GraduationCap className="w-5 h-5 text-indigo-600" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Education & Certifications</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Education</h2>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -935,17 +991,208 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                       className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
-                    <textarea
-                      name="certifications"
-                      placeholder="Certifications (AWS, Google Cloud, Microsoft, etc.)"
-                      value={formData.certifications}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                </div>
+              </div>
+            </div>
+
+            {/* Comprehensive Profile Sections */}
+            {/* Languages Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                      <GraduationCap className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Languages</h2>
                   </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about the languages that you can speak, read or write</p>
+                  <textarea
+                    name="languages"
+                    placeholder="English (Fluent), Tamil (Native), Hindi (Conversational)..."
+                    value={formData.languages}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Employment Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                      <Briefcase className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Employment</h2>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about the company you worked at, your designation and describe what all you did there</p>
+                  <textarea
+                    name="employment"
+                    placeholder="Company Name, Designation, Duration, Key Responsibilities and Achievements..."
+                    value={formData.employment}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Projects Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                      <Target className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about your projects that made you proud and contributed to your learnings</p>
+                  <textarea
+                    name="projects"
+                    placeholder="Project Name, Technologies Used, Duration, Description, and Key Learnings..."
+                    value={formData.projects}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Internships Card */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                      <Briefcase className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Internships</h2>
+                  </div>
+                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about the company you interned at, what projects you undertook and what special skills you learned</p>
+                  <textarea
+                    name="internships"
+                    placeholder="Company Name, Duration, Projects, Skills Learned, and Key Contributions..."
+                    value={formData.internships}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Accomplishments Section */}
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                    <GraduationCap className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Accomplishments</h2>
+                </div>
+                
+                {/* Certifications */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-800">Certifications</h3>
+                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about any certified courses that you completed</p>
+                  <textarea
+                    name="certifications"
+                    placeholder="Certification Name, Issuing Organization, Date, Validity..."
+                    value={formData.certifications}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Awards */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-800">Awards</h3>
+                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about any special recognitions that you received that makes you proud</p>
+                  <textarea
+                    name="awards"
+                    placeholder="Award Name, Issuing Organization, Date, Description..."
+                    value={formData.awards}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Club & Committees */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-800">Club & committees</h3>
+                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Add details of position of responsibilities that you have held</p>
+                  <textarea
+                    name="clubsCommittees"
+                    placeholder="Organization Name, Position, Duration, Responsibilities..."
+                    value={formData.clubsCommittees}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Competitive Exams */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-800">Competitive exams</h3>
+                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about any competitive exam that you appeared for and the rank received</p>
+                  <textarea
+                    name="competitiveExams"
+                    placeholder="Exam Name, Year, Rank/Score, Percentile..."
+                    value={formData.competitiveExams}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Academic Achievements */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-800">Academic achievements</h3>
+                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Talk about any academic achievement whether in college or school that deserves a mention</p>
+                  <textarea
+                    name="academicAchievements"
+                    placeholder="Achievement, Institution, Year, Description..."
+                    value={formData.academicAchievements}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
               </div>
             </div>

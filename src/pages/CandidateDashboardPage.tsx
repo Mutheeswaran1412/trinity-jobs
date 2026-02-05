@@ -23,7 +23,96 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   }>({ type: 'success', message: '', isVisible: false });
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any>(null);
+  const [loadingActivity, setLoadingActivity] = useState(false);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+
+  const fetchActivityInsights = async (userId: string) => {
+    setLoadingActivity(true);
+    try {
+      // Try to get real data from existing database collections
+      const [applicationsRes, jobsRes, usersRes] = await Promise.all([
+        fetch(`${API_ENDPOINTS.BASE_URL}/api/applications?candidateId=${userId}`),
+        fetch(`${API_ENDPOINTS.JOBS}`),
+        fetch(`${API_ENDPOINTS.BASE_URL}/api/users/${userId}`)
+      ]);
+
+      let realData = {
+        profileViews: 0,
+        searchAppearances: 0,
+        applicationsSent: 0,
+        recruiterActions: 0,
+        recentActivity: []
+      };
+
+      // Get applications count from database
+      if (applicationsRes.ok) {
+        const applications = await applicationsRes.json();
+        realData.applicationsSent = Array.isArray(applications) ? applications.length : 0;
+        
+        // Create recent activity from applications
+        if (Array.isArray(applications) && applications.length > 0) {
+          realData.recentActivity = applications.slice(0, 3).map((app: any, index: number) => ({
+            type: 'application',
+            company: app.companyName || app.company || 'Company',
+            message: `You applied for ${app.jobTitle || app.position || 'a position'}`,
+            time: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString() : `${index + 1} day${index > 0 ? 's' : ''} ago`,
+            icon: '📝'
+          }));
+        }
+      }
+
+      // Get job search appearances (estimate based on profile completeness)
+      if (usersRes.ok) {
+        const userData = await usersRes.json();
+        const profileFields = ['name', 'email', 'skills', 'location', 'experience'];
+        const completedFields = profileFields.filter(field => userData[field] && userData[field].length > 0).length;
+        realData.searchAppearances = Math.floor((completedFields / profileFields.length) * 50) + realData.applicationsSent * 2;
+      }
+
+      // Estimate profile views based on applications and profile completeness
+      realData.profileViews = Math.floor(realData.applicationsSent * 1.5) + Math.floor(realData.searchAppearances * 0.3);
+      
+      // Estimate recruiter actions (views, shortlists, etc.)
+      realData.recruiterActions = Math.floor(realData.profileViews * 0.2);
+
+      // Add some mock recent activity if no real applications
+      if (realData.recentActivity.length === 0) {
+        realData.recentActivity = [
+          {
+            type: 'profile_setup',
+            company: 'ZyncJobs',
+            message: 'Profile created successfully',
+            time: 'Recently',
+            icon: '👤'
+          }
+        ];
+      }
+
+      setActivityData(realData);
+      
+    } catch (error) {
+      console.error('Error fetching activity insights:', error);
+      // Fallback to basic mock data
+      setActivityData({
+        profileViews: 0,
+        searchAppearances: 0,
+        applicationsSent: 0,
+        recruiterActions: 0,
+        recentActivity: [
+          {
+            type: 'info',
+            company: 'ZyncJobs',
+            message: 'Complete your profile to start tracking activity',
+            time: 'Now',
+            icon: '📊'
+          }
+        ]
+      });
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -34,6 +123,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
           setUser(parsedUser);
           calculateProfileCompletion(parsedUser);
           fetchNotifications(parsedUser.email || parsedUser.id);
+          // Fetch activity insights when Activity tab is active
+          if (activeTab === 'Activity') {
+            fetchActivityInsights(parsedUser.email || parsedUser.id);
+          }
         } catch (error) {
           console.error('Error parsing user data:', error);
           setUser(null);
@@ -43,6 +136,21 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
     };
     
     loadUserProfile();
+    
+    // Listen for storage changes to update profile when returning from edit page
+    const handleStorageChange = () => {
+      loadUserProfile();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for focus events to reload data when returning to tab
+    window.addEventListener('focus', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleStorageChange);
+    };
   }, []);
 
   const fetchNotifications = async (userId: string) => {
@@ -171,7 +279,12 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 View & Edit
               </button>
               <button 
-                onClick={() => setActiveTab('Activity')}
+                onClick={() => {
+                  setActiveTab('Activity');
+                  if (user && !activityData) {
+                    fetchActivityInsights(user.email || user.id);
+                  }
+                }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm font-['IBM_Plex_Sans'] ${
                   activeTab === 'Activity' 
                     ? 'border-black text-gray-900' 
@@ -225,8 +338,6 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 <button 
                   onClick={() => setShowNotifications(false)}
                   className="text-gray-400 hover:text-gray-600"
-                  title="Close notifications"
-                  aria-label="Close notifications"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -662,18 +773,343 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Languages</h2>
-                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      {user?.languages ? 'Edit' : 'Add'}
+                    </button>
                   </div>
-                  <p className="text-gray-500">Talk about the languages that you can speak, read or write</p>
+                  {user?.languages ? (
+                    <p className="text-gray-700">{user.languages}</p>
+                  ) : (
+                    <p className="text-gray-500">Talk about the languages that you can speak, read or write</p>
+                  )}
+                </div>
+
+                {/* Profile Summary Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Profile Summary</h2>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      {user?.profileSummary ? 'Edit' : 'Add'}
+                    </button>
+                  </div>
+                  {user?.profileSummary ? (
+                    <p className="text-gray-700">{user.profileSummary}</p>
+                  ) : (
+                    <p className="text-gray-500">Your Profile Summary should mention the highlights of your career and education, what your professional interests are, and what kind of a career you are looking for. Write a meaningful summary of more than 50 characters.</p>
+                  )}
+                </div>
+
+                {/* Employment Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Employment</h2>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      {user?.employment || user?.experience ? 'Edit' : 'Add'}
+                    </button>
+                  </div>
+                  {user?.employment || user?.experience ? (
+                    <div className="space-y-2">
+                      {user?.companyName && (
+                        <p className="font-medium text-gray-900">{user.companyName} - {user.roleTitle}</p>
+                      )}
+                      <p className="text-gray-700 whitespace-pre-line">{user.employment || user.experience}</p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Talk about the company you worked at, your designation and describe what all you did there</p>
+                  )}
+                </div>
+
+                {/* Projects Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      {user?.projects ? 'Edit' : 'Add'}
+                    </button>
+                  </div>
+                  {user?.projects ? (
+                    <p className="text-gray-700 whitespace-pre-line">{user.projects}</p>
+                  ) : (
+                    <p className="text-gray-500">Talk about your projects that made you proud and contributed to your learnings</p>
+                  )}
+                </div>
+
+                {/* Internships Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Internships</h2>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      {user?.internships ? 'Edit' : 'Add'}
+                    </button>
+                  </div>
+                  {user?.internships ? (
+                    <p className="text-gray-700 whitespace-pre-line">{user.internships}</p>
+                  ) : (
+                    <p className="text-gray-500">Talk about the company you interned at, what projects you undertook and what special skills you learned</p>
+                  )}
+                </div>
+
+                {/* Accomplishments Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Accomplishments</h2>
+                  </div>
+                  <div className="space-y-4">
+                    {/* Certifications */}
+                    <div className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Certifications</h3>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {user?.certifications ? 'Edit' : 'Add'}
+                        </button>
+                      </div>
+                      {user?.certifications ? (
+                        <p className="text-gray-700 whitespace-pre-line">{user.certifications}</p>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Talk about any certified courses that you completed</p>
+                      )}
+                    </div>
+
+                    {/* Awards */}
+                    <div className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Awards</h3>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {user?.awards ? 'Edit' : 'Add'}
+                        </button>
+                      </div>
+                      {user?.awards ? (
+                        <p className="text-gray-700 whitespace-pre-line">{user.awards}</p>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Talk about any special recognitions that you received that makes you proud</p>
+                      )}
+                    </div>
+
+                    {/* Club & committees */}
+                    <div className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Club & committees</h3>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {user?.clubsCommittees ? 'Edit' : 'Add'}
+                        </button>
+                      </div>
+                      {user?.clubsCommittees ? (
+                        <p className="text-gray-700 whitespace-pre-line">{user.clubsCommittees}</p>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Add details of position of responsibilities that you have held</p>
+                      )}
+                    </div>
+
+                    {/* Competitive exams */}
+                    <div className="border-b border-gray-100 pb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Competitive exams</h3>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {user?.competitiveExams ? 'Edit' : 'Add'}
+                        </button>
+                      </div>
+                      {user?.competitiveExams ? (
+                        <p className="text-gray-700 whitespace-pre-line">{user.competitiveExams}</p>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Talk about any competitive exam that you appeared for and the rank received</p>
+                      )}
+                    </div>
+
+                    {/* Academic achievements */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Academic achievements</h3>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {user?.academicAchievements ? 'Edit' : 'Add'}
+                        </button>
+                      </div>
+                      {user?.academicAchievements ? (
+                        <p className="text-gray-700 whitespace-pre-line">{user.academicAchievements}</p>
+                      ) : (
+                        <p className="text-gray-500 text-sm">Talk about any academic achievement whether in college or school that deserves a mention</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resume Section */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Resume</h2>
+                  </div>
+                  <p className="text-gray-500 mb-4">Your resume is the first impression you make on potential employers. Craft it carefully to secure your desired job or internship.</p>
+                  {user?.resume ? (
+                    <div className="border border-gray-300 rounded-lg p-4">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-8 h-8 text-blue-600" />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{user.resume.name || 'Resume.pdf'}</p>
+                          <p className="text-sm text-gray-500">Uploaded on {user.resume.uploadDate || 'Recently'}</p>
+                        </div>
+                        <button 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Upload resume
+                      </button>
+                      <p className="text-gray-500 text-sm mt-2">Supported formats: doc, docx, rtf, pdf, up to 2MB</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
           {activeTab === 'Activity' && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Insights</h2>
-              <p className="text-gray-500">Your activity insights will appear here.</p>
+            <div className="space-y-6">
+              {loadingActivity ? (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600">Loading activity insights...</span>
+                  </div>
+                </div>
+              ) : activityData ? (
+                <>
+                  {/* Activity Stats Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">👁️</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Profile Views</p>
+                          <p className="text-2xl font-bold text-gray-900">{activityData.profileViews}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">🔍</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Search Appearances</p>
+                          <p className="text-2xl font-bold text-gray-900">{activityData.searchAppearances}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">📝</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Applications Sent</p>
+                          <p className="text-2xl font-bold text-gray-900">{activityData.applicationsSent}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <span className="text-lg">💼</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Recruiter Actions</p>
+                          <p className="text-2xl font-bold text-gray-900">{activityData.recruiterActions}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Activity */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+                    <div className="space-y-4">
+                      {activityData.recentActivity.map((activity: any, index: number) => (
+                        <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex-shrink-0">
+                            <span className="text-2xl">{activity.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">{activity.company} • {activity.time}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Activity Chart Placeholder */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Trends</h2>
+                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <span className="text-4xl mb-4 block">📈</span>
+                        <p className="text-gray-600">Activity chart will be implemented here</p>
+                        <p className="text-sm text-gray-500 mt-2">Track your profile performance over time</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="text-center py-8">
+                    <span className="text-4xl mb-4 block">📈</span>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">No Activity Data</h2>
+                    <p className="text-gray-500">Start applying to jobs to see your activity insights</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -685,6 +1121,31 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         onSave={async (photo, frame) => {
           const updatedUser = { ...user, profilePhoto: photo, profileFrame: frame || 'none' };
           setUser(updatedUser);
+          
+          // Save to localStorage
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          // Save to database
+          try {
+            const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user?.id || user?._id || user?.email,
+                email: user?.email,
+                profilePhoto: photo,
+                profileFrame: frame || 'none'
+              })
+            });
+            
+            if (response.ok) {
+              console.log('Profile photo saved to database successfully');
+            } else {
+              console.warn('Failed to save profile photo to database');
+            }
+          } catch (error) {
+            console.error('Error saving profile photo to database:', error);
+          }
           
           setNotification({
             type: 'success',

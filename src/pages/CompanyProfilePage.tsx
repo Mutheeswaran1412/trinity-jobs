@@ -144,10 +144,8 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="mb-8">
             <BackButton 
-              variant="inline"
-              label="Back"
-              fallbackPage="dashboard"
-              onNavigate={onNavigate}
+              onClick={() => onNavigate && onNavigate('dashboard')}
+              text="Back"
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors mb-4"
             />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Company Profile</h1>
@@ -232,6 +230,7 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
                   value={formData.companySize}
                   onChange={handleInputChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  aria-label="Company size"
                 >
                   <option value="">Company Size</option>
                   <option value="1-10">1-10 employees</option>
@@ -301,6 +300,7 @@ const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onNavigate }) =
                   value={formData.jobType}
                   onChange={handleInputChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  aria-label="Job type"
                 >
                   <option value="">Job Type</option>
                   <option value="full-time">Full Time</option>

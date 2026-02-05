@@ -454,8 +454,24 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
               <button
                 onClick={async () => {
                   try {
+                    console.log('🚀 Starting application submission...');
+                    
                     const jobData = JSON.parse(localStorage.getItem('selectedJob') || '{}');
                     const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                    
+                    console.log('📋 Job Data:', jobData);
+                    console.log('👤 User Data:', userData);
+                    
+                    // Validate required data
+                    if (!jobData._id && !jobData.id) {
+                      alert('❌ Job information is missing. Please go back and select a job.');
+                      return;
+                    }
+                    
+                    if (!userData.email) {
+                      alert('❌ User information is missing. Please log in again.');
+                      return;
+                    }
                     
                     // Get resume URL from various possible sources
                     let resumeUrl = '';
@@ -484,32 +500,62 @@ const JobApplicationPage: React.FC<JobApplicationPageProps> = ({ onNavigate, job
                       resumeUrl = 'resume_from_profile';
                     }
                     
+                    const applicationPayload = {
+                      jobId: jobData._id || jobData.id,
+                      candidateId: userData._id || userData.id,
+                      candidateName: userData.name || userData.fullName || 'Unknown',
+                      candidateEmail: userData.email,
+                      candidatePhone: userData.phone || '',
+                      resumeUrl: resumeUrl,
+                      workAuthorization: applicationData.workAuthorization,
+                      coverLetter: applicationData.coverLetterFile ? 'Cover letter attached' : 'No cover letter'
+                    };
+                    
+                    console.log('📤 Sending application payload:', applicationPayload);
+                    console.log('🌐 API Endpoint:', API_ENDPOINTS.APPLICATIONS);
+                    
                     const response = await fetch(API_ENDPOINTS.APPLICATIONS, {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        jobId: jobData._id || jobData.id,
-                        candidateId: userData._id || userData.id,
-                        candidateName: userData.name || userData.fullName,
-                        candidateEmail: userData.email,
-                        candidatePhone: userData.phone,
-                        resumeUrl: resumeUrl,
-                        workAuthorization: applicationData.workAuthorization,
-                        coverLetter: applicationData.coverLetterFile ? 'Cover letter attached' : 'No cover letter'
-                      })
+                      headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                      },
+                      body: JSON.stringify(applicationPayload)
                     });
                     
+                    console.log('📥 Response status:', response.status);
+                    
                     const result = await response.json();
+                    console.log('📋 Response data:', result);
                     
                     if (response.ok) {
-                      alert('🎉 Application submitted successfully!');
-                      setTimeout(() => onNavigate('candidate-dashboard'), 1500);
+                      console.log('✅ Application submitted successfully!');
+                      alert('🎉 Application submitted successfully! You can track your application in your dashboard.');
+                      
+                      // Update user's applied jobs in localStorage
+                      const updatedUser = {
+                        ...userData,
+                        appliedJobs: [
+                          ...(userData.appliedJobs || []),
+                          {
+                            jobId: jobData._id || jobData.id,
+                            appliedAt: new Date().toISOString(),
+                            status: 'applied',
+                            jobTitle: jobData.title || jobData.jobTitle,
+                            company: jobData.company
+                          }
+                        ]
+                      };
+                      localStorage.setItem('user', JSON.stringify(updatedUser));
+                      
+                      setTimeout(() => onNavigate('candidate-dashboard'), 2000);
                     } else {
-                      alert(result.error || 'Failed to submit application');
+                      console.error('❌ Application failed:', result);
+                      alert(`❌ ${result.error || 'Failed to submit application. Please try again.'}`);
                     }
                   } catch (error) {
-                    console.error('Application error:', error);
-                    alert('Failed to submit application. Please try again.');
+                    console.error('❌ Application submission error:', error);
+                    alert('❌ Network error. Please check your connection and try again.');
                   }
                 }}
                 className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 flex items-center"

@@ -1707,7 +1707,6 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       description: jobData.jobDescription,
       responsibilities: jobData.responsibilities,
       requirements: jobData.requirements,
-      requirements: jobData.skills,
       skills: jobData.skills,
       experienceRange: jobData.experienceRange,
       experience: jobData.experienceRange,
