@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../config/constants';
 import { decodeHtmlEntities, formatDate, formatSalary } from '../utils/textUtils';
 import BackButton from '../components/BackButton';
 import AutoRejectionSettings from '../components/AutoRejectionSettings';
+import ScheduleInterviewModal from '../components/ScheduleInterviewModal';
 
 interface EmployerDashboardPageProps {
   onNavigate: (page: string) => void;
@@ -27,6 +28,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [activeMenu, setActiveMenu] = useState('dashboard');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
 
   useEffect(() => {
     // Mock employer notifications
@@ -884,8 +887,8 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
                           </select>
                           <button 
                             onClick={() => {
-                              // Navigate to interview scheduling
-                              onNavigate('interview-schedule');
+                              setSelectedApplication(application);
+                              setShowScheduleModal(true);
                             }}
                             className="bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors text-sm"
                           >
@@ -1029,6 +1032,20 @@ const EmployerDashboardPage: React.FC<EmployerDashboardPageProps> = ({ onNavigat
         </div>
       </div>
       </div>
+
+      {/* Schedule Interview Modal */}
+      {showScheduleModal && selectedApplication && (
+        <ScheduleInterviewModal
+          application={selectedApplication}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedApplication(null);
+          }}
+          onSuccess={() => {
+            fetchDashboardData(user);
+          }}
+        />
+      )}
     </div>
   );
 };

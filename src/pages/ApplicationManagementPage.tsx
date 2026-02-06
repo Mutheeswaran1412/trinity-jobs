@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BackButton from '../components/BackButton';
+import ScheduleInterviewModal from '../components/ScheduleInterviewModal';
 import { API_ENDPOINTS } from '../config/api';
 
 interface ApplicationManagementPageProps {
@@ -18,6 +19,8 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -265,13 +268,8 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              // Navigate to interview scheduling with candidate data
-                              onNavigate('interview-schedule', {
-                                candidateName: application.candidateName,
-                                candidateEmail: application.candidateEmail,
-                                jobTitle: application.jobTitle,
-                                applicationId: application._id
-                              });
+                              setSelectedApplication(application);
+                              setShowScheduleModal(true);
                             }}
                             className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 transition-colors"
                           >
@@ -315,6 +313,20 @@ const ApplicationManagementPage: React.FC<ApplicationManagementPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Schedule Interview Modal */}
+      {showScheduleModal && selectedApplication && (
+        <ScheduleInterviewModal
+          application={selectedApplication}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedApplication(null);
+          }}
+          onSuccess={() => {
+            fetchApplications();
+          }}
+        />
+      )}
 
       <Footer onNavigate={onNavigate} />
     </div>

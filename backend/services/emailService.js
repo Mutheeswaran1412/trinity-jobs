@@ -315,3 +315,83 @@ export const sendFollowUpReminderEmail = async (candidateEmail, candidateName, j
 };
 
 export default { sendJobApplicationEmail, sendApplicationRejectionEmail, sendApplicationStatusEmail, sendJobAlertEmail, sendWelcomeEmail, sendFollowUpReminderEmail };
+
+// Send interview scheduled email to candidate
+export const sendInterviewScheduledEmail = async (candidateEmail, candidateName, jobTitle, company, interviewDetails) => {
+  try {
+    const { scheduledDate, duration, type, meetingLink, location, notes } = interviewDetails;
+    const interviewDate = new Date(scheduledDate);
+    
+    const mailOptions = {
+      from: `"ZyncJobs" <${process.env.SMTP_EMAIL}>`,
+      to: candidateEmail,
+      subject: `Interview Scheduled - ${jobTitle} at ${company}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #6366f1; padding: 30px 20px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Interview Scheduled! 🎉</h1>
+          </div>
+          
+          <div style="padding: 40px 30px; background-color: white;">
+            <h2 style="color: #333;">Hello ${candidateName}! 👋</h2>
+            
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+              Great news! Your interview has been scheduled for the position of <strong>${jobTitle}</strong> at <strong>${company}</strong>.
+            </p>
+            
+            <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366f1;">
+              <h3 style="color: #333; margin-top: 0;">📅 Interview Details</h3>
+              <p style="margin: 10px 0;"><strong>Date:</strong> ${interviewDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p style="margin: 10px 0;"><strong>Time:</strong> ${interviewDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+              <p style="margin: 10px 0;"><strong>Duration:</strong> ${duration} minutes</p>
+              <p style="margin: 10px 0;"><strong>Type:</strong> ${type === 'video' ? '🎥 Video Call' : type === 'phone' ? '📞 Phone Call' : '🏢 In Person'}</p>
+              ${meetingLink ? `<p style="margin: 10px 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #6366f1;">${meetingLink}</a></p>` : ''}
+              ${location ? `<p style="margin: 10px 0;"><strong>Location:</strong> ${location}</p>` : ''}
+            </div>
+            
+            ${notes ? `
+            <div style="background-color: #fff7ed; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="color: #333; margin-top: 0;">📝 Additional Notes</h4>
+              <p style="color: #666;">${notes}</p>
+            </div>
+            ` : ''}
+            
+            <div style="background-color: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="color: #333; margin-top: 0;">💡 Interview Tips</h4>
+              <ul style="color: #666; line-height: 1.8;">
+                <li>Test your equipment 15 minutes before the interview</li>
+                <li>Research the company and role thoroughly</li>
+                <li>Prepare examples of your work and achievements</li>
+                <li>Have questions ready for the interviewer</li>
+                <li>Dress professionally</li>
+              </ul>
+            </div>
+            
+            ${meetingLink ? `
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${meetingLink}" style="background-color: #6366f1; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                Join Interview
+              </a>
+            </div>
+            ` : ''}
+            
+            <p style="color: #666; font-size: 14px; margin-top: 30px;">
+              Good luck with your interview! If you need to reschedule or have any questions, please contact us as soon as possible.
+            </p>
+          </div>
+          
+          <div style="background-color: #f1f1f1; padding: 20px; text-align: center;">
+            <p style="color: #666; margin: 0; font-size: 12px;">© 2025 ZyncJobs. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('✅ Interview scheduled email sent to:', candidateEmail);
+    return { success: true, message: 'Interview email sent' };
+  } catch (error) {
+    console.error('❌ Interview email error:', error);
+    return { success: false, error: error.message };
+  }
+};

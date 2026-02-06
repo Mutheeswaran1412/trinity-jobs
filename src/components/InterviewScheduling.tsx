@@ -4,10 +4,10 @@ import BackButton from './BackButton';
 import { API_ENDPOINTS } from '../config/env';
 
 const InterviewScheduling = () => {
-  const [interviews, setInterviews] = useState([]);
+  const [interviews, setInterviews] = useState<any[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     scheduledDate: '',
     duration: 60,
@@ -41,7 +41,7 @@ const InterviewScheduling = () => {
     }
   };
 
-  const fetchAvailableSlots = async (date) => {
+  const fetchAvailableSlots = async (date: string) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_ENDPOINTS.INTERVIEWS}/available-slots?date=${date}`, {
@@ -72,9 +72,9 @@ const InterviewScheduling = () => {
         },
         body: JSON.stringify({
           ...formData,
-          jobId: selectedApplication.jobId,
-          candidateId: selectedApplication.candidateId,
-          applicationId: selectedApplication._id
+          jobId: selectedApplication?.jobId,
+          candidateId: selectedApplication?.candidateId,
+          applicationId: selectedApplication?._id
         })
       });
       
@@ -91,7 +91,7 @@ const InterviewScheduling = () => {
         });
       }
     } catch (error) {
-      console.error('Error scheduling interview:', error);
+      console.error('Error scheduling interview:', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
@@ -121,7 +121,7 @@ const InterviewScheduling = () => {
         alert('Error: ' + (result.error || result.message));
       }
     } catch (error) {
-      alert('Error creating Zoom meeting: ' + error.message);
+      alert('Error creating Zoom meeting: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -151,11 +151,11 @@ const InterviewScheduling = () => {
         alert('Error: ' + (result.error || result.message));
       }
     } catch (error) {
-      alert('Error creating Google Meet: ' + error.message);
+      alert('Error creating Google Meet: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
-  const confirmInterview = async (interviewId) => {
+  const confirmInterview = async (interviewId: string) => {
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_ENDPOINTS.INTERVIEWS}/${interviewId}/confirm`, {
@@ -168,7 +168,7 @@ const InterviewScheduling = () => {
     }
   };
 
-  const rescheduleInterview = async (interviewId, newDate) => {
+  const rescheduleInterview = async (interviewId: string, newDate: Date) => {
     try {
       const token = localStorage.getItem('token');
       await fetch(`${API_ENDPOINTS.INTERVIEWS}/${interviewId}/reschedule`, {
@@ -185,8 +185,8 @@ const InterviewScheduling = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
       scheduled: 'bg-yellow-100 text-yellow-800',
       confirmed: 'bg-green-100 text-green-800',
       rescheduled: 'bg-blue-100 text-blue-800',
@@ -196,8 +196,8 @@ const InterviewScheduling = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getTypeIcon = (type) => {
-    const icons = {
+  const getTypeIcon = (type: string) => {
+    const icons: Record<string, JSX.Element> = {
       video: <Video size={16} />,
       phone: <Phone size={16} />,
       'in-person': <MapPin size={16} />
@@ -330,8 +330,9 @@ const InterviewScheduling = () => {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Date & Time</label>
+                <label htmlFor="interview-datetime" className="block text-sm font-medium mb-1">Date & Time</label>
                 <input
+                  id="interview-datetime"
                   type="datetime-local"
                   value={formData.scheduledDate}
                   onChange={(e) => {
@@ -341,15 +342,18 @@ const InterviewScheduling = () => {
                     }
                   }}
                   className="w-full p-2 border rounded-lg"
+                  aria-label="Select interview date and time"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Duration (minutes)</label>
+                <label htmlFor="interview-duration" className="block text-sm font-medium mb-1">Duration (minutes)</label>
                 <select
+                  id="interview-duration"
                   value={formData.duration}
                   onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
                   className="w-full p-2 border rounded-lg"
+                  aria-label="Select interview duration"
                 >
                   <option value={30}>30 minutes</option>
                   <option value={60}>1 hour</option>
@@ -359,11 +363,13 @@ const InterviewScheduling = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
+                <label htmlFor="interview-type" className="block text-sm font-medium mb-1">Type</label>
                 <select
+                  id="interview-type"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   className="w-full p-2 border rounded-lg"
+                  aria-label="Select interview type"
                 >
                   <option value="video">Video Call</option>
                   <option value="phone">Phone Call</option>
