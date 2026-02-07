@@ -9,6 +9,8 @@ interface ScheduleInterviewModalProps {
 }
 
 const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({ application, onClose, onSuccess }) => {
+  console.log('📋 Application data:', JSON.stringify(application, null, 2));
+  
   const [formData, setFormData] = useState({
     scheduledDate: '',
     duration: 60,
@@ -19,6 +21,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({ applica
     notes: ''
   });
   const [loading, setLoading] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
   const [error, setError] = useState('');
 
   const scheduleInterview = async () => {
@@ -31,52 +34,119 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({ applica
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = formData.type === 'video' && formData.platform === 'zoom' && !formData.meetingLink
-        ? `${API_ENDPOINTS.INTERVIEWS}/create-with-meeting`
-        : `${API_ENDPOINTS.INTERVIEWS}/schedule`;
+      // Get employerId from multiple sources
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      let employerId = user.id || user._id || user.userId;
+      
+      // If not in localStorage, get from application
+      if (!employerId && application.employerId) {
+        employerId = application.employerId;
+      }
+      
+      // If still not found, get from application.employerEmail
+      if (!employerId && application.employerEmail) {
+        employerId = application.employerEmail; // Use email as fallback
+      }
+      
+      console.log('EmployerId:', employerId);
+      console.log('CandidateEmail:', application.candidateEmail);
 
-      const response = await fetch(endpoint, {
+      const payload = {
+        applicationId: application._id,
+        candidateEmail: application.candidateEmail,
+        candidateName: application.candidateName,
+        employerId: employerId,
+        jobId: application.jobId?._id || application.jobId,
+        scheduledDate: formData.scheduledDate,
+        duration: formData.duration,
+        type: formData.type,
+        meetingLink: formData.meetingLink,
+        location: formData.location,
+        notes: formData.notes
+      };
+      
+      console.log('Sending payload:', payload);
+
+      const response = await fetch('http://localhost:5000/api/interviews/schedule', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          applicationId: application._id,
-          candidateId: application.candidateId,
-          candidateEmail: application.candidateEmail,
-          jobId: application.jobId?._id || application.jobId,
-          ...formData
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
+      console.log('Result:', result);
 
       if (response.ok && result.success) {
-        alert('Interview scheduled successfully!');
+        alert('✅ Interview scheduled successfully! Email sent to candidate.');
         onSuccess();
         onClose();
       } else {
-        setError(result.error || 'Failed to schedule interview');
+        alert('❌ ' + (result.error || 'Failed to schedule interview'));
       }
     } catch (error) {
-      console.error('Error scheduling interview:', error);
-      setError('Failed to schedule interview. Please try again.');
+      console.error('Error:', error);
+      alert('❌ Error: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateZoomLink = async () => {
-    setLoading(true);
+  const handleZoomClick = () => {
+    console.log('🔵 ZOOM BUTTON CLICKED!');
+    if (!formData.scheduledDate) {
+      alert('Please select a date and time first');
+      return;
+    }
+    generateZoomLink();
+  };
+
+  const handleMeetClick = () => {
+    console.log('🟢 MEET BUTTON CLICKED!');
+    if (!formData.scheduledDate) {
+      alert('Please select a date and time first');
+      return;
+    }
+    generateGoogleMeetLink();
+  };
+
+  const generateGoogleMeetLink = async () => {
+    setGeneratingLink(true);
     try {
-      const response = await fetch(`${API_ENDPOINTS.MEETINGS}/create`, {
+      const response = await fetch('http://localhost:5000/api/meetings/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: 'googlemeet',
+          topic: `Interview - ${application.jobId?.jobTitle || application.jobId?.title}`,
+          start_time: formData.scheduledDate,
+          duration: formData.duration,
+          description: `Interview with ${application.candidateName}`
+        })
+      });
+
+      const result = await response.json();
+      console.log('✅ Meet result:', result);
+      
+      if (result.success && result.meeting?.meetLink) {
+        setFormData(prev => ({ ...prev, meetingLink: result.meeting.meetLink }));
+        alert('Google Meet link generated: ' + result.meeting.meetLink);
+      } else {
+        alert('Failed to generate Google Meet link');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const generateZoomLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/meetings/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           platform: 'zoom',
           topic: `Interview - ${application.jobId?.jobTitle || application.jobId?.title}`,
@@ -87,16 +157,19 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({ applica
       });
 
       const result = await response.json();
-      if (result.success) {
-        setFormData({ ...formData, meetingLink: result.meeting.join_url });
-        alert('Zoom meeting created successfully!');
+      console.log('✅ Zoom result:', result);
+      
+      if (result.success && result.meeting?.join_url) {
+        setFormData(prev => ({ ...prev, meetingLink: result.meeting.join_url }));
+        alert('Zoom link generated: ' + result.meeting.join_url);
       } else {
-        alert('Error: ' + (result.error || result.message));
+        alert('Failed to generate Zoom link');
       }
     } catch (error) {
-      alert('Error creating Zoom meeting: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
     } finally {
-      setLoading(false);
+      setGeneratingLink(false);
     }
   };
 
@@ -173,38 +246,35 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({ applica
 
           {formData.type === 'video' && (
             <div>
-              <label htmlFor="schedule-platform" className="block text-sm font-medium mb-1">Meeting Platform</label>
+              <label className="block text-sm font-medium mb-2">Meeting Link</label>
               <div className="space-y-2">
-                <select
-                  id="schedule-platform"
-                  value={formData.platform}
-                  onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                  className="w-full p-2 border rounded-lg"
-                  aria-label="Select meeting platform"
-                >
-                  <option value="zoom">Zoom</option>
-                  <option value="googlemeet">Google Meet</option>
-                  <option value="custom">Custom Link</option>
-                </select>
-
-                {formData.platform === 'zoom' && formData.scheduledDate && (
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={generateZoomLink}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50"
+                    onClick={handleZoomClick}
+                    disabled={generatingLink}
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Video size={16} className="mr-2" />
-                    {loading ? 'Creating...' : 'Generate Zoom Link'}
+                    {generatingLink ? 'Generating...' : 'Open Zoom'}
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleMeetClick}
+                    disabled={generatingLink}
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Video size={16} className="mr-2" />
+                    {generatingLink ? 'Generating...' : 'Open GMeet'}
+                  </button>
+                </div>
 
                 <input
                   type="url"
                   value={formData.meetingLink}
                   onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
                   placeholder="Or paste meeting link here..."
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-2 border rounded-lg text-sm"
                 />
               </div>
             </div>

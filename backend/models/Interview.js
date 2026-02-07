@@ -1,10 +1,15 @@
 import mongoose from 'mongoose';
 
 const interviewSchema = new mongoose.Schema({
-  jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job', required: true },
-  candidateId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  employerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },
+  candidateId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  employerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   applicationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Application' },
+  
+  // Store emails as backup
+  candidateEmail: { type: String, required: true },
+  candidateName: String,
+  employerEmail: String,
   
   scheduledDate: { type: Date, required: true },
   duration: { type: Number, default: 60 }, // minutes

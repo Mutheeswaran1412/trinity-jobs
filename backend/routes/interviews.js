@@ -52,24 +52,49 @@ router.get('/my-interviews', async (req, res) => {
 // POST /api/interviews/schedule - Schedule new interview
 router.post('/schedule', async (req, res) => {
   try {
-    const { applicationId, candidateId, candidateEmail, jobId, scheduledDate, duration, type, meetingLink, location, notes } = req.body;
+    const { applicationId, candidateId, candidateEmail, candidateName, employerId, jobId, scheduledDate, duration, type, meetingLink, location, notes } = req.body;
     
-    // Get application details
-    const application = await Application.findById(applicationId).populate('jobId');
-    if (!application) {
-      return res.status(404).json({ success: false, error: 'Application not found' });
+    console.log('📅 Schedule request:', { candidateEmail, employerId });
+
+    // Get candidateId from email
+    let finalCandidateId = candidateId;
+    if (!finalCandidateId && candidateEmail) {
+      const candidate = await User.findOne({ email: candidateEmail });
+      if (candidate) {
+        finalCandidateId = candidate._id;
+        console.log('✅ Found candidate:', finalCandidateId);
+      }
     }
 
-    // Get candidate details
-    const candidate = await User.findById(candidateId || application.candidateId);
-    const job = await Job.findById(application.jobId);
+    // Get employerId from email if it looks like an email
+    let finalEmployerId = employerId;
+    if (employerId && employerId.includes('@')) {
+      const employer = await User.findOne({ email: employerId });
+      if (employer) {
+        finalEmployerId = employer._id;
+        console.log('✅ Found employer:', finalEmployerId);
+      }
+    }
+
+    // Get job
+    let job;
+    if (applicationId) {
+      const application = await Application.findById(applicationId).populate('jobId');
+      job = application?.jobId;
+    }
+    if (!job && jobId) {
+      job = await Job.findById(jobId);
+    }
 
     // Create interview
     const interview = new Interview({
-      jobId: application.jobId,
-      candidateId: candidateId || application.candidateId,
-      employerId: application.employerId,
-      applicationId,
+      jobId: job?._id || jobId,
+      candidateId: finalCandidateId,
+      employerId: finalEmployerId,
+      candidateEmail: candidateEmail,
+      candidateName: candidateName,
+      employerEmail: typeof employerId === 'string' && employerId.includes('@') ? employerId : null,
+      applicationId: applicationId || null,
       scheduledDate,
       duration: duration || 60,
       type: type || 'video',
@@ -81,25 +106,31 @@ router.post('/schedule', async (req, res) => {
     });
 
     await interview.save();
+    console.log('✅ Interview saved:', interview._id);
     
-    // Send email to candidate
-    if (candidate && candidate.email) {
-      await sendInterviewScheduledEmail(
-        candidate.email,
-        candidate.name || candidateEmail,
-        job?.jobTitle || job?.title || 'Position',
-        job?.company || 'Company',
-        { scheduledDate, duration, type, meetingLink, location, notes }
-      );
+    // Send email
+    if (candidateEmail) {
+      try {
+        await sendInterviewScheduledEmail(
+          candidateEmail,
+          candidateName || candidateEmail,
+          job?.jobTitle || job?.title || 'Position',
+          job?.company || 'Company',
+          { scheduledDate, duration, type, meetingLink, location, notes }
+        );
+        console.log('📧 Email sent to:', candidateEmail);
+      } catch (emailError) {
+        console.error('❌ Email error:', emailError.message);
+      }
     }
     
     res.json({ 
       success: true, 
-      message: 'Interview scheduled successfully and email sent to candidate',
+      message: 'Interview scheduled successfully',
       interview 
     });
   } catch (error) {
-    console.error('Schedule interview API error:', error);
+    console.error('❌ Error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });

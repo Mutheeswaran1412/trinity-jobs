@@ -23,9 +23,19 @@ router.post('/create', async (req, res) => {
       description: description || 'Interview meeting'
     });
     
-    res.json(result);
+    // Always return JSON response
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json(result);
+    }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Meeting creation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to create meeting',
+      message: 'An error occurred while creating the meeting'
+    });
   }
 });
 
@@ -40,9 +50,17 @@ router.post('/zoom/create', async (req, res) => {
       topic: topic || 'Interview Meeting'
     });
     
-    res.json(result);
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json(result);
+    }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Zoom meeting creation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to create Zoom meeting'
+    });
   }
 });
 
@@ -57,9 +75,17 @@ router.post('/google-meet/create', async (req, res) => {
       topic: summary || 'Interview Meeting'
     });
     
-    res.json(result);
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json(result);
+    }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Google Meet creation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to create Google Meet'
+    });
   }
 });
 

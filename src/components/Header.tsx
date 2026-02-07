@@ -185,15 +185,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                       <button 
                         onClick={() => {
                           setIsCareerDropdownOpen(false);
-                          onNavigate && onNavigate('interviews');
-                        }}
-                        className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                      >
-                        Interview Scheduling
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setIsCareerDropdownOpen(false);
                           onNavigate && onNavigate('resume-parser');
                         }}
                         className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"

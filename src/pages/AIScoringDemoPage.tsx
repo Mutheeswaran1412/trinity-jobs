@@ -201,7 +201,7 @@ Projects:
                               style={{ width: `${value}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm font-medium w-12">{value}%</span>
+                          <span className="text-sm font-medium w-12">{value as number}%</span>
                         </div>
                       </div>
                     ))}
