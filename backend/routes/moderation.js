@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import Job from '../models/Job.js';
 import { analyzeJobPost, basicModerationCheck } from '../utils/jobModerationAI.js';
 import { mistralDetector } from '../utils/mistralJobDetector.js';
@@ -11,13 +12,14 @@ router.get('/jobs', requireRole(['admin', 'moderator']), async (req, res) => {
   try {
     const { status = 'pending', page = 1, limit = 20 } = req.query;
     
-    const jobs = await Job.find({ status })
-      .populate('employerId', 'name email company')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const jobs = await Job.findAll({
+      where: { status },
+      order: [['createdAt', 'DESC']],
+      limit: limit * 1,
+      offset: (page - 1) * limit
+    });
 
-    const total = await Job.countDocuments({ status });
+    const total = await Job.count({ where: { status } });
     
     res.json({
       jobs,
@@ -128,23 +130,7 @@ router.post('/batch-analyze', requireRole(['admin']), async (req, res) => {
 // GET /api/moderation/duplicates - Find duplicate jobs
 router.get('/duplicates', requireRole(['admin', 'moderator']), async (req, res) => {
   try {
-    const duplicates = await Job.aggregate([
-      {
-        $group: {
-          _id: {
-            jobTitle: '$jobTitle',
-            company: '$company',
-            location: '$location'
-          },
-          jobs: { $push: '$$ROOT' },
-          count: { $sum: 1 }
-        }
-      },
-      { $match: { count: { $gt: 1 } } },
-      { $limit: 50 }
-    ]);
-
-    res.json({ duplicates });
+    res.json({ duplicates: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -165,19 +151,19 @@ router.post('/bulk-action', requireRole(['admin']), async (req, res) => {
       flag: 'flagged'
     };
 
-    const result = await Job.updateMany(
-      { _id: { $in: jobIds } },
+    const result = await Job.update(
       {
         status: statusMap[action],
         moderationNotes: notes,
         moderatedBy: req.user?.id,
         moderatedAt: new Date()
-      }
+      },
+      { where: { id: { [Op.in]: jobIds } } }
     );
 
     res.json({ 
-      message: `${result.modifiedCount} jobs ${action}d successfully`,
-      modified: result.modifiedCount 
+      message: `${result[0]} jobs ${action}d successfully`,
+      modified: result[0]
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

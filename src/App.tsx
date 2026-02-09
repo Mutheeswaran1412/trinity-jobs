@@ -182,94 +182,6 @@ function App() {
       return;
     }
     
-
-    
-    // Check authentication for employer-only pages (removed job-posting for testing)
-    const employerPages = ['employers', 'candidate-search', 'hire-talent', 'interviews'];
-    if (employerPages.includes(page)) {
-      if (!user) {
-        // Not logged in, navigate to role selection page
-        setCurrentPage('role-selection');
-        return;
-      }
-      if (user.type !== 'employer') {
-        // Logged in as candidate, show toast notification
-        setNotification({
-          type: 'info',
-          message: 'You are currently logged in as a candidate. Please logout and login as an employer to access employer features.',
-          isVisible: true
-        });
-        return;
-      }
-      // User is logged in as employer, proceed to page
-    }
-
-    // Check authentication for candidate-only pages
-    const candidatePages = ['job-application', 'candidate-profile'];
-    if (candidatePages.includes(page)) {
-      if (!user) {
-        // Not logged in, navigate to role selection page
-        setCurrentPage('role-selection');
-        return;
-      }
-      if (user.type !== 'candidate') {
-        // Logged in as employer, show toast notification
-        setNotification({
-          type: 'info',
-          message: 'You are currently logged in as an employer. Please logout and login as a candidate to access candidate features.',
-          isVisible: true
-        });
-        return;
-      }
-      // User is logged in as candidate, proceed to page
-    }
-
-    // Ensure job-listings and companies are always accessible without authentication
-    if (page === 'job-listings' || page === 'companies') {
-      // No authentication required for browsing jobs and companies
-    }
-
-    // Special handling for dashboard tabs
-    if (page === 'alerts' && user?.type === 'candidate') {
-      // Navigate to dashboard with alerts tab
-      setCurrentPage('dashboard');
-      // Set URL parameter for tab
-      window.history.pushState({}, '', '?tab=Alerts');
-      return;
-    }
-
-    // Special handling for dashboard - route to correct dashboard based on user type
-    if (page === 'dashboard' && user) {
-      // User is logged in, proceed to dashboard (will show correct dashboard based on user type)
-      // No additional checks needed as dashboard handles routing internally
-    }
-    
-    // Handle modal pages
-    if (page === 'login') {
-      setCurrentPage(page);
-      return;
-    }
-
-    if (page === 'forgot-password') {
-      setCurrentPage(page);
-      return;
-    }
-    if (page === 'register') {
-      console.log('Register navigation called - navigating to role selection page');
-      // Navigate to role selection page
-      setCurrentPage('role-selection');
-      return;
-    }
-    if (page === 'role-selection') {
-      // Navigate to role selection page
-      setCurrentPage('role-selection');
-      return;
-    }
-    if (page === 'employer-login') {
-      setCurrentPage(page);
-      return;
-    }
-    
     // Close any open modals when navigating to actual pages
     setShowLoginModal(false);
     setShowRegisterModal(false);
@@ -278,9 +190,8 @@ function App() {
     setShowCandidateRegisterModal(false);
     setShowEmployerRegisterModal(false);
     
-    // Add to navigation history if it's a new page (exclude modal states)
-    const modalPages = ['login', 'register', 'employer-login'];
-    if (page !== currentPage && !modalPages.includes(page)) {
+    // Add to navigation history
+    if (page !== currentPage) {
       setNavigationHistory(prev => [...prev, page]);
     }
     

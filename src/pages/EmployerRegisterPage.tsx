@@ -281,8 +281,7 @@ const EmployerRegisterPage: React.FC<EmployerRegisterPageProps> = ({ onNavigate,
                             onLoad={() => console.log('Logo loaded:', company.name)}
                             onError={(e) => {
                               console.log('Logo failed:', company.name, e.currentTarget.src);
-                              // Fallback to a simple letter avatar
-                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name.charAt(0))}&size=32&background=3b82f6&color=ffffff&bold=true`;
+                              e.currentTarget.style.display = 'none';
                             }}
                           />
                         </div>

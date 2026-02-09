@@ -72,20 +72,16 @@ router.post('/start', authenticateToken, async (req, res) => {
       ];
     }
     
-    const assessment = new SkillAssessment({
+    const assessment = await SkillAssessment.create({
       userId: req.user.id,
       skill,
       questions: questions.map(q => ({ ...q, userAnswer: -1, timeSpent: 0 })),
       score: 0,
-      totalQuestions: questions.length,
-      correctAnswers: 0,
-      timeSpent: 0
+      answers: {}
     });
     
-    await assessment.save();
-    
     res.json({
-      assessmentId: assessment._id,
+      assessmentId: assessment.id,
       skill,
       questions: questions.map(q => ({ question: q.question, options: q.options })),
       totalQuestions: questions.length,
@@ -100,30 +96,30 @@ router.post('/start', authenticateToken, async (req, res) => {
 router.post('/submit/:id', authenticateToken, async (req, res) => {
   try {
     const { answers, timeSpent } = req.body;
-    const assessment = await SkillAssessment.findById(req.params.id);
+    const assessment = await SkillAssessment.findByPk(req.params.id);
     
-    if (!assessment || assessment.userId.toString() !== req.user.id) {
+    if (!assessment || assessment.userId !== req.user.id) {
       return res.status(404).json({ error: 'Assessment not found' });
     }
     
     let correctAnswers = 0;
-    assessment.questions.forEach((q, i) => {
+    const questions = assessment.questions || [];
+    questions.forEach((q, i) => {
       q.userAnswer = answers[i];
       if (answers[i] === q.correctAnswer) correctAnswers++;
     });
     
-    assessment.correctAnswers = correctAnswers;
-    assessment.score = Math.round((correctAnswers / assessment.totalQuestions) * 100);
-    assessment.timeSpent = timeSpent;
-    assessment.status = 'completed';
-    assessment.completedAt = new Date();
-    
-    await assessment.save();
+    await SkillAssessment.update({
+      questions,
+      answers,
+      score: Math.round((correctAnswers / questions.length) * 100),
+      completedAt: new Date()
+    }, { where: { id: req.params.id } });
     
     res.json({
-      score: assessment.score,
+      score: Math.round((correctAnswers / questions.length) * 100),
       correctAnswers,
-      totalQuestions: assessment.totalQuestions,
+      totalQuestions: questions.length,
       timeSpent,
       status: 'completed'
     });
@@ -135,9 +131,11 @@ router.post('/submit/:id', authenticateToken, async (req, res) => {
 // Get user assessments
 router.get('/my-assessments', authenticateToken, async (req, res) => {
   try {
-    const assessments = await SkillAssessment.find({ userId: req.user.id, status: 'completed' })
-      .select('skill score correctAnswers totalQuestions completedAt')
-      .sort({ completedAt: -1 });
+    const assessments = await SkillAssessment.findAll({ 
+      where: { userId: req.user.id },
+      attributes: ['skill', 'score', 'completedAt'],
+      order: [['completedAt', 'DESC']]
+    });
     
     res.json(assessments);
   } catch (error) {

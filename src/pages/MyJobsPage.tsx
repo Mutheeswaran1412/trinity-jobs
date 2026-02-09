@@ -310,7 +310,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
             {actionType === 'posted' && (
               <>
                 <button 
-                  onClick={() => onNavigate('job-detail', { jobId: job._id || job.id })}
+                  onClick={() => onNavigate('job-detail', { jobId: job._id || job.id, jobData: job })}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors min-w-[120px]"
                 >
                   View Job

@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import User from '../models/User.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roleAuth.js';
@@ -14,13 +15,15 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req, res) => {
     if (userType) filter.userType = userType;
     if (status) filter.status = status;
     
-    const users = await User.find(filter)
-      .select('-password -refreshTokens')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const users = await User.findAll({
+      where: filter,
+      attributes: { exclude: ['password', 'refreshTokens'] },
+      order: [['createdAt', 'DESC']],
+      limit: limit * 1,
+      offset: (page - 1) * limit
+    });
 
-    const total = await User.countDocuments(filter);
+    const total = await User.count({ where: filter });
     
     res.json({
       users,

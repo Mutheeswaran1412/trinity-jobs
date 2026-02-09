@@ -24,7 +24,7 @@ const EmployerLoginPage: React.FC<EmployerLoginPageProps> = ({ onNavigate, onLog
     try {
       const response = await authAPI.login({ email, password });
       
-      if (response.user.userType !== 'employer') {
+      if (response.user.userType !== 'employer' && response.user.role !== 'employer') {
         setError('This is a candidate account. Please use regular "Login" instead.');
         setLoading(false);
         return;

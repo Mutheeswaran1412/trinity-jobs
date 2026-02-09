@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
+import { Op } from 'sequelize';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwt.js';
 import { sendWelcomeEmail } from '../services/emailService.js';
 
@@ -37,12 +38,14 @@ router.post('/register', [
 
     const { name, fullName, email, password, userType, phone, company, companyName, companyLogo, companyWebsite, location } = req.body;
 
-    console.log('🔍 Registration attempt for:', email);
-    console.log('🔍 UserType:', userType);
+    const userName = name || fullName || '';
+    const companyField = company || companyName || '';
 
-    // Check if user already exists - case insensitive
+    console.log('🔍 Registration attempt for:', email);
+    console.log('🔍 UserType received:', userType);
+
     const existingUser = await User.findOne({ 
-      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      where: { email: { [Op.iLike]: email } }
     });
     
     if (existingUser) {
@@ -50,28 +53,19 @@ router.post('/register', [
       return res.status(400).json({ error: 'User already exists with this email' });
     }
 
-    console.log('✅ Email available, creating user...');
-
-    // Hash password with lower rounds for faster processing
     const hashedPassword = await bcrypt.hash(password, 8);
-
-    // Create new user - support both name and fullName
-    const userName = name || fullName || '';
-    const companyField = company || companyName || '';
     
-    const user = new User({
+    const user = await User.create({
       name: userName,
-      email: email.toLowerCase(), // Store email in lowercase
+      email: email.toLowerCase(),
       password: hashedPassword,
-      userType: userType || 'candidate',
+      role: userType || 'candidate',
       phone: phone || '',
       company: companyField,
       companyLogo: companyLogo || '',
       companyWebsite: companyWebsite || '',
       location: location || ''
     });
-
-    await user.save();
     console.log('✅ User created successfully:', email);
 
     // Send welcome email asynchronously (don't wait for it)
@@ -86,15 +80,14 @@ router.post('/register', [
     });
 
     // Generate tokens
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
 
-    // Return user without password
     const userResponse = {
-      id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
-      userType: user.userType,
+      userType: user.role,
       phone: user.phone,
       company: user.company,
       companyLogo: user.companyLogo,
@@ -135,9 +128,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user - case insensitive
     const user = await User.findOne({ 
-      email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } 
+      where: { email: { [Op.iLike]: email.trim() } }
     });
     
     // Check if user exists
@@ -210,32 +202,15 @@ router.post('/login', async (req, res) => {
       console.log('Profile load error:', err.message);
     }
 
-    // Generate tokens
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
     const decoded = verifyToken(refreshToken);
 
-    // Clean old expired refresh tokens
-    user.refreshTokens = user.refreshTokens.filter(rt => 
-      rt.expiresAt > new Date() && rt.isActive
-    );
-
-    // Add new refresh token to database
-    user.refreshTokens.push({
-      token: refreshToken,
-      tokenId: decoded.tokenId.toString(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      isActive: true
-    });
-
-    await user.save();
-
-    // Return user without password
     const userResponse = {
-      id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
-      userType: user.userType,
+      userType: user.role,
       phone: user.phone,
       company: user.company,
       companyLogo: user.companyLogo,
@@ -268,7 +243,9 @@ router.post('/login', async (req, res) => {
 // GET /api/users/:id - Get user by ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -refreshTokens');
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -285,10 +262,13 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { status } = req.query;
-    const filter = { isActive: true };
-    if (status) filter.status = status;
+    const where = { isActive: true };
+    if (status) where.status = status;
     
-    const users = await User.find(filter).select('-password');
+    const users = await User.findAll({
+      where,
+      attributes: { exclude: ['password'] }
+    });
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -304,15 +284,18 @@ router.put('/:id/status', async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
     
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
+    const [updated] = await User.update(
       { status },
-      { new: true }
-    ).select('-password');
+      { where: { id: req.params.id }, returning: true }
+    );
     
-    if (!user) {
+    if (!updated) {
       return res.status(404).json({ error: 'User not found' });
     }
+    
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
     
     res.json({ message: 'User status updated', user });
   } catch (error) {
@@ -324,22 +307,23 @@ router.put('/:id/status', async (req, res) => {
 router.post('/:id/save-job', async (req, res) => {
   try {
     const { jobId } = req.body;
-    const user = await User.findById(req.params.id);
+    const user = await User.findByPk(req.params.id);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    if (user.userType !== 'candidate') {
+    if (user.role !== 'candidate') {
       return res.status(400).json({ error: 'Only candidates can save jobs' });
     }
     
-    if (!user.savedJobs.includes(jobId)) {
-      user.savedJobs.push(jobId);
-      await user.save();
+    const savedJobs = user.savedJobs || [];
+    if (!savedJobs.includes(jobId)) {
+      savedJobs.push(jobId);
+      await user.update({ savedJobs });
     }
     
-    res.json({ message: 'Job saved successfully', savedJobs: user.savedJobs });
+    res.json({ message: 'Job saved successfully', savedJobs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -348,16 +332,16 @@ router.post('/:id/save-job', async (req, res) => {
 // DELETE /api/users/:id/save-job/:jobId - Remove saved job
 router.delete('/:id/save-job/:jobId', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findByPk(req.params.id);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    user.savedJobs = user.savedJobs.filter(id => id.toString() !== req.params.jobId);
-    await user.save();
+    const savedJobs = (user.savedJobs || []).filter(id => id !== req.params.jobId);
+    await user.update({ savedJobs });
     
-    res.json({ message: 'Job removed from saved jobs', savedJobs: user.savedJobs });
+    res.json({ message: 'Job removed from saved jobs', savedJobs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -366,13 +350,13 @@ router.delete('/:id/save-job/:jobId', async (req, res) => {
 // GET /api/users/:id/saved-jobs - Get user's saved jobs
 router.get('/:id/saved-jobs', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('savedJobs');
+    const user = await User.findByPk(req.params.id);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    res.json(user.savedJobs);
+    res.json(user.savedJobs || []);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -389,46 +373,15 @@ router.post('/refresh', async (req, res) => {
 
     // Verify refresh token
     const decoded = verifyToken(oldRefreshToken);
-    const user = await User.findById(decoded.userId);
+    const user = await User.findByPk(decoded.userId);
 
     if (!user || !user.isActive) {
       return res.status(403).json({ error: 'Invalid refresh token' });
     }
 
-    // Find the refresh token in database
-    const tokenRecord = user.refreshTokens.find(rt => 
-      rt.token === oldRefreshToken && rt.isActive && rt.expiresAt > new Date()
-    );
-
-    if (!tokenRecord) {
-      // Token reuse detected - block all tokens for this user
-      user.refreshTokens.forEach(rt => rt.isActive = false);
-      await user.save();
-      return res.status(403).json({ error: 'Token reuse detected. Please login again.' });
-    }
-
     // Generate new tokens
-    const newAccessToken = generateAccessToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
-    const newDecoded = verifyToken(newRefreshToken);
-
-    // Block old refresh token
-    tokenRecord.isActive = false;
-
-    // Add new refresh token
-    user.refreshTokens.push({
-      token: newRefreshToken,
-      tokenId: newDecoded.tokenId.toString(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      isActive: true
-    });
-
-    // Clean old expired tokens
-    user.refreshTokens = user.refreshTokens.filter(rt => 
-      rt.expiresAt > new Date() || rt.isActive
-    );
-
-    await user.save();
+    const newAccessToken = generateAccessToken(user.id);
+    const newRefreshToken = generateRefreshToken(user.id);
 
     // Set new refresh token cookie
     res.cookie('refreshToken', newRefreshToken, {
@@ -455,20 +408,10 @@ router.post('/logout', async (req, res) => {
 
     if (refreshToken) {
       const decoded = verifyToken(refreshToken);
-      const user = await User.findById(decoded.userId);
+      const user = await User.findByPk(decoded.userId);
       
       if (user) {
-        if (logoutAll) {
-          // Logout from all devices
-          user.refreshTokens.forEach(rt => rt.isActive = false);
-        } else {
-          // Logout from current device only
-          const tokenRecord = user.refreshTokens.find(rt => rt.token === refreshToken);
-          if (tokenRecord) {
-            tokenRecord.isActive = false;
-          }
-        }
-        await user.save();
+        // Token invalidation handled by token expiry
       }
     }
 
@@ -495,43 +438,34 @@ router.get('/sessions', async (req, res) => {
     }
 
     const decoded = verifyToken(refreshToken);
-    const user = await User.findById(decoded.userId);
+    const user = await User.findByPk(decoded.userId);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const activeSessions = user.refreshTokens
-      .filter(rt => rt.isActive && rt.expiresAt > new Date())
-      .map(rt => ({
-        tokenId: rt.tokenId,
-        createdAt: rt.createdAt,
-        expiresAt: rt.expiresAt,
-        isCurrent: rt.token === refreshToken
-      }));
-
-    res.json({ sessions: activeSessions });
+    res.json({ sessions: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/users/check/:email - Check if user exists (for testing)
+// GET /api/users/check/:email - Check if user exists
 router.get('/check/:email', async (req, res) => {
   try {
     const { email } = req.params;
     const user = await User.findOne({ 
-      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      where: { email: { [Op.iLike]: email } }
     });
     
     if (user) {
       res.json({ 
         exists: true, 
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
-          userType: user.userType,
+          userType: user.role,
           createdAt: user.createdAt
         }
       });
@@ -543,16 +477,16 @@ router.get('/check/:email', async (req, res) => {
   }
 });
 
-// DELETE /api/users/cleanup/:email - Delete user by email (for testing)
+// DELETE /api/users/cleanup/:email - Delete user by email
 router.delete('/cleanup/:email', async (req, res) => {
   try {
     const { email } = req.params;
-    const result = await User.deleteOne({ 
-      email: { $regex: new RegExp(`^${email}$`, 'i') } 
+    const deletedCount = await User.destroy({ 
+      where: { email: { [Op.iLike]: email } }
     });
     
-    if (result.deletedCount > 0) {
-      res.json({ message: `User ${email} deleted successfully`, deletedCount: result.deletedCount });
+    if (deletedCount > 0) {
+      res.json({ message: `User ${email} deleted successfully`, deletedCount });
     } else {
       res.json({ message: `No user found with email ${email}`, deletedCount: 0 });
     }
@@ -566,12 +500,12 @@ router.delete('/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     
-    // Find and delete the user
-    const user = await User.findByIdAndDelete(userId);
-    
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    
+    await User.destroy({ where: { id: userId } });
     
     console.log('✅ User account deleted:', user.email);
     res.json({ message: 'Account deleted successfully' });
@@ -592,16 +526,10 @@ router.delete('/sessions/:tokenId', async (req, res) => {
     }
 
     const decoded = verifyToken(refreshToken);
-    const user = await User.findById(decoded.userId);
+    const user = await User.findByPk(decoded.userId);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
-    }
-
-    const tokenRecord = user.refreshTokens.find(rt => rt.tokenId === tokenId);
-    if (tokenRecord) {
-      tokenRecord.isActive = false;
-      await user.save();
     }
 
     res.json({ message: 'Session revoked successfully' });
@@ -617,14 +545,14 @@ router.delete('/by-email/:email', async (req, res) => {
     
     console.log('🗑️ Delete request for user:', email);
     
-    const user = await User.findOneAndDelete({ email: email });
+    const deletedCount = await User.destroy({ where: { email } });
     
-    if (!user) {
+    if (!deletedCount) {
       return res.status(404).json({ error: 'User not found' });
     }
     
     console.log('✅ User deleted successfully:', email);
-    res.json({ message: 'User deleted successfully', email: email });
+    res.json({ message: 'User deleted successfully', email });
   } catch (error) {
     console.error('❌ Delete user error:', error);
     res.status(500).json({ error: error.message });

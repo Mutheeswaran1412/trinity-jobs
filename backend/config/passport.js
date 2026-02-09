@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Op } from 'sequelize';
 import User from '../models/User.js';
 
 // Only configure Google OAuth if credentials are available
@@ -13,10 +14,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       console.log('👤 Google OAuth callback for:', profile.emails[0].value);
       
       let user = await User.findOne({ 
-        $or: [
-          { googleId: profile.id },
-          { email: profile.emails[0].value }
-        ]
+        where: {
+          [Op.or]: [
+            { googleId: profile.id },
+            { email: profile.emails[0].value }
+          ]
+        }
       });
       
       if (user) {

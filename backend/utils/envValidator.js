@@ -1,5 +1,5 @@
 const requiredEnvVars = [
-  'MONGODB_URI',
+  'DATABASE_URL',
   'JWT_SECRET',
   'SMTP_EMAIL',
   'SMTP_PASSWORD'
@@ -15,7 +15,7 @@ const sensitiveEnvVars = [
 ];
 
 const validateFormat = {
-  MONGODB_URI: (val) => val.startsWith('mongodb'),
+  DATABASE_URL: (val) => val.startsWith('postgresql'),
   SMTP_EMAIL: (val) => val.includes('@'),
   JWT_SECRET: (val) => val.length >= 32
 };

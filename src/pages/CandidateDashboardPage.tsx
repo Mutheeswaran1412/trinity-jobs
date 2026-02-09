@@ -30,8 +30,9 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const fetchActivityInsights = async (userId: string) => {
     setLoadingActivity(true);
     try {
-      // Get real applications data
-      const applicationsRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/applications/candidate/${encodeURIComponent(user?.email || userId)}`);
+      // Fetch real analytics data from backend
+      const analyticsRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/profile/${encodeURIComponent(user?.email || userId)}`);
+      const recentActivityRes = await fetch(`${API_ENDPOINTS.BASE_URL}/api/analytics/recent-activity/${encodeURIComponent(user?.email || userId)}`);
       
       let realData = {
         profileViews: 0,
@@ -47,29 +48,24 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         }>
       };
 
-      // Get applications count from database
-      if (applicationsRes.ok) {
-        const applications = await applicationsRes.json();
-        realData.applicationsSent = Array.isArray(applications) ? applications.length : 0;
-        
-        // Create recent activity from applications
-        if (Array.isArray(applications) && applications.length > 0) {
-          realData.recentActivity = applications.slice(0, 3).map((app: any) => ({
-            type: 'application',
-            company: app.jobId?.company || 'Company',
-            message: `You applied for ${app.jobId?.jobTitle || 'a position'}`,
-            time: new Date(app.createdAt).toLocaleDateString(),
-            icon: '📝'
-          }));
+      // Get analytics data from database
+      if (analyticsRes.ok) {
+        const analytics = await analyticsRes.json();
+        realData.profileViews = analytics.profileViews || 0;
+        realData.searchAppearances = analytics.searchAppearances || 0;
+        realData.applicationsSent = analytics.applicationsSent || 0;
+        realData.recruiterActions = analytics.recruiterActions || 0;
+      }
+
+      // Get recent activity from database
+      if (recentActivityRes.ok) {
+        const activities = await recentActivityRes.json();
+        if (Array.isArray(activities) && activities.length > 0) {
+          realData.recentActivity = activities;
         }
       }
 
-      // Estimate other metrics based on applications
-      realData.searchAppearances = realData.applicationsSent * 3 + 5;
-      realData.profileViews = realData.applicationsSent * 2 + 3;
-      realData.recruiterActions = Math.floor(realData.applicationsSent * 0.5);
-
-      // Add default activity if no applications
+      // Add default activity if no activities found
       if (realData.recentActivity.length === 0) {
         realData.recentActivity = [
           {
@@ -88,10 +84,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
       console.error('Error fetching activity insights:', error);
       // Fallback data
       setActivityData({
-        profileViews: 5,
-        searchAppearances: 12,
+        profileViews: 0,
+        searchAppearances: 0,
         applicationsSent: 0,
-        recruiterActions: 2,
+        recruiterActions: 0,
         recentActivity: [
           {
             type: 'info',
@@ -119,8 +115,34 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
             const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/${parsedUser.email}`);
             if (response.ok) {
               const profileData = await response.json();
-              // Merge database data with localStorage data
-              const updatedUser = { ...parsedUser, ...profileData };
+              console.log('Dashboard - Fetched profile data:', {
+                hasInternships: !!profileData.internships,
+                hasLanguages: !!profileData.languages,
+                hasEmployment: !!profileData.employment,
+                internships: profileData.internships,
+                languages: profileData.languages
+              });
+              // Merge database data with localStorage data, prioritizing database data
+              const updatedUser = { 
+                ...parsedUser, 
+                ...profileData,
+                // Ensure all comprehensive fields are included
+                profilePhoto: profileData.profilePhoto || parsedUser.profilePhoto || '',
+                profileFrame: profileData.profileFrame || parsedUser.profileFrame || 'none',
+                profileSummary: profileData.profileSummary || parsedUser.profileSummary || '',
+                employment: profileData.employment || parsedUser.employment || '',
+                projects: profileData.projects || parsedUser.projects || '',
+                internships: profileData.internships || parsedUser.internships || '',
+                languages: profileData.languages || parsedUser.languages || '',
+                awards: profileData.awards || parsedUser.awards || '',
+                clubsCommittees: profileData.clubsCommittees || parsedUser.clubsCommittees || '',
+                competitiveExams: profileData.competitiveExams || parsedUser.competitiveExams || '',
+                academicAchievements: profileData.academicAchievements || parsedUser.academicAchievements || '',
+                companyName: profileData.companyName || parsedUser.companyName || '',
+                roleTitle: profileData.roleTitle || parsedUser.roleTitle || '',
+                gender: profileData.gender || parsedUser.gender || '',
+                birthday: profileData.birthday || parsedUser.birthday || ''
+              };
               setUser(updatedUser);
               // Update localStorage with fresh data
               localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -149,103 +171,33 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
     };
     
     loadUserProfile();
-    
-    // Listen for storage changes to update profile when returning from edit page
-    const handleStorageChange = () => {
-      loadUserProfile();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for focus events to reload data when returning to tab
-    window.addEventListener('focus', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', handleStorageChange);
-    };
-  }, []);
+  }, [activeTab]);
 
   const fetchNotifications = async (userId: string) => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/notifications/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
+      // Fallback to job notifications directly
+      const jobsResponse = await fetch(`${API_ENDPOINTS.JOBS}?limit=5`);
+      if (jobsResponse.ok) {
+        const jobs = await jobsResponse.json();
+        const jobNotifications = jobs.map((job: any, index: number) => ({
+          id: job._id || index,
+          type: 'job',
+          company: job.company || 'Company',
+          title: `New job: ${job.jobTitle || job.title}`,
+          message: `${job.company} is hiring for ${job.jobTitle || job.title} in ${job.location}`,
+          actionText: 'View Job',
+          time: new Date(job.createdAt).toLocaleDateString() === new Date().toLocaleDateString() ? 
+                `${Math.floor(Math.random() * 12) + 1}h ago` : 
+                `${Math.floor(Math.random() * 7) + 1}d ago`,
+          jobId: job._id
+        }));
+        setNotifications(jobNotifications);
       } else {
-        // Fetch real jobs from database for notifications
-        const jobsResponse = await fetch(`${API_ENDPOINTS.JOBS}?limit=5`);
-        if (jobsResponse.ok) {
-          const jobs = await jobsResponse.json();
-          const jobNotifications = jobs.map((job: any, index: number) => ({
-            id: job._id || index,
-            type: 'job',
-            company: job.company || 'Company',
-            title: `New job: ${job.jobTitle || job.title}`,
-            message: `${job.company} is hiring for ${job.jobTitle || job.title} in ${job.location}`,
-            actionText: 'View Job',
-            time: new Date(job.createdAt).toLocaleDateString() === new Date().toLocaleDateString() ? 
-                  `${Math.floor(Math.random() * 12) + 1}h ago` : 
-                  `${Math.floor(Math.random() * 7) + 1}d ago`,
-            jobId: job._id
-          }));
-          setNotifications(jobNotifications);
-        } else {
-          // Fallback mock notifications
-          setNotifications([
-            {
-              id: 1,
-              type: 'job',
-              company: 'Wipro',
-              title: '2 roles where you could become a top applicant',
-              message: 'Jobs based on your profile',
-              actionText: 'View Jobs',
-              time: '1h ago'
-            },
-            {
-              id: 2,
-              type: 'job',
-              company: 'Swiggy',
-              title: '15 new job recommendations based on your profile',
-              message: 'Jobs based on your profile',
-              actionText: 'View Jobs',
-              time: '1d ago'
-            },
-            {
-              id: 3,
-              type: 'application',
-              company: 'Zoho',
-              title: '2 roles where you could become a top applicant',
-              message: 'Jobs based on your profile',
-              actionText: 'View Jobs',
-              time: '3d ago'
-            }
-          ]);
-        }
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      // Fallback mock notifications
-      setNotifications([
-        {
-          id: 1,
-          type: 'job',
-          company: 'Wipro',
-          title: '2 roles where you could become a top applicant',
-          message: 'Jobs based on your profile',
-          actionText: 'View Jobs',
-          time: '1h ago'
-        },
-        {
-          id: 2,
-          type: 'job',
-          company: 'Swiggy',
-          title: '15 new job recommendations based on your profile',
-          message: 'Jobs based on your profile',
-          actionText: 'View Jobs',
-          time: '1d ago'
-        }
-      ]);
+      setNotifications([]);
     }
   };
 
@@ -653,13 +605,16 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                             <h1 className="text-2xl font-semibold text-gray-900">
                               {user?.name || 'mutheeswaran'}
                             </h1>
-                            <Edit className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" />
+                            <Edit 
+                              onClick={() => onNavigate('candidate-profile')}
+                              className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
+                            />
                           </div>
                           <p className="text-gray-600 mb-2">
-                            Bachelor of Technology / Bachelor of Engineering (B.Tech/B.E.)
+                            {user?.degree || 'Add your degree'}
                           </p>
                           <p className="text-gray-500 text-sm mb-3">
-                            Loyola - Icam College Of Engineering And Technology, Chennai
+                            {user?.college || 'Add your college'}
                           </p>
                           
                           {/* Contact Info */}
@@ -757,20 +712,40 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Your career preferences</h2>
-                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add</button>
+                    <button 
+                      onClick={() => onNavigate('candidate-profile')}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Preferred job type</p>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add desired job type</button>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add desired job type
+                      </button>
                     </div>
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Availability to work</p>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add work availability</button>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add work availability
+                      </button>
                     </div>
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Preferred location</p>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Add preferred work location</button>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add preferred work location
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -790,18 +765,31 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <div className="border-b border-gray-100 pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">Bachelor of Technology / Bachelor of Engineering (B.Tech/B.E.) from Loyola - Icam College Of Engineering...</h3>
-                          <p className="text-gray-500 text-sm">Graduated in 2025, Full Time</p>
+                          <h3 className="font-semibold text-gray-900">{user?.degree || 'Bachelor of Technology / Bachelor of Engineering (B.Tech/B.E.)'} from {user?.college || 'Your College'}</h3>
+                          <p className="text-gray-500 text-sm">Graduated in {user?.graduationYear || '2025'}, {user?.courseType || 'Full Time'}</p>
                         </div>
-                        <Edit className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" />
+                        <Edit 
+                          onClick={() => onNavigate('candidate-profile')}
+                          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium block">Add Class XII Details</button>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
+                      >
+                        Add Class XII Details
+                      </button>
                       <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
                     </div>
                     <div className="space-y-2">
-                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium block">Add Class X Details</button>
+                      <button 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
+                      >
+                        Add Class X Details
+                      </button>
                       <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
                     </div>
                   </div>
@@ -812,7 +800,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
                       <span>Key skills</span>
-                      <Edit className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" />
+                      <Edit 
+                        onClick={() => onNavigate('candidate-profile')}
+                        className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
+                      />
                     </h2>
                   </div>
                   {user?.skills && user.skills.length > 0 ? (

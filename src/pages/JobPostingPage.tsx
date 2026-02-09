@@ -149,11 +149,6 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
 
   const updateJobData = (field: keyof JobData, value: any) => {
     setJobData(prev => ({ ...prev, [field]: value }));
-    
-    // Auto-generate job description when job title is selected
-    if (field === 'jobTitle' && value.length > 2) {
-      setTimeout(() => generateJobDescription(value), 500);
-    }
   };
   useEffect(() => {
     if (parsedData?.companyName && !jobData.companyLogo) {
@@ -381,7 +376,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
   };
 
   // Auto-generate job description and populate skills/education
-  const generateJobDescription = async (jobTitle: string) => {
+  const generateJobDescription = async (jobTitle: string, forceUpdate = false) => {
     if (!jobTitle || jobTitle.length < 3) return;
     
     setIsGeneratingDescription(true);
@@ -400,7 +395,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         jobData.companyName || 'ZyncJobs',
         jobData.jobLocation || 'Remote',
         {
-          jobType: jobData.jobType.join(', '),
+          jobType: jobData.jobType.join(', ') || 'full-time',
           skills: jobData.skills,
           salary: `${currencySymbol}${jobData.minSalary} - ${currencySymbol}${jobData.maxSalary} ${jobData.payRate}`,
           benefits: jobData.benefits,
@@ -409,13 +404,15 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       );
       updateJobData('jobDescription', description);
       
-      // Auto-populate skills and education based on job title
-      const { skills, education } = getJobTitleDefaults(jobTitle);
-      if (jobData.skills.length === 0 || jobData.skills.every(skill => ['AWS', 'Azure', 'GitHub', 'IT', 'Java', 'Linux', 'Python', 'SQL', 'Version control'].includes(skill))) {
-        updateJobData('skills', skills);
-      }
-      if (jobData.educationLevel === "Bachelor's degree") {
-        updateJobData('educationLevel', education);
+      // Auto-populate skills and education based on job title (only on first generation)
+      if (!forceUpdate) {
+        const { skills, education } = getJobTitleDefaults(jobTitle);
+        if (jobData.skills.length === 0 || jobData.skills.every(skill => ['AWS', 'Azure', 'GitHub', 'IT', 'Java', 'Linux', 'Python', 'SQL', 'Version control'].includes(skill))) {
+          updateJobData('skills', skills);
+        }
+        if (jobData.educationLevel === "Bachelor's degree") {
+          updateJobData('educationLevel', education);
+        }
       }
       
       setNotification({
@@ -485,6 +482,8 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
     updateJobData('jobTitle', title);
     setShowJobTitleSuggestions(false);
     setJobTitleSuggestions([]);
+    // Generate description after title is selected
+    setTimeout(() => generateJobDescription(title), 500);
   };
 
   // Handle country input change with suggestions
@@ -1508,7 +1507,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
         
         <div className="flex justify-end mt-4">
           <button
-            onClick={() => generateJobDescription(jobData.jobTitle)}
+            onClick={() => generateJobDescription(jobData.jobTitle, true)}
             disabled={!jobData.jobTitle || isGeneratingDescription}
             className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors"
           >
@@ -1520,7 +1519,7 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
             ) : (
               <>
                 <span>🤖</span>
-                <span>Generate with AI</span>
+                <span>Regenerate with AI</span>
               </>
             )}
           </button>
@@ -1695,6 +1694,15 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       return;
     }
 
+    // Map experienceRange to experienceLevel enum
+    const mapExperienceLevel = (range: string): string => {
+      if (range.includes('0-1') || range.includes('1-2')) return 'Entry';
+      if (range.includes('2-3') || range.includes('3-5')) return 'Mid';
+      if (range.includes('5-7') || range.includes('7-10')) return 'Senior';
+      if (range.includes('10+')) return 'Lead';
+      return 'Mid';
+    };
+
     // Get proper company logo
     const logoUrl = jobData.companyLogo || '/images/trinity-logo.webp';
     
@@ -1705,14 +1713,13 @@ const JobPostingPage: React.FC<JobPostingPageProps> = ({ onNavigate, user, onLog
       location: jobData.jobLocation,
       jobType: jobData.jobType.length > 0 ? jobData.jobType.join(', ') : 'Full-time',
       description: jobData.jobDescription,
-      responsibilities: jobData.responsibilities,
-      requirements: jobData.requirements,
+      responsibilities: Array.isArray(jobData.responsibilities) ? jobData.responsibilities.join('\n') : jobData.responsibilities,
+      requirements: Array.isArray(jobData.requirements) ? jobData.requirements.join('\n') : jobData.requirements,
       skills: jobData.skills,
-      experienceRange: jobData.experienceRange,
-      experience: jobData.experienceRange,
+      experienceLevel: mapExperienceLevel(jobData.experienceRange),
       salary: {
-        min: parseFloat(jobData.minSalary.replace(/,/g, '')) || 0,
-        max: parseFloat(jobData.maxSalary.replace(/,/g, '')) || 0,
+        min: parseInt(jobData.minSalary.replace(/,/g, '')) || 0,
+        max: parseInt(jobData.maxSalary.replace(/,/g, '')) || 0,
         currency: jobData.currency,
         period: jobData.payRate === 'per year' ? 'yearly' : jobData.payRate === 'per month' ? 'monthly' : 'hourly'
       },

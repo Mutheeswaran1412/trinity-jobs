@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Op } from 'sequelize';
 import Resume from '../models/Resume.js';
 import User from '../models/User.js';
 import { resumeModerator } from '../utils/resumeModerationAI.js';
@@ -143,13 +144,14 @@ router.get('/moderation', requireRole(['admin', 'moderator']), async (req, res) 
   try {
     const { status = 'pending', page = 1, limit = 20 } = req.query;
     
-    const resumes = await Resume.find({ status })
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const resumes = await Resume.findAll({
+      where: { status },
+      order: [['createdAt', 'DESC']],
+      limit: limit * 1,
+      offset: (page - 1) * limit
+    });
 
-    const total = await Resume.countDocuments({ status });
+    const total = await Resume.count({ where: { status } });
     
     res.json({
       resumes,
@@ -175,17 +177,20 @@ router.post('/:id/moderate', requireRole(['admin', 'moderator']), async (req, re
 
     const statusMap = { approve: 'approved', reject: 'rejected', flag: 'flagged' };
     
-    const resume = await Resume.findByIdAndUpdate(req.params.id, {
+    const [updated] = await Resume.update({
       status: statusMap[action],
       moderationNotes: notes,
-      moderatedBy: req.user?.id,
       moderatedAt: new Date()
-    }, { new: true });
+    }, { 
+      where: { id: req.params.id },
+      returning: true
+    });
 
-    if (!resume) {
+    if (!updated) {
       return res.status(404).json({ error: 'Resume not found' });
     }
-
+    
+    const resume = await Resume.findByPk(req.params.id);
     res.json({ message: `Resume ${action}d successfully`, resume });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -195,8 +200,10 @@ router.post('/:id/moderate', requireRole(['admin', 'moderator']), async (req, re
 // GET /api/resume/:userId/status - Get user's resume status
 router.get('/:userId/status', async (req, res) => {
   try {
-    const resume = await Resume.findOne({ userId: req.params.userId })
-      .sort({ createdAt: -1 });
+    const resume = await Resume.findOne({ 
+      where: { userId: req.params.userId },
+      order: [['createdAt', 'DESC']]
+    });
     
     if (!resume) {
       return res.status(404).json({ error: 'No resume found' });

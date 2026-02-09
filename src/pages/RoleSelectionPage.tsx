@@ -9,7 +9,7 @@ interface RoleSelectionPageProps {
   onLogout: () => void;
 }
 
-const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onNavigate, user, onLogout }) => {
+const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ onNavigate, user = null, onLogout }) => {
   const handleRoleSelection = (role: 'candidate' | 'employer') => {
     if (role === 'candidate') {
       onNavigate('candidate-register');

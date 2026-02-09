@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import { Op } from 'sequelize';
 import JobAlert from '../models/JobAlert.js';
 import Job from '../models/Job.js';
 import { sendJobAlertEmail } from '../services/emailService.js';
@@ -19,8 +20,7 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const jobAlert = new JobAlert(req.body);
-    await jobAlert.save();
+    const jobAlert = await JobAlert.create(req.body);
     
     res.status(201).json({ 
       message: 'Job alert created successfully!', 
@@ -34,10 +34,13 @@ router.post('/', [
 // GET /api/job-alerts/user/:userId - Get user's job alerts
 router.get('/user/:userId', async (req, res) => {
   try {
-    const jobAlerts = await JobAlert.find({ 
-      userId: req.params.userId,
-      isActive: true 
-    }).sort({ createdAt: -1 });
+    const jobAlerts = await JobAlert.findAll({ 
+      where: {
+        userId: req.params.userId,
+        isActive: true
+      },
+      order: [['createdAt', 'DESC']]
+    });
     
     res.json(jobAlerts);
   } catch (error) {
@@ -48,16 +51,16 @@ router.get('/user/:userId', async (req, res) => {
 // PUT /api/job-alerts/:id - Update job alert
 router.put('/:id', async (req, res) => {
   try {
-    const jobAlert = await JobAlert.findByIdAndUpdate(
-      req.params.id,
+    const [updated] = await JobAlert.update(
       req.body,
-      { new: true }
+      { where: { id: req.params.id }, returning: true }
     );
     
-    if (!jobAlert) {
+    if (!updated) {
       return res.status(404).json({ error: 'Job alert not found' });
     }
     
+    const jobAlert = await JobAlert.findByPk(req.params.id);
     res.json({ message: 'Job alert updated successfully', jobAlert });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -67,13 +70,12 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/job-alerts/:id - Delete job alert
 router.delete('/:id', async (req, res) => {
   try {
-    const jobAlert = await JobAlert.findByIdAndUpdate(
-      req.params.id,
+    const [updated] = await JobAlert.update(
       { isActive: false },
-      { new: true }
+      { where: { id: req.params.id } }
     );
     
-    if (!jobAlert) {
+    if (!updated) {
       return res.status(404).json({ error: 'Job alert not found' });
     }
     
@@ -86,47 +88,49 @@ router.delete('/:id', async (req, res) => {
 // POST /api/job-alerts/check-and-send - Check for matching jobs and send alerts
 router.post('/check-and-send', async (req, res) => {
   try {
-    const activeAlerts = await JobAlert.find({ isActive: true });
+    const activeAlerts = await JobAlert.findAll({ where: { isActive: true } });
     let alertsSent = 0;
     
     for (const alert of activeAlerts) {
       // Build query based on alert criteria
-      const query = { isActive: true };
+      const whereConditions = { isActive: true };
       
-      if (alert.criteria.keywords && alert.criteria.keywords.length > 0) {
-        query.$or = [
-          { jobTitle: { $regex: alert.criteria.keywords.join('|'), $options: 'i' } },
-          { description: { $regex: alert.criteria.keywords.join('|'), $options: 'i' } },
-          { skills: { $in: alert.criteria.keywords } }
-        ];
+      // Keywords search
+      if (alert.keywords && alert.keywords.length > 0) {
+        const keywordConditions = [];
+        alert.keywords.forEach(keyword => {
+          keywordConditions.push(
+            { jobTitle: { [Op.iLike]: `%${keyword}%` } },
+            { description: { [Op.iLike]: `%${keyword}%` } }
+          );
+        });
+        whereConditions[Op.or] = keywordConditions;
       }
       
-      if (alert.criteria.location) {
-        query.location = { $regex: alert.criteria.location, $options: 'i' };
+      // Location filter
+      if (alert.location) {
+        whereConditions.location = { [Op.iLike]: `%${alert.location}%` };
       }
       
-      if (alert.criteria.jobType && alert.criteria.jobType.length > 0) {
-        query.jobType = { $in: alert.criteria.jobType };
-      }
-      
-      if (alert.criteria.salaryMin) {
-        query['salary.min'] = { $gte: alert.criteria.salaryMin };
+      // Job type filter
+      if (alert.jobType) {
+        whereConditions.jobType = alert.jobType;
       }
       
       // Get jobs posted since last alert
-      const lastSent = alert.lastSent || new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
-      query.createdAt = { $gte: lastSent };
+      const lastSent = alert.lastSent || new Date(Date.now() - 24 * 60 * 60 * 1000);
+      whereConditions.createdAt = { [Op.gte]: lastSent };
       
-      const matchingJobs = await Job.find(query).limit(10);
+      const matchingJobs = await Job.findAll({ where: whereConditions, limit: 10 });
       
       if (matchingJobs.length > 0) {
         try {
-          await sendJobAlertEmail(alert.email, alert.alertName, matchingJobs);
+          await sendJobAlertEmail(alert.email, alert.keywords?.join(', ') || 'Job Alert', matchingJobs);
           
-          // Update alert
-          alert.lastSent = new Date();
-          alert.totalJobsSent += matchingJobs.length;
-          await alert.save();
+          await JobAlert.update(
+            { lastSent: new Date() },
+            { where: { id: alert.id } }
+          );
           
           alertsSent++;
         } catch (emailError) {

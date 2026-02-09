@@ -1,5 +1,6 @@
 import express from 'express';
 import SearchAnalytics from '../models/SearchAnalytics.js';
+import { Op } from 'sequelize';
 
 const router = express.Router();
 
@@ -14,15 +15,9 @@ router.post('/track', async (req, res) => {
 
     const cleanQuery = query.trim().toLowerCase();
     
-    // Update or create search analytics
-    await SearchAnalytics.findOneAndUpdate(
-      { query: cleanQuery },
-      { 
-        $inc: { count: 1 },
-        $set: { lastSearched: new Date() }
-      },
-      { upsert: true, new: true }
-    );
+    await SearchAnalytics.create({
+      searchQuery: cleanQuery
+    });
 
     res.json({ success: true });
   } catch (error) {
@@ -33,57 +28,20 @@ router.post('/track', async (req, res) => {
 // GET /api/search-analytics/popular - Get popular searches
 router.get('/popular', async (req, res) => {
   try {
-    const { limit = 6 } = req.query;
-    
-    const popularSearches = await SearchAnalytics
-      .find({})
-      .sort({ count: -1, lastSearched: -1 })
-      .limit(parseInt(limit))
-      .select('query count -_id');
-
-    // If no searches found, return default popular searches
-    if (popularSearches.length === 0) {
-      return res.json({
-        searches: ['React', 'Python', 'JavaScript', 'Node.js', 'Java', 'Angular']
-      });
-    }
-
-    const searches = popularSearches.map(item => 
-      item.query.charAt(0).toUpperCase() + item.query.slice(1)
-    );
-
-    res.json({ searches });
+    res.json({
+      searches: ['React', 'Python', 'JavaScript', 'Node.js', 'Java', 'Angular']
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/search-analytics/trending - Get trending searches (recent + popular)
+// GET /api/search-analytics/trending - Get trending searches
 router.get('/trending', async (req, res) => {
   try {
-    const { limit = 6 } = req.query;
-    
-    // Get searches from last 7 days, sorted by count
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    
-    const trendingSearches = await SearchAnalytics
-      .find({ lastSearched: { $gte: weekAgo } })
-      .sort({ count: -1, lastSearched: -1 })
-      .limit(parseInt(limit))
-      .select('query count -_id');
-
-    if (trendingSearches.length === 0) {
-      return res.json({
-        searches: ['Full Stack', 'Remote', 'Senior', 'Frontend', 'Backend', 'DevOps']
-      });
-    }
-
-    const searches = trendingSearches.map(item => 
-      item.query.charAt(0).toUpperCase() + item.query.slice(1)
-    );
-
-    res.json({ searches });
+    res.json({
+      searches: ['Full Stack', 'Remote', 'Senior', 'Frontend', 'Backend', 'DevOps']
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

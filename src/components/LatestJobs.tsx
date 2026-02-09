@@ -88,10 +88,17 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
   };
 
   const formatSalary = (salary: Job['salary']) => {
-    if (salary?.min && salary?.max) {
-      const currencySymbol = salary.currency === 'INR' ? '₹' : salary.currency === 'USD' ? '$' : salary.currency || '$';
-      return `${currencySymbol}${salary.min.toLocaleString()} - ${currencySymbol}${salary.max.toLocaleString()}`;
+    if (!salary) return 'Salary not specified';
+    
+    const min = salary.min;
+    const max = salary.max;
+    const currency = salary.currency || 'INR';
+    
+    if (min && max && min > 0 && max > 0) {
+      const currencySymbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+      return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()}`;
     }
+    
     return 'Salary not specified';
   };
 
@@ -168,7 +175,7 @@ const LatestJobs: React.FC<LatestJobsProps> = ({ onNavigate, user }) => {
                             }
                             
                             // Create letter avatar as fallback for other companies
-                            const initials = job.company.split(' ').map(n => n[0]).join('').toUpperCase();
+                            const initials = job.company.split(' ').map((n, i) => n[0]).join('').toUpperCase();
                             target.src = `data:image/svg+xml,${encodeURIComponent(`
                               <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
                                 <rect width="64" height="64" fill="#3B82F6" rx="8"/>

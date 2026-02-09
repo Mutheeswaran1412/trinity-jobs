@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 
 const router = express.Router();
 
@@ -10,18 +11,25 @@ router.get('/debug/:email', async (req, res) => {
     const Analytics = (await import('../models/Analytics.js')).default;
     
     // Get all analytics for this email
-    const allAnalytics = await Analytics.find({
-      email: { $regex: new RegExp(email, 'i') }
-    }).sort({ createdAt: -1 });
+    const allAnalytics = await Analytics.findAll({
+      where: {
+        email: { [Op.iLike]: `%${email}%` }
+      },
+      order: [['createdAt', 'DESC']]
+    });
     
-    const searchAppearances = await Analytics.countDocuments({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'search_appearance'
+    const searchAppearances = await Analytics.count({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'search_appearance'
+      }
     });
 
-    const recruiterActions = await Analytics.countDocuments({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'recruiter_action'
+    const recruiterActions = await Analytics.count({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'recruiter_action'
+      }
     });
     
     res.json({

@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import Message from '../models/Message.js';
 
 const router = express.Router();
@@ -6,33 +7,42 @@ const router = express.Router();
 // Get conversations for user
 router.get('/conversations/:userId', async (req, res) => {
   try {
-    const messages = await Message.aggregate([
-      {
-        $match: {
-          $or: [
-            { senderId: req.params.userId },
-            { receiverId: req.params.userId }
-          ]
-        }
+    const { userId } = req.params;
+    
+    // Get all messages for this user
+    const messages = await Message.findAll({
+      where: {
+        [Op.or]: [
+          { senderId: userId },
+          { receiverId: userId }
+        ]
       },
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: '$conversationId',
-          lastMessage: { $first: '$$ROOT' },
-          unreadCount: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$receiverId', req.params.userId] }, { $eq: ['$read', false] }] },
-                1,
-                0
-              ]
-            }
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Group by conversationId and get latest message
+    const conversationsMap = new Map();
+    
+    for (const message of messages) {
+      if (!conversationsMap.has(message.conversationId)) {
+        // Count unread messages
+        const unreadCount = await Message.count({
+          where: {
+            conversationId: message.conversationId,
+            receiverId: userId,
+            read: false
           }
-        }
+        });
+        
+        conversationsMap.set(message.conversationId, {
+          _id: message.conversationId,
+          lastMessage: message,
+          unreadCount
+        });
       }
-    ]);
-    res.json(messages);
+    }
+    
+    res.json(Array.from(conversationsMap.values()));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -41,9 +51,10 @@ router.get('/conversations/:userId', async (req, res) => {
 // Get messages in conversation
 router.get('/:conversationId', async (req, res) => {
   try {
-    const messages = await Message.find({ conversationId: req.params.conversationId })
-      .sort({ createdAt: 1 })
-      .lean();
+    const messages = await Message.findAll({ 
+      where: { conversationId: req.params.conversationId },
+      order: [['createdAt', 'ASC']]
+    });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -56,14 +67,13 @@ router.post('/', async (req, res) => {
     const { senderId, receiverId, message } = req.body;
     const conversationId = [senderId, receiverId].sort().join('_');
     
-    const newMessage = new Message({
+    const newMessage = await Message.create({
       conversationId,
       senderId,
       receiverId,
       message
     });
     
-    await newMessage.save();
     res.status(201).json(newMessage);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -73,9 +83,15 @@ router.post('/', async (req, res) => {
 // Mark messages as read
 router.put('/:conversationId/read/:userId', async (req, res) => {
   try {
-    await Message.updateMany(
-      { conversationId: req.params.conversationId, receiverId: req.params.userId, read: false },
-      { read: true }
+    await Message.update(
+      { read: true },
+      { 
+        where: { 
+          conversationId: req.params.conversationId, 
+          receiverId: req.params.userId, 
+          read: false 
+        }
+      }
     );
     res.json({ message: 'Messages marked as read' });
   } catch (error) {

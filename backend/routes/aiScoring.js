@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import { AIScoring } from '../utils/aiScoring.js';
 import User from '../models/User.js';
 import Job from '../models/Job.js';
@@ -73,7 +74,10 @@ router.get('/recommendations/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const jobs = await Job.find({ status: 'approved', isActive: true }).limit(20);
+    const jobs = await Job.findAll({ 
+      where: { status: 'approved', isActive: true },
+      limit: 20
+    });
     
     const recommendations = jobs.map(job => {
       const matchScore = AIScoring.scoreMatch(user, job);

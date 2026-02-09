@@ -41,7 +41,18 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               workAuthorization: profileData.workAuthorization || parsedUser.workAuthorization || '',
               securityClearance: profileData.securityClearance || parsedUser.securityClearance || '',
               companyName: profileData.companyName || parsedUser.companyName || '',
-              roleTitle: profileData.roleTitle || parsedUser.roleTitle || ''
+              roleTitle: profileData.roleTitle || parsedUser.roleTitle || '',
+              profileSummary: profileData.profileSummary || parsedUser.profileSummary || '',
+              internships: profileData.internships || parsedUser.internships || '',
+              projects: profileData.projects || parsedUser.projects || '',
+              awards: profileData.awards || parsedUser.awards || '',
+              clubsCommittees: profileData.clubsCommittees || parsedUser.clubsCommittees || '',
+              competitiveExams: profileData.competitiveExams || parsedUser.competitiveExams || '',
+              employment: profileData.employment || parsedUser.employment || '',
+              academicAchievements: profileData.academicAchievements || parsedUser.academicAchievements || '',
+              languages: profileData.languages || parsedUser.languages || '',
+              gender: profileData.gender || parsedUser.gender || '',
+              birthday: profileData.birthday || parsedUser.birthday || ''
             });
           } else {
             // Fallback to localStorage data if backend fails
@@ -62,7 +73,18 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
               workAuthorization: parsedUser.workAuthorization || '',
               securityClearance: parsedUser.securityClearance || '',
               companyName: parsedUser.companyName || '',
-              roleTitle: parsedUser.roleTitle || ''
+              roleTitle: parsedUser.roleTitle || '',
+              profileSummary: parsedUser.profileSummary || '',
+              internships: parsedUser.internships || '',
+              projects: parsedUser.projects || '',
+              awards: parsedUser.awards || '',
+              clubsCommittees: parsedUser.clubsCommittees || '',
+              competitiveExams: parsedUser.competitiveExams || '',
+              employment: parsedUser.employment || '',
+              academicAchievements: parsedUser.academicAchievements || '',
+              languages: parsedUser.languages || '',
+              gender: parsedUser.gender || '',
+              birthday: parsedUser.birthday || ''
             });
           }
         } catch (error) {
@@ -85,7 +107,18 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             workAuthorization: parsedUser.workAuthorization || '',
             securityClearance: parsedUser.securityClearance || '',
             companyName: parsedUser.companyName || '',
-            roleTitle: parsedUser.roleTitle || ''
+            roleTitle: parsedUser.roleTitle || '',
+            profileSummary: parsedUser.profileSummary || '',
+            internships: parsedUser.internships || '',
+            projects: parsedUser.projects || '',
+            awards: parsedUser.awards || '',
+            clubsCommittees: parsedUser.clubsCommittees || '',
+            competitiveExams: parsedUser.competitiveExams || '',
+            employment: parsedUser.employment || '',
+            academicAchievements: parsedUser.academicAchievements || '',
+            languages: parsedUser.languages || '',
+            gender: parsedUser.gender || '',
+            birthday: parsedUser.birthday || ''
           });
         }
       }
@@ -444,7 +477,16 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
         companyName: formData.companyName,
         roleTitle: formData.roleTitle,
         gender: formData.gender,
-        birthday: formData.birthday
+        birthday: formData.birthday,
+        profileSummary: formData.profileSummary,
+        employment: formData.employment,
+        projects: formData.projects,
+        internships: formData.internships,
+        languages: formData.languages,
+        awards: formData.awards,
+        clubsCommittees: formData.clubsCommittees,
+        competitiveExams: formData.competitiveExams,
+        academicAchievements: formData.academicAchievements
       };
       
       // Update localStorage
@@ -503,7 +545,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
       
       setTimeout(() => {
         onNavigate && onNavigate('dashboard');
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.error('Profile save error:', error);
       setNotification({
@@ -560,7 +602,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Summary Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="profile-summary-section">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -569,7 +611,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Profile Summary</h2>
                   </div>
-                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const summaryField = document.querySelector('textarea[name="profileSummary"]') as HTMLTextAreaElement;
+                      if (summaryField) {
+                        summaryField.focus();
+                        summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-3">Your Profile Summary should mention the highlights of your career and education, what your professional interests are, and what kind of a career you are looking for. Write a meaningful summary of more than 50 characters.</p>
@@ -651,9 +705,10 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     <input
                       type="date"
                       name="birthday"
-                      value={formData.birthday}
+                      value={formData.birthday ? formData.birthday.split('T')[0] : ''}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      aria-label="Select your birthday"
                     />
                   </div>
                   <div className="relative">
@@ -838,6 +893,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                           placeholder="Type skills (e.g., React, Python, AWS)..."
                           className="w-full border-none outline-none text-sm bg-transparent"
                           aria-label="Add skills to your profile"
+                          title="Add skills to your profile"
                         />
                       </div>
                       {showSuggestions && skillSuggestions.length > 0 && (
@@ -1001,20 +1057,35 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             </div>
 
             {/* Education & Certifications Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="education-section">
               <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                    <GraduationCap className="w-5 h-5 text-indigo-600" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                      <GraduationCap className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900">Education</h2>
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Education</h2>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const educationField = document.querySelector('textarea[name="education"]') as HTMLTextAreaElement;
+                      if (educationField) {
+                        educationField.focus();
+                        educationField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Education</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Education (Add your degree and college)</label>
                     <textarea
                       name="education"
-                      placeholder="Education (degree, university, graduation year)"
+                      placeholder="e.g., Bachelor of Technology in Computer Science, Anna University, 2020-2024"
                       value={formData.education}
                       onChange={handleInputChange}
                       rows={3}
@@ -1027,7 +1098,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
 
             {/* Comprehensive Profile Sections */}
             {/* Languages Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="languages-section">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -1036,7 +1107,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Languages</h2>
                   </div>
-                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const languagesField = document.querySelector('textarea[name="languages"]') as HTMLTextAreaElement;
+                      if (languagesField) {
+                        languagesField.focus();
+                        languagesField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-3">Talk about the languages that you can speak, read or write</p>
@@ -1053,7 +1136,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             </div>
 
             {/* Employment Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="employment-section">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -1062,7 +1145,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Employment</h2>
                   </div>
-                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const employmentField = document.querySelector('textarea[name="employment"]') as HTMLTextAreaElement;
+                      if (employmentField) {
+                        employmentField.focus();
+                        employmentField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-3">Talk about the company you worked at, your designation and describe what all you did there</p>
@@ -1079,7 +1174,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             </div>
 
             {/* Projects Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="projects-section">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -1088,7 +1183,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
                   </div>
-                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const projectsField = document.querySelector('textarea[name="projects"]') as HTMLTextAreaElement;
+                      if (projectsField) {
+                        projectsField.focus();
+                        projectsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-3">Talk about your projects that made you proud and contributed to your learnings</p>
@@ -1105,7 +1212,7 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
             </div>
 
             {/* Internships Card */}
-            <div className="bg-white rounded-lg shadow-sm border">
+            <div className="bg-white rounded-lg shadow-sm border" id="internships-section">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center">
@@ -1114,7 +1221,19 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                     </div>
                     <h2 className="text-xl font-semibold text-gray-900">Internships</h2>
                   </div>
-                  <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const internshipsField = document.querySelector('textarea[name="internships"]') as HTMLTextAreaElement;
+                      if (internshipsField) {
+                        internshipsField.focus();
+                        internshipsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-3">Talk about the company you interned at, what projects you undertook and what special skills you learned</p>
@@ -1141,10 +1260,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
                 
                 {/* Certifications */}
-                <div className="mb-6">
+                <div className="mb-6" id="certifications-section">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium text-gray-800">Certifications</h3>
-                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const certificationsField = document.querySelector('textarea[name="certifications"]') as HTMLTextAreaElement;
+                        if (certificationsField) {
+                          certificationsField.focus();
+                          certificationsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">Talk about any certified courses that you completed</p>
                   <textarea
@@ -1158,10 +1289,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
 
                 {/* Awards */}
-                <div className="mb-6">
+                <div className="mb-6" id="awards-section">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium text-gray-800">Awards</h3>
-                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const awardsField = document.querySelector('textarea[name="awards"]') as HTMLTextAreaElement;
+                        if (awardsField) {
+                          awardsField.focus();
+                          awardsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">Talk about any special recognitions that you received that makes you proud</p>
                   <textarea
@@ -1175,10 +1318,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
 
                 {/* Club & Committees */}
-                <div className="mb-6">
+                <div className="mb-6" id="clubs-section">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium text-gray-800">Club & committees</h3>
-                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const clubsField = document.querySelector('textarea[name="clubsCommittees"]') as HTMLTextAreaElement;
+                        if (clubsField) {
+                          clubsField.focus();
+                          clubsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">Add details of position of responsibilities that you have held</p>
                   <textarea
@@ -1192,10 +1347,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
 
                 {/* Competitive Exams */}
-                <div className="mb-6">
+                <div className="mb-6" id="competitive-exams-section">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium text-gray-800">Competitive exams</h3>
-                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const examsField = document.querySelector('textarea[name="competitiveExams"]') as HTMLTextAreaElement;
+                        if (examsField) {
+                          examsField.focus();
+                          examsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">Talk about any competitive exam that you appeared for and the rank received</p>
                   <textarea
@@ -1209,10 +1376,22 @@ const CandidateProfilePage: React.FC<CandidateProfilePageProps> = ({ onNavigate 
                 </div>
 
                 {/* Academic Achievements */}
-                <div>
+                <div id="academic-achievements-section">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-medium text-gray-800">Academic achievements</h3>
-                    <button type="button" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Add</button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const achievementsField = document.querySelector('textarea[name="academicAchievements"]') as HTMLTextAreaElement;
+                        if (achievementsField) {
+                          achievementsField.focus();
+                          achievementsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">Talk about any academic achievement whether in college or school that deserves a mention</p>
                   <textarea

@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import Job from '../models/Job.js';
 import Application from '../models/Application.js';
 import Analytics from '../models/Analytics.js';
@@ -15,20 +16,20 @@ router.get('/profile/:email', async (req, res) => {
 
     if (userType === 'employer') {
       // For employers: Jobs Posted and Applications Received
-      const jobsPosted = await Job.countDocuments({ 
-        $or: [
-          { employerEmail: { $regex: new RegExp(email, 'i') } },
-          { postedBy: { $regex: new RegExp(email, 'i') } },
-          { 'employer.email': { $regex: new RegExp(email, 'i') } }
-        ],
-        isActive: { $ne: false }
+      const jobsPosted = await Job.count({ 
+        where: {
+          [Op.or]: [
+            { employerEmail: { [Op.iLike]: `%${email}%` } },
+            { postedBy: { [Op.iLike]: `%${email}%` } }
+          ],
+          isActive: { [Op.ne]: false }
+        }
       });
 
-      const applicationsReceived = await Application.countDocuments({ 
-        $or: [
-          { employerEmail: { $regex: new RegExp(email, 'i') } },
-          { 'employer.email': { $regex: new RegExp(email, 'i') } }
-        ]
+      const applicationsReceived = await Application.count({ 
+        where: {
+          employerEmail: { [Op.iLike]: `%${email}%` }
+        }
       });
 
       console.log('📈 Employer analytics result:', { jobsPosted, applicationsReceived, email });
@@ -39,25 +40,40 @@ router.get('/profile/:email', async (req, res) => {
       });
     } else {
       // For candidates: Real analytics from database
-      const applicationsSent = await Application.countDocuments({ 
-        candidateEmail: { $regex: new RegExp(email, 'i') }
+      const applicationsSent = await Application.count({ 
+        where: {
+          candidateEmail: { [Op.iLike]: `%${email}%` }
+        }
       });
 
       // Get real analytics data from database
-      const searchAppearances = await Analytics.countDocuments({
-        email: { $regex: new RegExp(email, 'i') },
-        eventType: 'search_appearance'
+      const profileViews = await Analytics.count({
+        where: {
+          email: { [Op.iLike]: `%${email}%` },
+          eventType: 'profile_view'
+        }
       });
 
-      const recruiterActions = await Analytics.countDocuments({
-        email: { $regex: new RegExp(email, 'i') },
-        eventType: 'recruiter_action'
+      const searchAppearances = await Analytics.count({
+        where: {
+          email: { [Op.iLike]: `%${email}%` },
+          eventType: 'search_appearance'
+        }
       });
 
-      console.log('📈 Candidate analytics result:', { applicationsSent, searchAppearances, recruiterActions, email });
+      const recruiterActions = await Analytics.count({
+        where: {
+          email: { [Op.iLike]: `%${email}%` },
+          eventType: 'recruiter_action'
+        }
+      });
+
+      console.log('📈 Candidate analytics result:', { profileViews, applicationsSent, searchAppearances, recruiterActions, email });
 
       res.json({
+        profileViews: profileViews || 0,
         searchAppearances: searchAppearances || 0,
+        applicationsSent: applicationsSent || 0,
         recruiterActions: recruiterActions || 0
       });
     }
@@ -71,10 +87,14 @@ router.get('/profile/:email', async (req, res) => {
 router.get('/recruiter-actions/:email', async (req, res) => {
   try {
     const { email } = req.params;
-    const actions = await Analytics.find({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'recruiter_action'
-    }).sort({ createdAt: -1 }).limit(10);
+    const actions = await Analytics.findAll({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'recruiter_action'
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
     
     res.json(actions);
   } catch (error) {
@@ -87,14 +107,90 @@ router.get('/recruiter-actions/:email', async (req, res) => {
 router.get('/search-appearances/:email', async (req, res) => {
   try {
     const { email } = req.params;
-    const appearances = await Analytics.find({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'search_appearance'
-    }).sort({ createdAt: -1 }).limit(10);
+    const appearances = await Analytics.findAll({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'search_appearance'
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
     
     res.json(appearances);
   } catch (error) {
     console.error('❌ Search appearances error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/recent-activity/:email - Get recent activity for candidate
+router.get('/recent-activity/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    // Get recent applications with job details
+    const recentApplications = await Application.findAll({
+      where: { candidateEmail: { [Op.iLike]: `%${email}%` } },
+      order: [['createdAt', 'DESC']],
+      limit: 5
+    });
+
+    // Get job details for applications
+    const activities = [];
+    for (const app of recentApplications) {
+      try {
+        const job = await Job.findByPk(app.jobId);
+        activities.push({
+          type: 'application',
+          company: job?.company || 'Company',
+          message: `You applied for ${job?.jobTitle || 'a position'}`,
+          time: new Date(app.createdAt).toLocaleDateString(),
+          icon: '📝',
+          timestamp: app.createdAt
+        });
+      } catch (err) {
+        console.error('Error fetching job for application:', err);
+      }
+    }
+
+    // Get recent analytics events
+    const recentEvents = await Analytics.findAll({
+      where: { email: { [Op.iLike]: `%${email}%` } },
+      order: [['createdAt', 'DESC']],
+      limit: 5
+    });
+
+    recentEvents.forEach(event => {
+      let icon = '📊';
+      let message = event.eventType;
+      
+      if (event.eventType === 'profile_view') {
+        icon = '👁️';
+        message = `Your profile was viewed${event.metadata?.company ? ` by ${event.metadata.company}` : ''}`;
+      } else if (event.eventType === 'search_appearance') {
+        icon = '🔍';
+        message = 'Your profile appeared in search results';
+      } else if (event.eventType === 'recruiter_action') {
+        icon = '💼';
+        message = `Recruiter action${event.metadata?.action ? `: ${event.metadata.action}` : ''}`;
+      }
+
+      activities.push({
+        type: event.eventType,
+        company: event.metadata?.company || 'ZyncJobs',
+        message,
+        time: new Date(event.createdAt).toLocaleDateString(),
+        icon,
+        timestamp: event.createdAt
+      });
+    });
+
+    // Sort by timestamp and return top 10
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    res.json(activities.slice(0, 10));
+  } catch (error) {
+    console.error('❌ Recent activity error:', error);
     res.status(500).json({ error: error.message });
   }
 });

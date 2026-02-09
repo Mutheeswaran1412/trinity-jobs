@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 
@@ -12,21 +13,21 @@ router.get('/debug', async (req, res) => {
     console.log('Debug request:', { employerId, employerEmail, userName });
     
     // Get all jobs
-    const allJobs = await Job.find({}).sort({ createdAt: -1 }).limit(10);
+    const allJobs = await Job.findAll({ order: [['createdAt', 'DESC']], limit: 10 });
     console.log('All jobs (latest 10):', allJobs.length);
     
     // Get all applications
-    const allApps = await Application.find({}).sort({ createdAt: -1 }).limit(5);
+    const allApps = await Application.findAll({ order: [['createdAt', 'DESC']], limit: 5 });
     console.log('All applications (latest 5):', allApps.length);
     
     // Find matching jobs
     const queryConditions = [];
-    if (employerEmail) queryConditions.push({ employerEmail: employerEmail });
+    if (employerEmail) queryConditions.push({ employerEmail });
     if (userName) queryConditions.push({ postedBy: userName });
-    if (employerId) queryConditions.push({ employerId: employerId });
+    if (employerId) queryConditions.push({ employerId });
     
-    const matchingJobs = queryConditions.length > 0 ? await Job.find({
-      $or: queryConditions
+    const matchingJobs = queryConditions.length > 0 ? await Job.findAll({
+      where: { [Op.or]: queryConditions }
     }) : [];
     
     res.json({
@@ -66,29 +67,31 @@ router.get('/stats', async (req, res) => {
       return res.json({ activeJobs: 0, applications: 0, interviews: 0, hired: 0 });
     }
     
-    const activeJobs = await Job.countDocuments({
-      $or: queryConditions,
-      isActive: true
+    const activeJobs = await Job.count({
+      where: {
+        [Op.or]: queryConditions,
+        isActive: true
+      }
     });
     
-    const applications = await Application.countDocuments({
-      $or: queryConditions.filter(condition => 
-        condition.employerEmail || condition.employerId
-      )
+    const applications = await Application.count({
+      where: {
+        [Op.or]: queryConditions.filter(c => c.employerEmail || c.employerId)
+      }
     });
     
-    const interviews = await Application.countDocuments({
-      $or: queryConditions.filter(condition => 
-        condition.employerEmail || condition.employerId
-      ),
-      status: { $in: ['shortlisted', 'interviewed'] }
+    const interviews = await Application.count({
+      where: {
+        [Op.or]: queryConditions.filter(c => c.employerEmail || c.employerId),
+        status: { [Op.in]: ['shortlisted', 'interviewed'] }
+      }
     });
     
-    const hired = await Application.countDocuments({
-      $or: queryConditions.filter(condition => 
-        condition.employerEmail || condition.employerId
-      ),
-      status: 'hired'
+    const hired = await Application.count({
+      where: {
+        [Op.or]: queryConditions.filter(c => c.employerEmail || c.employerId),
+        status: 'hired'
+      }
     });
 
     res.json({ activeJobs, applications, interviews, hired });
@@ -114,9 +117,11 @@ router.get('/recent-activity', async (req, res) => {
       return res.json([]);
     }
     
-    const recentJobs = await Job.find({
-      $or: queryConditions
-    }).sort({ createdAt: -1 }).limit(3);
+    const recentJobs = await Job.findAll({
+      where: { [Op.or]: queryConditions },
+      order: [['createdAt', 'DESC']],
+      limit: 3
+    });
     
     const activities = recentJobs.map(job => ({
       type: 'job',

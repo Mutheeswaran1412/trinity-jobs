@@ -159,11 +159,38 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Experience */}
-            {candidate.experience && (
+            {/* Profile Summary */}
+            {candidate.profileSummary && (
               <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-xl font-semibold mb-4">Work Experience</h2>
-                <p className="text-gray-700 whitespace-pre-line">{candidate.experience}</p>
+                <h2 className="text-xl font-semibold mb-4">Profile Summary</h2>
+                <p className="text-gray-700 whitespace-pre-line">{candidate.profileSummary}</p>
+              </div>
+            )}
+
+            {/* Employment */}
+            {(candidate.employment || candidate.experience) && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-xl font-semibold mb-4">Employment</h2>
+                {candidate.companyName && (
+                  <p className="font-medium text-gray-900 mb-2">{candidate.companyName} - {candidate.roleTitle}</p>
+                )}
+                <p className="text-gray-700 whitespace-pre-line">{candidate.employment || candidate.experience}</p>
+              </div>
+            )}
+
+            {/* Projects */}
+            {candidate.projects && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-xl font-semibold mb-4">Projects</h2>
+                <p className="text-gray-700 whitespace-pre-line">{candidate.projects}</p>
+              </div>
+            )}
+
+            {/* Internships */}
+            {candidate.internships && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-xl font-semibold mb-4">Internships</h2>
+                <p className="text-gray-700 whitespace-pre-line">{candidate.internships}</p>
               </div>
             )}
 
@@ -172,12 +199,45 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h2 className="text-xl font-semibold mb-4">Education</h2>
                 <p className="text-gray-700 whitespace-pre-line">{candidate.education}</p>
-                {candidate.certifications && (
-                  <div className="mt-4">
-                    <h3 className="font-medium mb-2">Certifications</h3>
-                    <p className="text-gray-700">{candidate.certifications}</p>
-                  </div>
-                )}
+              </div>
+            )}
+
+            {/* Accomplishments */}
+            {(candidate.certifications || candidate.awards || candidate.clubsCommittees || candidate.competitiveExams || candidate.academicAchievements) && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-xl font-semibold mb-4">Accomplishments</h2>
+                <div className="space-y-4">
+                  {candidate.certifications && (
+                    <div>
+                      <h3 className="font-medium mb-2">Certifications</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{candidate.certifications}</p>
+                    </div>
+                  )}
+                  {candidate.awards && (
+                    <div>
+                      <h3 className="font-medium mb-2">Awards</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{candidate.awards}</p>
+                    </div>
+                  )}
+                  {candidate.clubsCommittees && (
+                    <div>
+                      <h3 className="font-medium mb-2">Club & Committees</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{candidate.clubsCommittees}</p>
+                    </div>
+                  )}
+                  {candidate.competitiveExams && (
+                    <div>
+                      <h3 className="font-medium mb-2">Competitive Exams</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{candidate.competitiveExams}</p>
+                    </div>
+                  )}
+                  {candidate.academicAchievements && (
+                    <div>
+                      <h3 className="font-medium mb-2">Academic Achievements</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{candidate.academicAchievements}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -221,6 +281,14 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
               </div>
             )}
 
+            {/* Languages */}
+            {candidate.languages && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <h2 className="text-xl font-semibold mb-4">Languages</h2>
+                <p className="text-gray-700 whitespace-pre-line">{candidate.languages}</p>
+              </div>
+            )}
+
             {/* Additional Info */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold mb-4">Additional Information</h2>
@@ -228,6 +296,16 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
                 {candidate.yearsExperience && (
                   <div>
                     <span className="font-medium">Experience:</span> {candidate.yearsExperience} years
+                  </div>
+                )}
+                {candidate.salary && (
+                  <div>
+                    <span className="font-medium">Expected Salary:</span> {candidate.salary}
+                  </div>
+                )}
+                {candidate.jobType && (
+                  <div>
+                    <span className="font-medium">Job Type:</span> {candidate.jobType}
                   </div>
                 )}
                 {candidate.workAuthorization && (
@@ -238,6 +316,16 @@ const CandidateProfileView: React.FC<CandidateProfileViewProps> = ({ candidateId
                 {candidate.securityClearance && candidate.securityClearance !== 'none' && (
                   <div>
                     <span className="font-medium">Security Clearance:</span> {candidate.securityClearance}
+                  </div>
+                )}
+                {candidate.gender && (
+                  <div>
+                    <span className="font-medium">Gender:</span> {candidate.gender}
+                  </div>
+                )}
+                {candidate.birthday && (
+                  <div>
+                    <span className="font-medium">Birthday:</span> {new Date(candidate.birthday).toLocaleDateString()}
                   </div>
                 )}
               </div>

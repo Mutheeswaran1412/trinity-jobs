@@ -1,4 +1,5 @@
 import express from 'express';
+import { Op } from 'sequelize';
 import Interview from '../models/Interview.js';
 import Application from '../models/Application.js';
 import User from '../models/User.js';
@@ -19,10 +20,14 @@ router.get('/', async (req, res) => {
     if (employerId) query.employerId = employerId;
     if (employerEmail) query.employerEmail = employerEmail;
     
-    const interviews = await Interview.find(query)
-      .populate('jobId', 'jobTitle title company')
-      .populate('candidateId', 'name email')
-      .sort({ scheduledDate: -1 });
+    const interviews = await Interview.findAll({
+      where: query,
+      include: [
+        { model: Job, attributes: ['jobTitle', 'title', 'company'] },
+        { model: User, as: 'candidate', attributes: ['name', 'email'] }
+      ],
+      order: [['scheduledDate', 'DESC']]
+    });
     
     console.log('✅ Found interviews:', interviews.length);
     
@@ -56,13 +61,17 @@ router.get('/my-interviews', async (req, res) => {
   try {
     const userId = req.user?.id || req.query.userId;
     
-    const interviews = await Interview.find({
-      $or: [{ candidateId: userId }, { employerId: userId }]
-    })
-      .populate('jobId', 'jobTitle title company')
-      .populate('candidateId', 'name email')
-      .populate('employerId', 'name email company')
-      .sort({ scheduledDate: -1 });
+    const interviews = await Interview.findAll({
+      where: {
+        [Op.or]: [{ candidateId: userId }, { employerId: userId }]
+      },
+      include: [
+        { model: Job, attributes: ['jobTitle', 'title', 'company'] },
+        { model: User, as: 'candidate', attributes: ['name', 'email'] },
+        { model: User, as: 'employer', attributes: ['name', 'email', 'company'] }
+      ],
+      order: [['scheduledDate', 'DESC']]
+    });
     
     res.json(interviews);
   } catch (error) {
@@ -81,9 +90,9 @@ router.post('/schedule', async (req, res) => {
     // Get candidateId from email
     let finalCandidateId = candidateId;
     if (!finalCandidateId && candidateEmail) {
-      const candidate = await User.findOne({ email: candidateEmail });
+      const candidate = await User.findOne({ where: { email: candidateEmail } });
       if (candidate) {
-        finalCandidateId = candidate._id;
+        finalCandidateId = candidate.id;
         console.log('✅ Found candidate:', finalCandidateId);
       }
     }
@@ -91,9 +100,9 @@ router.post('/schedule', async (req, res) => {
     // Get employerId from email if it looks like an email
     let finalEmployerId = employerId;
     if (employerId && employerId.includes('@')) {
-      const employer = await User.findOne({ email: employerId });
+      const employer = await User.findOne({ where: { email: employerId } });
       if (employer) {
-        finalEmployerId = employer._id;
+        finalEmployerId = employer.id;
         console.log('✅ Found employer:', finalEmployerId);
       }
     }
@@ -101,16 +110,18 @@ router.post('/schedule', async (req, res) => {
     // Get job
     let job;
     if (applicationId) {
-      const application = await Application.findById(applicationId).populate('jobId');
-      job = application?.jobId;
+      const application = await Application.findByPk(applicationId);
+      if (application) {
+        job = await Job.findByPk(application.jobId);
+      }
     }
     if (!job && jobId) {
-      job = await Job.findById(jobId);
+      job = await Job.findByPk(jobId);
     }
 
     // Create interview
-    const interview = new Interview({
-      jobId: job?._id || jobId,
+    const interview = await Interview.create({
+      jobId: job?.id || jobId,
       candidateId: finalCandidateId,
       employerId: finalEmployerId,
       candidateEmail: candidateEmail,
@@ -127,8 +138,7 @@ router.post('/schedule', async (req, res) => {
       employerConfirmed: true
     });
 
-    await interview.save();
-    console.log('✅ Interview saved:', interview._id);
+    console.log('✅ Interview saved:', interview.id);
     
     // Send email
     if (candidateEmail) {
@@ -179,17 +189,17 @@ router.post('/create-with-meeting', async (req, res) => {
     }
 
     // Get application details
-    const application = await Application.findById(applicationId).populate('jobId');
+    const application = await Application.findByPk(applicationId);
     if (!application) {
       return res.status(404).json({ success: false, error: 'Application not found' });
     }
 
-    // Get candidate details
-    const candidate = await User.findById(candidateId || application.candidateId);
-    const job = await Job.findById(application.jobId);
+    // Get candidate and job details
+    const candidate = await User.findByPk(candidateId || application.candidateId);
+    const job = await Job.findByPk(application.jobId);
 
     // Create interview
-    const interview = new Interview({
+    const interview = await Interview.create({
       jobId: application.jobId,
       candidateId: candidateId || application.candidateId,
       employerId: application.employerId,
@@ -202,8 +212,6 @@ router.post('/create-with-meeting', async (req, res) => {
       status: 'scheduled',
       employerConfirmed: true
     });
-
-    await interview.save();
     
     // Send email to candidate
     if (candidate && candidate.email) {
@@ -232,11 +240,11 @@ router.post('/create-with-meeting', async (req, res) => {
 router.patch('/:id/confirm', async (req, res) => {
   try {
     const { id } = req.params;
-    const interview = await Interview.findByIdAndUpdate(
-      id,
+    await Interview.update(
       { candidateConfirmed: true, status: 'confirmed' },
-      { new: true }
+      { where: { id } }
     );
+    const interview = await Interview.findByPk(id);
     res.json({ success: true, message: 'Interview confirmed', interview });
   } catch (error) {
     console.error('Confirm interview API error:', error);
@@ -249,11 +257,11 @@ router.patch('/:id/reschedule', async (req, res) => {
   try {
     const { id } = req.params;
     const { scheduledDate } = req.body;
-    const interview = await Interview.findByIdAndUpdate(
-      id,
+    await Interview.update(
       { scheduledDate, status: 'rescheduled' },
-      { new: true }
+      { where: { id } }
     );
+    const interview = await Interview.findByPk(id);
     res.json({ success: true, message: 'Interview rescheduled', interview });
   } catch (error) {
     console.error('Reschedule interview API error:', error);
@@ -267,11 +275,8 @@ router.put('/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     
-    const interview = await Interview.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
+    await Interview.update({ status }, { where: { id } });
+    const interview = await Interview.findByPk(id);
     
     res.json({ success: true, interview });
   } catch (error) {

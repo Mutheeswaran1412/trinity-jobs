@@ -20,12 +20,7 @@ try {
 
 // GET /api/locations - Get all locations
 router.get('/', (req, res) => {
-  res.json({ locations: locationsData });
-});
-
-// GET /api/countries - Get all countries (alias for locations)
-router.get('/countries', (req, res) => {
-  res.json({ countries: locationsData });
+  res.json({ countries: locationsData, locations: locationsData });
 });
 
 // GET /api/locations/search/:query - Search locations
