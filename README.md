@@ -1,11 +1,11 @@
-# Job Portal with MongoDB Atlas & Local Development
+# Job Portal with PostgreSQL & Local Development
 
 ## Local Setup Instructions
 
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn
-- MongoDB Atlas account (or local MongoDB)
+- PostgreSQL (local installation)
 
 ### Quick Start
 
@@ -14,9 +14,9 @@
    npm run install:all
    ```
 
-2. **Configure MongoDB Atlas:**
-   - Update `backend/.env` with your MongoDB Atlas connection string
-   - Replace the password in the connection string
+2. **Configure PostgreSQL:**
+   - Update `backend/.env` with your PostgreSQL connection details
+   - Create database using: `npm run create:db`
 
 3. **Start both frontend and backend:**
    ```bash
@@ -39,7 +39,7 @@ npm run start:frontend
 
 ### API Endpoints
 
-- `GET /api/test` - Test MongoDB connection
+- `GET /api/test` - Test PostgreSQL connection
 - `GET /api/jobs` - Get all jobs
 - `POST /api/jobs` - Create new job
 - `GET /api/jobs/<id>` - Get specific job
@@ -47,11 +47,13 @@ npm run start:frontend
 - `POST /api/users` - Create new user
 - `GET /api/users/<id>` - Get specific user
 
-### Database Collections
+### Database Tables
 
-Your MongoDB Atlas database will have:
+Your PostgreSQL database will have:
 - `jobs` - Job listings
 - `users` - User profiles
+- `applications` - Job applications
+- `analytics` - User analytics
 
 ### Environment Configuration
 
@@ -62,7 +64,12 @@ VITE_API_URL=http://localhost:5000
 
 **Backend (backend/.env):**
 ```
-MONGODB_URI=your_mongodb_atlas_connection_string
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=zyncjobs
+DB_USER=postgres
+DB_PASSWORD=your_password
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/zyncjobs
 PORT=5000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
@@ -70,8 +77,9 @@ FRONTEND_URL=http://localhost:5173
 
 ### Important Notes
 
-1. Make sure to update your MongoDB Atlas connection string in `backend/.env`
-2. Frontend runs on port 5173 (Vite default)
-3. Backend runs on port 5000
-4. CORS is configured for local development
-5. No Docker or ECS deployment needed - runs locally
+1. Make sure PostgreSQL is installed and running
+2. Update your PostgreSQL credentials in `backend/.env`
+3. Frontend runs on port 5173 (Vite default)
+4. Backend runs on port 5000
+5. CORS is configured for local development
+6. No Docker or ECS deployment needed - runs locally

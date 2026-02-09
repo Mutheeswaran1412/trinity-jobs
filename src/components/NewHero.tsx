@@ -301,30 +301,12 @@ const NewHero: React.FC<NewHeroProps> = ({ onNavigate, user }) => {
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-12">
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Google</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Microsoft</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Amazon</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Meta</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Apple</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
-              <span className="text-gray-600 text-sm font-medium">Netflix</span>
-            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" className="h-8 opacity-70 hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </div>

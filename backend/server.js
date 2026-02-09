@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -469,9 +470,11 @@ app.get('/api/verify-reset-token/:token', async (req, res) => {
   try {
     const { token } = req.params;
     const tokenData = await PasswordReset.findOne({ 
-      token, 
-      used: false,
-      expiresAt: { $gt: new Date() }
+      where: {
+        token, 
+        used: false,
+        expiresAt: { [Op.gt]: new Date() }
+      }
     });
     
     if (!tokenData) {
@@ -493,9 +496,11 @@ app.post('/api/reset-password', async (req, res) => {
     }
     
     const tokenData = await PasswordReset.findOne({ 
-      token, 
-      used: false,
-      expiresAt: { $gt: new Date() }
+      where: {
+        token, 
+        used: false,
+        expiresAt: { [Op.gt]: new Date() }
+      }
     });
     
     if (!tokenData) {
@@ -503,7 +508,7 @@ app.post('/api/reset-password', async (req, res) => {
     }
     
     // Mark token as used
-    await PasswordReset.findByIdAndUpdate(tokenData._id, { used: true });
+    await tokenData.update({ used: true });
     
     console.log('Password reset successful for:', tokenData.email);
     res.json({ success: true, message: 'Password reset successful' });
@@ -845,22 +850,20 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
       const Job = (await import('./models/Job.js')).default;
       const Application = (await import('./models/Application.js')).default;
       
-      // Get real job count
-      const jobsPosted = await Job.countDocuments({ 
-        $or: [
-          { employerEmail: { $regex: new RegExp(email, 'i') } },
-          { postedBy: { $regex: new RegExp(email, 'i') } },
-          { 'employer.email': { $regex: new RegExp(email, 'i') } }
-        ],
-        isActive: { $ne: false }
+      const jobsPosted = await Job.count({ 
+        where: {
+          [Op.or]: [
+            { employerEmail: { [Op.iLike]: `%${email}%` } },
+            { postedBy: { [Op.iLike]: `%${email}%` } }
+          ],
+          isActive: { [Op.ne]: false }
+        }
       });
 
-      // Get real applications count
-      const applicationsReceived = await Application.countDocuments({ 
-        $or: [
-          { employerEmail: { $regex: new RegExp(email, 'i') } },
-          { 'employer.email': { $regex: new RegExp(email, 'i') } }
-        ]
+      const applicationsReceived = await Application.count({ 
+        where: {
+          employerEmail: { [Op.iLike]: `%${email}%` }
+        }
       });
 
       console.log('📈 Employer analytics result:', { jobsPosted, applicationsReceived, email });
@@ -873,20 +876,24 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
       const Application = (await import('./models/Application.js')).default;
       const Analytics = (await import('./models/Analytics.js')).default;
       
-      // Get real applications sent
-      const applicationsSent = await Application.countDocuments({ 
-        candidateEmail: { $regex: new RegExp(email, 'i') }
+      const applicationsSent = await Application.count({ 
+        where: {
+          candidateEmail: { [Op.iLike]: `%${email}%` }
+        }
       });
 
-      // Get real analytics data from database
-      const searchAppearances = await Analytics.countDocuments({
-        email: { $regex: new RegExp(email, 'i') },
-        eventType: 'search_appearance'
+      const searchAppearances = await Analytics.count({
+        where: {
+          email: { [Op.iLike]: `%${email}%` },
+          eventType: 'search_appearance'
+        }
       });
 
-      const recruiterActions = await Analytics.countDocuments({
-        email: { $regex: new RegExp(email, 'i') },
-        eventType: 'recruiter_action'
+      const recruiterActions = await Analytics.count({
+        where: {
+          email: { [Op.iLike]: `%${email}%` },
+          eventType: 'recruiter_action'
+        }
       });
 
       console.log('📈 Candidate analytics result:', { applicationsSent, searchAppearances, recruiterActions, email });
@@ -919,19 +926,26 @@ app.get('/api/test-analytics', async (req, res) => {
     
     const email = 'mutheeswaran@trinitetech.com';
     
-    const searchAppearances = await Analytics.countDocuments({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'search_appearance'
+    const searchAppearances = await Analytics.count({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'search_appearance'
+      }
     });
 
-    const recruiterActions = await Analytics.countDocuments({
-      email: { $regex: new RegExp(email, 'i') },
-      eventType: 'recruiter_action'
+    const recruiterActions = await Analytics.count({
+      where: {
+        email: { [Op.iLike]: `%${email}%` },
+        eventType: 'recruiter_action'
+      }
     });
     
-    const allData = await Analytics.find({
-      email: { $regex: new RegExp(email, 'i') }
-    }).sort({ createdAt: -1 });
+    const allData = await Analytics.findAll({
+      where: {
+        email: { [Op.iLike]: `%${email}%` }
+      },
+      order: [['createdAt', 'DESC']]
+    });
     
     res.json({
       status: 'success',
