@@ -3,15 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// PostgreSQL Connection
 const sequelize = new Sequelize({
   dialect: 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'jobportal',
+  database: process.env.DB_NAME || 'zyncjobs',
   username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'admin123',
-  logging: false,
+  password: process.env.DB_PASSWORD,
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 10,
     min: 0,
@@ -25,7 +24,6 @@ const connectPostgreSQL = async () => {
     await sequelize.authenticate();
     console.log('✅ PostgreSQL Connected successfully');
     
-    // Sync all models (create tables)
     await sequelize.sync({ alter: true });
     console.log('✅ Database tables synchronized');
     

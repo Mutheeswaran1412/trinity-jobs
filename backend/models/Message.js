@@ -1,12 +1,35 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const messageSchema = new mongoose.Schema({
-  conversationId: { type: String, required: true, index: true },
-  senderId: { type: String, required: true },
-  receiverId: { type: String, required: true },
-  message: { type: String, required: true },
-  read: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now, index: true }
+const Message = sequelize.define('Message', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  conversationId: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  senderId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
+  receiverId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  }
+}, {
+  tableName: 'messages',
+  timestamps: true
 });
 
-export default mongoose.model('Message', messageSchema);
+export default Message;

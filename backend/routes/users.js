@@ -186,10 +186,15 @@ router.post('/login', async (req, res) => {
     // Load profile data from Profile collection
     let profileData = {};
     try {
-      const mongoose = await import('mongoose');
-      const Profile = mongoose.default.model('Profile');
+      const Profile = (await import('../models/Profile.js')).default;
+      const { Op } = await import('sequelize');
       const profile = await Profile.findOne({ 
-        $or: [{ userId: user._id }, { email: user.email }] 
+        where: {
+          [Op.or]: [
+            { userId: user.id },
+            { email: user.email }
+          ]
+        }
       });
       if (profile) {
         profileData = {

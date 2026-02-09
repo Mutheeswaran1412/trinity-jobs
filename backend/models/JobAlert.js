@@ -1,49 +1,39 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const jobAlertSchema = new mongoose.Schema({
+const JobAlert = sequelize.define('JobAlert', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false
   },
   email: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  phone: String,
-  alertName: {
-    type: String,
-    required: true
+  keywords: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: []
   },
-  criteria: {
-    keywords: [String],
-    location: String,
-    jobType: [String],
-    experienceLevel: String,
-    salaryMin: Number,
-    salaryMax: Number,
-    company: String
-  },
+  location: DataTypes.STRING,
+  jobType: DataTypes.STRING,
+  experienceLevel: DataTypes.STRING,
   frequency: {
-    type: String,
-    enum: ['instant', 'daily', 'weekly'],
-    default: 'daily'
+    type: DataTypes.ENUM('daily', 'weekly', 'instant'),
+    defaultValue: 'daily'
   },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
-  lastSent: Date,
-  totalJobsSent: {
-    type: Number,
-    default: 0
-  }
+  lastSent: DataTypes.DATE
 }, {
+  tableName: 'job_alerts',
   timestamps: true
 });
 
-jobAlertSchema.index({ userId: 1 });
-jobAlertSchema.index({ isActive: 1 });
-jobAlertSchema.index({ frequency: 1 });
-
-export default mongoose.model('JobAlert', jobAlertSchema);
+export default JobAlert;

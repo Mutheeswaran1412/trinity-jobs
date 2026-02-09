@@ -1,5 +1,6 @@
 import express from 'express';
-import mongoose from 'mongoose';
+import Company from '../models/Company.js';
+import { Op } from 'sequelize';
 
 const router = express.Router();
 
@@ -66,11 +67,13 @@ router.get('/search', async (req, res) => {
     // Search in database
     let dbMatches = [];
     try {
-      const companies = await mongoose.connection.db.collection('companies')
-        .find({ name: { $regex: q, $options: 'i' } })
-        .limit(5)
-        .project({ name: 1, website: 1, _id: 0 })
-        .toArray();
+      const companies = await Company.findAll({
+        where: {
+          name: { [Op.iLike]: `%${q}%` }
+        },
+        limit: 5,
+        attributes: ['name', 'website']
+      });
 
       dbMatches = companies.map(c => ({
         name: c.name,

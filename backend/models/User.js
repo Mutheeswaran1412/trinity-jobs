@@ -1,165 +1,70 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Name is required'],
-    trim: true
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    trim: true
+    validate: { isEmail: true }
   },
   password: {
-    type: String,
-    required: function() { return !this.googleId; },
-    minlength: [6, 'Password must be at least 6 characters']
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  googleId: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  profilePicture: {
-    type: String,
-    trim: true
-  },
-  userType: {
-    type: String,
-    required: true,
-    enum: ['candidate', 'employer', 'admin', 'moderator', 'jobseeker']
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
   role: {
-    type: String,
-    enum: ['candidate', 'employer', 'admin', 'moderator', 'jobseeker'],
-    default: function() { return this.userType; }
+    type: DataTypes.ENUM('candidate', 'employer', 'admin'),
+    defaultValue: 'candidate'
   },
-  phone: {
-    type: String,
-    trim: true
+  company: DataTypes.STRING,
+  companyName: DataTypes.STRING,
+  companyLogo: DataTypes.STRING,
+  companyWebsite: DataTypes.STRING,
+  phone: DataTypes.STRING,
+  location: DataTypes.STRING,
+  title: DataTypes.STRING,
+  bio: DataTypes.TEXT,
+  headline: DataTypes.STRING,
+  skills: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: []
   },
-  company: {
-    type: String,
-    trim: true
+  experience: DataTypes.INTEGER,
+  education: DataTypes.TEXT,
+  certifications: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: []
   },
-  companyLogo: {
-    type: String,
-    trim: true
+  languages: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    defaultValue: []
   },
-  companyWebsite: {
-    type: String,
-    trim: true
-  },
-  location: {
-    type: String,
-    trim: true
-  },
-  title: {
-    type: String,
-    trim: true
-  },
-  salary: {
-    type: String,
-    trim: true
-  },
-  availability: {
-    type: String,
-    enum: ['Available', 'Not Available', 'Available in 2 weeks', 'Available in 1 month'],
-    default: 'Available'
-  },
-  rating: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 4.0
-  },
-  status: {
-    type: String,
-    enum: ['active', 'suspended', 'deleted'],
-    default: 'active'
-  },
+  profilePicture: DataTypes.STRING,
+  resumeUrl: DataTypes.STRING,
+  linkedinUrl: DataTypes.STRING,
+  githubUrl: DataTypes.STRING,
+  portfolioUrl: DataTypes.STRING,
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
-  profile: {
-    skills: [String],
-    experience: Number,
-    resume: String,
-    bio: String
+  emailVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  // Comprehensive profile fields
-  profileSummary: String,
-  employment: String,
-  projects: String,
-  internships: String,
-  languages: String,
-  certifications: String,
-  awards: String,
-  clubsCommittees: String,
-  competitiveExams: String,
-  academicAchievements: String,
-  birthday: String,
-  gender: String,
-  college: String,
-  degree: String,
-  profilePhoto: String,
-  profileFrame: String,
-  skills: [String],
-  yearsExperience: String,
-  workAuthorization: String,
-  securityClearance: String,
-  jobType: String,
-  education: String,
-  companyName: String,
-  roleTitle: String,
-  savedJobs: {
-    type: [mongoose.Schema.Types.ObjectId],
-    ref: 'Job',
-    default: []
-  },
-  appliedJobs: {
-    type: [{
-      jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },
-      appliedAt: { type: Date, default: Date.now },
-      status: { type: String, enum: ['pending', 'reviewed', 'shortlisted', 'rejected', 'interviewed', 'hired'], default: 'pending' },
-      shortlistedAt: { type: Date },
-      employerNotes: { type: String },
-      updatedAt: { type: Date, default: Date.now }
-    }],
-    default: []
-  },
-  refreshTokens: [{
-    token: String,
-    tokenId: String,
-    createdAt: { type: Date, default: Date.now },
-    expiresAt: Date,
-    isActive: { type: Boolean, default: true }
-  }],
-  resetPasswordToken: {
-    type: String,
-    default: undefined
-  },
-  resetPasswordExpiry: {
-    type: Date,
-    default: undefined
-  }
+  lastLogin: DataTypes.DATE
 }, {
+  tableName: 'users',
   timestamps: true
 });
 
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
-userSchema.index({ userType: 1 });
-userSchema.index({ status: 1 });
-userSchema.index({ isActive: 1 });
-userSchema.index({ createdAt: -1 });
-userSchema.index({ 'refreshTokens.tokenId': 1 });
-userSchema.index({ 'refreshTokens.expiresAt': 1 }, { expireAfterSeconds: 0 });
-userSchema.index({ resetPasswordToken: 1 });
-userSchema.index({ resetPasswordExpiry: 1 }, { expireAfterSeconds: 0 });
-
-export default mongoose.model('User', userSchema);
+export default User;

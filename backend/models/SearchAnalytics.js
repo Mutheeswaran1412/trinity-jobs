@@ -1,27 +1,22 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const searchAnalyticsSchema = new mongoose.Schema({
-  query: {
-    type: String,
-    required: true,
-    trim: true,
-    lowercase: true
+const SearchAnalytics = sequelize.define('SearchAnalytics', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
-  count: {
-    type: Number,
-    default: 1
-  },
-  lastSearched: {
-    type: Date,
-    default: Date.now
-  }
+  userId: DataTypes.UUID,
+  email: DataTypes.STRING,
+  searchQuery: DataTypes.STRING,
+  location: DataTypes.STRING,
+  filters: DataTypes.JSONB,
+  resultsCount: DataTypes.INTEGER,
+  clickedJobId: DataTypes.UUID
 }, {
+  tableName: 'search_analytics',
   timestamps: true
 });
 
-// Index for efficient queries
-searchAnalyticsSchema.index({ query: 1 });
-searchAnalyticsSchema.index({ count: -1 });
-searchAnalyticsSchema.index({ lastSearched: -1 });
-
-export default mongoose.model('SearchAnalytics', searchAnalyticsSchema);
+export default SearchAnalytics;

@@ -1,10 +1,11 @@
 import express from 'express';
 import User from '../models/User.js';
 import Job from '../models/Job.js';
+import Profile from '../models/Profile.js';
 import { AIScoring } from '../utils/aiScoring.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roleAuth.js';
-import mongoose from 'mongoose';
+import { Op } from 'sequelize';
 
 const router = express.Router();
 
@@ -36,9 +37,10 @@ router.get('/', async (req, res) => {
     const candidateEmails = candidates.map(c => c.email);
     let profiles = [];
     try {
-      const Profile = mongoose.model('Profile');
-      profiles = await Profile.find({ 
-        email: { $in: candidateEmails } 
+      profiles = await Profile.findAll({ 
+        where: { 
+          email: { [Op.in]: candidateEmails } 
+        }
       });
     } catch (error) {
       console.log('Profile collection not found, using user data only');

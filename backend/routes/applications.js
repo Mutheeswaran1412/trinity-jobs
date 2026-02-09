@@ -1,5 +1,4 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import { body, validationResult } from 'express-validator';
 import Application from '../models/Application.js';
 import Job from '../models/Job.js';
@@ -36,8 +35,8 @@ router.post('/', [
 
     // Create application with timeline
     const application = new Application({
-      jobId: new mongoose.Types.ObjectId(jobId),
-      candidateId: candidateId ? new mongoose.Types.ObjectId(candidateId) : null,
+      jobId: jobId,
+      candidateId: candidateId || null,
       candidateName,
       candidateEmail,
       candidatePhone: candidatePhone || '',
@@ -63,7 +62,7 @@ router.post('/', [
       await User.findByIdAndUpdate(candidateId, {
         $push: {
           appliedJobs: {
-            jobId: new mongoose.Types.ObjectId(jobId),
+            jobId: jobId,
             appliedAt: new Date(),
             status: 'applied'
           }

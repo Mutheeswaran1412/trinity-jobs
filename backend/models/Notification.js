@@ -1,17 +1,36 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const notificationSchema = new mongoose.Schema({
-  userId: { type: String, required: true, index: true },
-  type: { 
-    type: String, 
-    required: true,
-    enum: ['application', 'message', 'job_match', 'status_update', 'system']
+const Notification = sequelize.define('Notification', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
-  title: { type: String, required: true },
-  message: { type: String, required: true },
-  link: { type: String },
-  read: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now, index: true }
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
+  type: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  link: DataTypes.STRING,
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  }
+}, {
+  tableName: 'notifications',
+  timestamps: true
 });
 
-export default mongoose.model('Notification', notificationSchema);
+export default Notification;

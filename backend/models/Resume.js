@@ -1,76 +1,33 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const resumeSchema = new mongoose.Schema({
+const Resume = sequelize.define('Resume', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false
   },
-  filename: {
-    type: String,
-    required: true
-  },
-  originalName: {
-    type: String,
-    required: true
-  },
-  fileSize: {
-    type: Number,
-    required: true
-  },
-  fileType: {
-    type: String,
-    required: true,
-    enum: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-  },
-  filePath: {
-    type: String,
-    required: true
-  },
+  email: DataTypes.STRING,
+  fileName: DataTypes.STRING,
+  fileUrl: DataTypes.STRING,
+  fileSize: DataTypes.INTEGER,
+  parsedData: DataTypes.JSONB,
   status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected', 'flagged'],
-    default: 'pending'
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending'
   },
-  moderationFlags: {
-    hasSpam: { type: Boolean, default: false },
-    hasInappropriateContent: { type: Boolean, default: false },
-    isDuplicate: { type: Boolean, default: false },
-    isFake: { type: Boolean, default: false },
-    profileMismatch: { type: Boolean, default: false }
-  },
-  extractedText: {
-    type: String
-  },
-  extractedData: {
-    name: String,
-    email: String,
-    phone: String,
-    skills: [String],
-    experience: String
-  },
-  moderationNotes: {
-    type: String
-  },
-  moderatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  moderatedAt: {
-    type: Date
-  },
-  riskScore: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
+  moderationNotes: DataTypes.TEXT,
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
+  tableName: 'resumes',
   timestamps: true
 });
 
-resumeSchema.index({ userId: 1 });
-resumeSchema.index({ status: 1 });
-resumeSchema.index({ createdAt: -1 });
-
-export default mongoose.model('Resume', resumeSchema);
+export default Resume;

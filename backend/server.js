@@ -904,12 +904,9 @@ app.get('/api/analytics/profile/:email', async (req, res) => {
 
 app.get('/api/test', async (req, res) => {
   try {
-    const mongoose = await import('mongoose');
-    if (mongoose.default.connection.readyState === 1) {
-      res.json({ status: 'success', message: 'Connected to MongoDB Atlas' });
-    } else {
-      res.status(500).json({ status: 'error', message: 'Database not connected' });
-    }
+    const { sequelize } = await import('./config/postgresql.js');
+    await sequelize.authenticate();
+    res.json({ status: 'success', message: 'Connected to PostgreSQL' });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }

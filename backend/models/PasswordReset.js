@@ -1,30 +1,33 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const passwordResetSchema = new mongoose.Schema({
+const PasswordReset = sequelize.define('PasswordReset', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   email: {
-    type: String,
-    required: true,
-    lowercase: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   token: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true
   },
-  expiresAt: {
-    type: Date,
-    required: true,
-    default: () => new Date(Date.now() + 3600000) // 1 hour
-  },
   used: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  expiresAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: () => new Date(Date.now() + 3600000) // 1 hour
   }
 }, {
+  tableName: 'password_resets',
   timestamps: true
 });
 
-// Auto-delete expired tokens
-passwordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-export default mongoose.model('PasswordReset', passwordResetSchema);
+export default PasswordReset;

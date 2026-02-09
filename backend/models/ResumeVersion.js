@@ -1,33 +1,31 @@
-import mongoose from 'mongoose';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../config/postgresql.js';
 
-const resumeVersionSchema = new mongoose.Schema({
+const ResumeVersion = sequelize.define('ResumeVersion', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false
   },
-  resumeId: {
-    type: String,
-    required: true
-  },
+  resumeId: DataTypes.UUID,
   version: {
-    type: Number,
-    required: true
+    type: DataTypes.INTEGER,
+    defaultValue: 1
   },
-  data: {
-    type: Object,
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
+  fileName: DataTypes.STRING,
+  fileUrl: DataTypes.STRING,
+  parsedData: DataTypes.JSONB,
   isActive: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
+}, {
+  tableName: 'resume_versions',
+  timestamps: true
 });
 
-resumeVersionSchema.index({ userId: 1, resumeId: 1, version: 1 });
-
-export default mongoose.model('ResumeVersion', resumeVersionSchema);
+export default ResumeVersion;

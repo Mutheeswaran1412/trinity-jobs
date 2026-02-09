@@ -284,17 +284,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
 
           {/* Right side items */}
           <div className="hidden md:flex items-center space-x-6 ml-auto">
-            {/* For Employers Dropdown */}
-            <div className="relative">
-              <button 
-                onClick={handleEmployersClick}
-                className="flex items-center space-x-1 text-gray-900 hover:text-gray-600 transition-colors"
-              >
-                <span>For Employers</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-            
             {/* Login/Register Dropdown */}
             {user ? (
               <div className="relative" ref={dropdownRef}>
@@ -653,9 +642,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user, onLogout }) => {
                 {user?.type === 'employer' ? 'Job Posting' : 'My Jobs'}
               </button>
               <div className="pt-4 border-t border-gray-600 space-y-3">
-                <button onClick={handleEmployersClick} className="block text-left text-white hover:text-gray-300 font-medium">
-                  For Employers
-                </button>
                 <button className="flex items-center space-x-2 text-white hover:text-gray-300 font-medium">
                   <User className="w-4 h-4" />
                   <span>Login/Register</span>

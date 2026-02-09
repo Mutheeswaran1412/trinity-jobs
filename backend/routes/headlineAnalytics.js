@@ -1,33 +1,23 @@
 import express from 'express';
-import mongoose from 'mongoose';
+import HeadlineAnalytics from '../models/HeadlineAnalytics.js';
 
 const router = express.Router();
-
-// Schema for headline analytics
-const headlineAnalyticsSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  headlineA: String,
-  headlineB: String,
-  viewsA: { type: Number, default: 0 },
-  viewsB: { type: Number, default: 0 },
-  clicksA: { type: Number, default: 0 },
-  clicksB: { type: Number, default: 0 },
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const HeadlineAnalytics = mongoose.model('HeadlineAnalytics', headlineAnalyticsSchema);
 
 // POST /api/headline/track-view - Track headline view
 router.post('/track-view', async (req, res) => {
   try {
     const { userId, version } = req.body; // version: 'A' or 'B'
     
-    await HeadlineAnalytics.findOneAndUpdate(
-      { userId, isActive: true },
-      { $inc: version === 'A' ? { viewsA: 1 } : { viewsB: 1 } },
-      { upsert: true }
-    );
+    const [analytics] = await HeadlineAnalytics.findOrCreate({
+      where: { userId, isActive: true },
+      defaults: { userId, viewsA: 0, viewsB: 0, clicksA: 0, clicksB: 0 }
+    });
+    
+    if (version === 'A') {
+      await analytics.increment('viewsA');
+    } else {
+      await analytics.increment('viewsB');
+    }
     
     res.json({ success: true });
   } catch (error) {
@@ -44,7 +34,7 @@ router.get('/rotation/:userId', async (req, res) => {
       return res.json({ version: 'A', headline: '', viewsA: 0, viewsB: 0 });
     }
     
-    const analytics = await HeadlineAnalytics.findOne({ userId, isActive: true });
+    const analytics = await HeadlineAnalytics.findOne({ where: { userId, isActive: true } });
     if (!analytics) {
       return res.json({ version: 'A', headline: '', viewsA: 0, viewsB: 0 });
     }
@@ -70,19 +60,16 @@ router.post('/start-test', async (req, res) => {
   try {
     const { userId, headlineA, headlineB } = req.body;
     
-    await HeadlineAnalytics.findOneAndUpdate(
-      { userId },
-      { 
-        headlineA, 
-        headlineB, 
-        viewsA: 0, 
-        viewsB: 0, 
-        clicksA: 0, 
-        clicksB: 0, 
-        isActive: true 
-      },
-      { upsert: true }
-    );
+    await HeadlineAnalytics.upsert({
+      userId,
+      headlineA, 
+      headlineB, 
+      viewsA: 0, 
+      viewsB: 0, 
+      clicksA: 0, 
+      clicksB: 0, 
+      isActive: true 
+    });
     
     res.json({ success: true });
   } catch (error) {
@@ -95,7 +82,7 @@ router.get('/stats/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    const analytics = await HeadlineAnalytics.findOne({ userId, isActive: true });
+    const analytics = await HeadlineAnalytics.findOne({ where: { userId, isActive: true } });
     if (!analytics) {
       return res.json({ viewsA: 0, viewsB: 0, clicksA: 0, clicksB: 0 });
     }

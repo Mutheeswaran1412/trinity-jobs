@@ -219,6 +219,7 @@
   /* Swipe gestures */
   .mobile-swipeable {
     touch-action: pan-x;
+    -webkit-user-select: none;
     user-select: none;
   }
   
