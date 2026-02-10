@@ -535,7 +535,7 @@ const MyJobsPage: React.FC<MyJobsPageProps> = ({ onNavigate, user, onLogout }) =
                         Start posting jobs to attract top talent to your company.
                       </p>
                       <button
-                        onClick={() => onNavigate('job-posting')}
+                        onClick={() => onNavigate('job-posting-selection')}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium flex items-center space-x-2 mx-auto transition-colors"
                       >
                         <span>Post Your First Job</span>

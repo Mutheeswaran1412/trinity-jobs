@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, ChevronDown, Info, TrendingUp, Star, Edit, FileText, Search, Bell, MessageSquare } from 'lucide-react';
+import { Camera, ChevronDown, Info, TrendingUp, Star, Edit, FileText, Search, Bell, MessageSquare, Plus, X } from 'lucide-react';
 import Notification from '../components/Notification';
 import BackButton from '../components/BackButton';
 import ProfilePhotoEditor from '../components/ProfilePhotoEditor';
@@ -26,6 +26,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
   const [activityData, setActivityData] = useState<any>(null);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [modalData, setModalData] = useState<any>({});
 
   const fetchActivityInsights = async (userId: string) => {
     setLoadingActivity(true);
@@ -141,7 +143,8 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                 companyName: profileData.companyName || parsedUser.companyName || '',
                 roleTitle: profileData.roleTitle || parsedUser.roleTitle || '',
                 gender: profileData.gender || parsedUser.gender || '',
-                birthday: profileData.birthday || parsedUser.birthday || ''
+                birthday: profileData.birthday || parsedUser.birthday || '',
+                resume: profileData.resume || parsedUser.resume || null
               };
               setUser(updatedUser);
               // Update localStorage with fresh data
@@ -203,11 +206,21 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
 
   const calculateProfileCompletion = (userData: any) => {
     let completed = 0;
-    const fields = ['name', 'email', 'location', 'resume', 'skills', 'workAuthorization', 'employmentType'];
+    const fields = [
+      'name', 'email', 'phone', 'location', 'gender', 'birthday',
+      'profilePhoto', 'profileSummary', 'skills', 'languages',
+      'education', 'employment', 'projects', 'resume'
+    ];
     
     fields.forEach(field => {
-      if (userData[field] && userData[field].length > 0) {
-        completed += 1;
+      if (userData[field]) {
+        if (Array.isArray(userData[field]) && userData[field].length > 0) {
+          completed += 1;
+        } else if (typeof userData[field] === 'string' && userData[field].trim()) {
+          completed += 1;
+        } else if (typeof userData[field] === 'object' && userData[field] !== null) {
+          completed += 1;
+        }
       }
     });
     
@@ -603,18 +616,27 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
                             <h1 className="text-2xl font-semibold text-gray-900">
-                              {user?.name || 'mutheeswaran'}
+                              {user?.name || user?.fullName || 'Add your name'}
                             </h1>
                             <Edit 
-                              onClick={() => onNavigate('candidate-profile')}
+                              onClick={() => {
+                                setActiveModal('personalDetails');
+                                setModalData({
+                                  name: user?.name || '',
+                                  gender: user?.gender || '',
+                                  birthday: user?.birthday || '',
+                                  location: user?.location || '',
+                                  phone: user?.phone || ''
+                                });
+                              }}
                               className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
                             />
                           </div>
                           <p className="text-gray-600 mb-2">
-                            {user?.degree || 'Add your degree'}
+                            {user?.title || user?.jobTitle || 'Add your job title'}
                           </p>
                           <p className="text-gray-500 text-sm mb-3">
-                            {user?.college || 'Add your college'}
+                            {user?.education || user?.degree || 'Add your education'}
                           </p>
                           
                           {/* Contact Info */}
@@ -624,28 +646,37 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
-                              <span>Chennai</span>
+                              <span>{user?.location || 'Add location'}</span>
                             </div>
                             <div className="flex items-center space-x-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                               </svg>
-                              <span>9500366784</span>
-                              <span className="text-green-500">✓</span>
+                              <span>{user?.phone || 'Add phone'}</span>
+                              {user?.phone && <span className="text-green-500">✓</span>}
                             </div>
                             <div className="flex items-center space-x-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
-                              <span>mutheeswaran124@...</span>
-                              <span className="text-green-500">✓</span>
+                              <span>{user?.email ? `${user.email.substring(0, 15)}...` : 'Add email'}</span>
+                              {user?.email && <span className="text-green-500">✓</span>}
                             </div>
                           </div>
                           
                           {/* Action Links */}
                           <div className="flex items-center space-x-4 text-sm">
                             <button 
-                              onClick={() => onNavigate('candidate-profile')}
+                              onClick={() => {
+                                setActiveModal('personalDetails');
+                                setModalData({
+                                  name: user?.name || '',
+                                  gender: user?.gender || '',
+                                  birthday: user?.birthday || '',
+                                  location: user?.location || '',
+                                  phone: user?.phone || ''
+                                });
+                              }}
                               className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -654,52 +685,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                               <span>{user?.gender || 'Add Gender'}</span>
                             </button>
                             <button 
-                              onClick={() => onNavigate('candidate-profile')}
+                              onClick={() => {
+                                setActiveModal('personalDetails');
+                                setModalData({
+                                  name: user?.name || '',
+                                  gender: user?.gender || '',
+                                  birthday: user?.birthday || '',
+                                  location: user?.location || '',
+                                  phone: user?.phone || ''
+                                });
+                              }}
                               className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8" />
                               </svg>
                               <span>{user?.birthday || 'Add birthday'}</span>
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Profile Completion Card */}
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-sm">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                                <span className="text-gray-700">Add details</span>
-                              </div>
-                              <span className="text-green-600 text-xs">↑ 8%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                                <span className="text-gray-700">Add details</span>
-                              </div>
-                              <span className="text-green-600 text-xs">↑ 7%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                </svg>
-                                <span className="text-gray-700">Add competitive exam</span>
-                              </div>
-                              <span className="text-green-600 text-xs">↑ 6%</span>
-                            </div>
-                            <button 
-                              onClick={() => onNavigate('candidate-profile')}
-                              className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                            >
-                              Add 13 missing details
                             </button>
                           </div>
                         </div>
@@ -713,7 +714,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Your career preferences</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('careerPreferences');
+                        setModalData(user?.careerPreferences || {});
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
                       Add
@@ -722,30 +726,51 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Preferred job type</p>
-                      <button 
-                        onClick={() => onNavigate('candidate-profile')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Add desired job type
-                      </button>
+                      {user?.careerPreferences?.lookingFor && user.careerPreferences.lookingFor.length > 0 ? (
+                        <p className="text-gray-900">{user.careerPreferences.lookingFor.join(', ')}</p>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setActiveModal('careerPreferences');
+                            setModalData(user?.careerPreferences || {});
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Add desired job type
+                        </button>
+                      )}
                     </div>
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Availability to work</p>
-                      <button 
-                        onClick={() => onNavigate('candidate-profile')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Add work availability
-                      </button>
+                      {user?.careerPreferences?.availability ? (
+                        <p className="text-gray-900">{user.careerPreferences.availability}</p>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setActiveModal('careerPreferences');
+                            setModalData(user?.careerPreferences || {});
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Add work availability
+                        </button>
+                      )}
                     </div>
                     <div>
                       <p className="text-gray-600 text-sm mb-1">Preferred location</p>
-                      <button 
-                        onClick={() => onNavigate('candidate-profile')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Add preferred work location
-                      </button>
+                      {user?.careerPreferences?.locations && user.careerPreferences.locations.length > 0 ? (
+                        <p className="text-gray-900">{user.careerPreferences.locations.join(', ')}</p>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setActiveModal('careerPreferences');
+                            setModalData(user?.careerPreferences || {});
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Add preferred work location
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -755,7 +780,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Education</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('educationCollege');
+                        setModalData(user?.educationCollege || {});
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
                       Add
@@ -765,32 +793,86 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <div className="border-b border-gray-100 pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{user?.degree || 'Bachelor of Technology / Bachelor of Engineering (B.Tech/B.E.)'} from {user?.college || 'Your College'}</h3>
-                          <p className="text-gray-500 text-sm">Graduated in {user?.graduationYear || '2025'}, {user?.courseType || 'Full Time'}</p>
+                          {user?.educationCollege && typeof user.educationCollege === 'object' ? (
+                            <>
+                              <h3 className="font-semibold text-gray-900">{user.educationCollege.degree || 'Degree'} from {user.educationCollege.college || 'College'}</h3>
+                              <p className="text-gray-500 text-sm">{user.educationCollege.courseType || 'Full Time'} • {user.educationCollege.percentage || 'N/A'} • Graduated in {user.educationCollege.passingYear || 'Year'}</p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="font-semibold text-gray-900">{user?.degree || 'Bachelor of Technology / Bachelor of Engineering (B.Tech/B.E.)'} from {user?.college || 'Your College'}</h3>
+                              <p className="text-gray-500 text-sm">Graduated in {user?.graduationYear || '2025'}, {user?.courseType || 'Full Time'}</p>
+                            </>
+                          )}
                         </div>
                         <Edit 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('educationCollege');
+                            setModalData(user?.educationCollege || {});
+                          }}
                           className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <button 
-                        onClick={() => onNavigate('candidate-profile')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
-                      >
-                        Add Class XII Details
-                      </button>
-                      <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
+                      {user?.educationClass12 && typeof user.educationClass12 === 'object' ? (
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-gray-700 font-medium">Class XII - {user.educationClass12.board}</p>
+                            <p className="text-gray-500 text-sm">{user.educationClass12.percentage}% • {user.educationClass12.medium} Medium • Passed in {user.educationClass12.passingYear}</p>
+                          </div>
+                          <Edit 
+                            onClick={() => {
+                              setActiveModal('educationClass12');
+                              setModalData(user?.educationClass12 || {});
+                            }}
+                            className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => {
+                              setActiveModal('educationClass12');
+                              setModalData({});
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
+                          >
+                            Add Class XII Details
+                          </button>
+                          <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
+                        </>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <button 
-                        onClick={() => onNavigate('candidate-profile')}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
-                      >
-                        Add Class X Details
-                      </button>
-                      <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
+                      {user?.educationClass10 && typeof user.educationClass10 === 'object' ? (
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-gray-700 font-medium">Class X - {user.educationClass10.board}</p>
+                            <p className="text-gray-500 text-sm">{user.educationClass10.percentage}% • {user.educationClass10.medium} Medium • Passed in {user.educationClass10.passingYear}</p>
+                          </div>
+                          <Edit 
+                            onClick={() => {
+                              setActiveModal('educationClass10');
+                              setModalData(user?.educationClass10 || {});
+                            }}
+                            className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => {
+                              setActiveModal('educationClass10');
+                              setModalData({});
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium block"
+                          >
+                            Add Class X Details
+                          </button>
+                          <p className="text-gray-500 text-xs">Scored Percentage, Passed out in Passing Year</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -801,7 +883,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
                       <span>Key skills</span>
                       <Edit 
-                        onClick={() => onNavigate('candidate-profile')}
+                        onClick={() => {
+                          setActiveModal('skills');
+                          setModalData(user?.skills || []);
+                        }}
                         className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600" 
                       />
                     </h2>
@@ -827,7 +912,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Languages</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('languages');
+                        setModalData(user?.languages || '');
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
                       {user?.languages && user.languages.length > 0 ? 'Edit' : 'Add'}
@@ -845,7 +933,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Profile Summary</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('profileSummary');
+                        setModalData(user?.profileSummary || '');
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
                       {user?.profileSummary && user.profileSummary.trim() ? 'Edit' : 'Add'}
@@ -863,18 +954,27 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Employment</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('employment');
+                        setModalData(user?.employment || {});
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {user?.employment || user?.experience ? 'Edit' : 'Add'}
+                      {user?.employment && typeof user.employment === 'object' && user.employment.companyName ? 'Edit' : 'Add'}
                     </button>
                   </div>
-                  {user?.employment || user?.experience ? (
+                  {user?.employment && typeof user.employment === 'object' && user.employment.companyName ? (
                     <div className="space-y-2">
-                      {user?.companyName && (
-                        <p className="font-medium text-gray-900">{user.companyName} - {user.roleTitle}</p>
-                      )}
-                      <p className="text-gray-700 whitespace-pre-line">{user.employment || user.experience}</p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{user.employment.designation} at {user.employment.companyName}</h3>
+                          <p className="text-gray-500 text-sm">
+                            {user.employment.startMonth} {user.employment.startYear} - {user.employment.currentlyWorking ? 'Present' : `${user.employment.endMonth} ${user.employment.endYear}`}
+                            {user.employment.experienceYears || user.employment.experienceMonths ? ` • ${user.employment.experienceYears || 0} years ${user.employment.experienceMonths || 0} months` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-700">{user.employment.description}</p>
                     </div>
                   ) : (
                     <p className="text-gray-500">Talk about the company you worked at, your designation and describe what all you did there</p>
@@ -886,14 +986,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('projects');
+                        setModalData(user?.projects || {});
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {user?.projects ? 'Edit' : 'Add'}
+                      {user?.projects && typeof user.projects === 'object' && user.projects.projectName ? 'Edit' : 'Add'}
                     </button>
                   </div>
-                  {user?.projects ? (
-                    <p className="text-gray-700 whitespace-pre-line">{user.projects}</p>
+                  {user?.projects && typeof user.projects === 'object' && user.projects.projectName ? (
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{user.projects.projectName}</h3>
+                      <p className="text-gray-700 mb-2">{user.projects.description}</p>
+                      {user.projects.skills && <p className="text-gray-600 text-sm mb-1"><span className="font-medium">Skills:</span> {user.projects.skills}</p>}
+                      {user.projects.projectUrl && <a href={user.projects.projectUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm">{user.projects.projectUrl}</a>}
+                    </div>
                   ) : (
                     <p className="text-gray-500">Talk about your projects that made you proud and contributed to your learnings</p>
                   )}
@@ -904,14 +1012,22 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900">Internships</h2>
                     <button 
-                      onClick={() => onNavigate('candidate-profile')}
+                      onClick={() => {
+                        setActiveModal('internships');
+                        setModalData(user?.internships || {});
+                      }}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {user?.internships ? 'Edit' : 'Add'}
+                      {user?.internships && typeof user.internships === 'object' && user.internships.companyName ? 'Edit' : 'Add'}
                     </button>
                   </div>
-                  {user?.internships ? (
-                    <p className="text-gray-700 whitespace-pre-line">{user.internships}</p>
+                  {user?.internships && typeof user.internships === 'object' && user.internships.companyName ? (
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{user.internships.companyName}</h3>
+                      <p className="text-gray-500 text-sm mb-2">{user.internships.startMonth} {user.internships.startYear} - {user.internships.endMonth} {user.internships.endYear}</p>
+                      <p className="text-gray-700 mb-2">{user.internships.description}</p>
+                      {user.internships.skills && <p className="text-gray-600 text-sm"><span className="font-medium">Skills:</span> {user.internships.skills}</p>}
+                    </div>
                   ) : (
                     <p className="text-gray-500">Talk about the company you interned at, what projects you undertook and what special skills you learned</p>
                   )}
@@ -923,19 +1039,29 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                     <h2 className="text-xl font-semibold text-gray-900">Accomplishments</h2>
                   </div>
                   <div className="space-y-4">
-                    {/* Certifications */}
+                        {/* Certifications */}
                     <div className="border-b border-gray-100 pb-4">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">Certifications</h3>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('certifications');
+                            setModalData(user?.certifications || {});
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.certifications && user.certifications.trim() ? 'Edit' : 'Add'}
+                          {user?.certifications && typeof user.certifications === 'object' && user.certifications.certificationName ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.certifications && user.certifications.trim() ? (
-                        <p className="text-gray-700 whitespace-pre-line">{user.certifications}</p>
+                      {user?.certifications && typeof user.certifications === 'object' && user.certifications.certificationName ? (
+                        <div>
+                          <p className="text-gray-900 font-medium">{user.certifications.certificationName}</p>
+                          {user.certifications.completionId && <p className="text-gray-600 text-sm">ID: {user.certifications.completionId}</p>}
+                          <p className="text-gray-500 text-sm">
+                            {user.certifications.startMonth} {user.certifications.startYear} - {user.certifications.noExpiry ? 'No Expiry' : `${user.certifications.endMonth} ${user.certifications.endYear}`}
+                          </p>
+                          {user.certifications.certificationUrl && <a href={user.certifications.certificationUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm">{user.certifications.certificationUrl}</a>}
+                        </div>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any certified courses that you completed</p>
                       )}
@@ -946,7 +1072,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">Awards</h3>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('awards');
+                            setModalData(user?.awards || '');
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           {user?.awards && user.awards.trim() ? 'Edit' : 'Add'}
@@ -964,14 +1093,24 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">Club & committees</h3>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('clubsCommittees');
+                            setModalData(user?.clubsCommittees || {});
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.clubsCommittees && user.clubsCommittees.trim() ? 'Edit' : 'Add'}
+                          {user?.clubsCommittees && typeof user.clubsCommittees === 'object' && user.clubsCommittees.clubName ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.clubsCommittees && user.clubsCommittees.trim() ? (
-                        <p className="text-gray-700 whitespace-pre-line">{user.clubsCommittees}</p>
+                      {user?.clubsCommittees && typeof user.clubsCommittees === 'object' && user.clubsCommittees.clubName ? (
+                        <div>
+                          <p className="text-gray-900 font-medium">{user.clubsCommittees.designation} at {user.clubsCommittees.clubName}</p>
+                          <p className="text-gray-500 text-sm">
+                            {user.clubsCommittees.startMonth} {user.clubsCommittees.startYear} - {user.clubsCommittees.currentlyWorking ? 'Present' : `${user.clubsCommittees.endMonth} ${user.clubsCommittees.endYear}`}
+                            {user.clubsCommittees.associatedEducation && ` • ${user.clubsCommittees.associatedEducation}`}
+                          </p>
+                          <p className="text-gray-700 text-sm mt-1">{user.clubsCommittees.description}</p>
+                        </div>
                       ) : (
                         <p className="text-gray-500 text-sm">Add details of position of responsibilities that you have held</p>
                       )}
@@ -982,14 +1121,17 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">Competitive exams</h3>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('competitiveExams');
+                            setModalData(user?.competitiveExams || {});
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          {user?.competitiveExams && user.competitiveExams.trim() ? 'Edit' : 'Add'}
+                          {user?.competitiveExams && typeof user.competitiveExams === 'object' && user.competitiveExams.examName ? 'Edit' : 'Add'}
                         </button>
                       </div>
-                      {user?.competitiveExams && user.competitiveExams.trim() ? (
-                        <p className="text-gray-700 whitespace-pre-line">{user.competitiveExams}</p>
+                      {user?.competitiveExams && typeof user.competitiveExams === 'object' && user.competitiveExams.examName ? (
+                        <p className="text-gray-700">{user.competitiveExams.examName}</p>
                       ) : (
                         <p className="text-gray-500 text-sm">Talk about any competitive exam that you appeared for and the rank received</p>
                       )}
@@ -1000,7 +1142,10 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">Academic achievements</h3>
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => {
+                            setActiveModal('academicAchievements');
+                            setModalData(user?.academicAchievements || '');
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           {user?.academicAchievements && user.academicAchievements.trim() ? 'Edit' : 'Add'}
@@ -1029,8 +1174,56 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                           <p className="font-medium text-gray-900">{user.resume.name || 'Resume.pdf'}</p>
                           <p className="text-sm text-gray-500">Uploaded on {user.resume.uploadDate || 'Recently'}</p>
                         </div>
+                        <input
+                          type="file"
+                          id="resume-update"
+                          accept=".doc,.docx,.rtf,.pdf"
+                          className="hidden"
+                          onChange={async (e) => {
+                            console.log('Resume update triggered');
+                            const file = e.target.files?.[0];
+                            console.log('Selected file:', file);
+                            if (file && file.size <= 2 * 1024 * 1024) {
+                              console.log('File valid, saving...');
+                              const resumeData = {
+                                name: file.name,
+                                size: file.size,
+                                uploadDate: new Date().toLocaleDateString()
+                              };
+                              const updatedUser = { ...user, resume: resumeData };
+                              setUser(updatedUser);
+                              localStorage.setItem('user', JSON.stringify(updatedUser));
+                              calculateProfileCompletion(updatedUser);
+                              try {
+                                await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ email: user?.email, resume: resumeData })
+                                });
+                                setNotification({
+                                  type: 'success',
+                                  message: 'Resume updated successfully!',
+                                  isVisible: true
+                                });
+                              } catch (error) {
+                                console.error('Error saving resume:', error);
+                                setNotification({
+                                  type: 'error',
+                                  message: 'Failed to save resume',
+                                  isVisible: true
+                                });
+                              }
+                            } else if (file && file.size > 2 * 1024 * 1024) {
+                              setNotification({
+                                type: 'error',
+                                message: 'File size must be less than 2MB',
+                                isVisible: true
+                              });
+                            }
+                          }}
+                        />
                         <button 
-                          onClick={() => onNavigate('candidate-profile')}
+                          onClick={() => document.getElementById('resume-update')?.click()}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           Update
@@ -1040,8 +1233,56 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <input
+                        type="file"
+                        id="resume-upload"
+                        accept=".doc,.docx,.rtf,.pdf"
+                        className="hidden"
+                        onChange={async (e) => {
+                          console.log('Resume upload triggered');
+                          const file = e.target.files?.[0];
+                          console.log('Selected file:', file);
+                          if (file && file.size <= 2 * 1024 * 1024) {
+                            console.log('File valid, saving...');
+                            const resumeData = {
+                              name: file.name,
+                              size: file.size,
+                              uploadDate: new Date().toLocaleDateString()
+                            };
+                            const updatedUser = { ...user, resume: resumeData };
+                            setUser(updatedUser);
+                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                            calculateProfileCompletion(updatedUser);
+                            try {
+                              await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: user?.email, resume: resumeData })
+                              });
+                              setNotification({
+                                type: 'success',
+                                message: 'Resume uploaded successfully!',
+                                isVisible: true
+                              });
+                            } catch (error) {
+                              console.error('Error saving resume:', error);
+                              setNotification({
+                                type: 'error',
+                                message: 'Failed to save resume',
+                                isVisible: true
+                              });
+                            }
+                          } else if (file && file.size > 2 * 1024 * 1024) {
+                            setNotification({
+                              type: 'error',
+                              message: 'File size must be less than 2MB',
+                              isVisible: true
+                            });
+                          }
+                        }}
+                      />
                       <button 
-                        onClick={() => onNavigate('candidate-profile')}
+                        onClick={() => document.getElementById('resume-upload')?.click()}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         Upload resume
@@ -1209,6 +1450,1500 @@ const CandidateDashboardPage: React.FC<CandidateDashboardPageProps> = ({ onNavig
         currentPhoto={user?.profilePhoto}
         currentFrame={user?.profileFrame || 'none'}
       />
+
+      {/* Personal Details Modal */}
+      {activeModal === 'personalDetails' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold">All about you</h2>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-medium mb-2">Full name</label>
+                  <input
+                    type="text"
+                    value={modalData.name || ''}
+                    onChange={(e) => setModalData({...modalData, name: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Gender</label>
+                  <div className="flex gap-3">
+                    {['Male', 'Female', 'Transgender'].map(g => (
+                      <button
+                        key={g}
+                        onClick={() => setModalData({...modalData, gender: g})}
+                        className={`px-6 py-2 border rounded-full ${modalData.gender === g ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'}`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Date of birth (DD/MM/YYYY)</label>
+                  <input
+                    type="date"
+                    value={modalData.birthday || ''}
+                    onChange={(e) => setModalData({...modalData, birthday: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Current location</label>
+                  <input
+                    type="text"
+                    value={modalData.location || ''}
+                    onChange={(e) => setModalData({...modalData, location: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter your location"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Phone number</label>
+                  <input
+                    type="tel"
+                    value={modalData.phone || ''}
+                    onChange={(e) => setModalData({...modalData, phone: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, ...modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, ...modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Career Preferences Modal */}
+      {activeModal === 'careerPreferences' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Career preferences</h2>
+                  <p className="text-gray-600">Tell us your preferences for your next job & we will send you most relevant recommendations</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-medium mb-3">Looking for</label>
+                  <div className="flex gap-3">
+                    {['Internships', 'Jobs'].map(type => (
+                      <button 
+                        key={type} 
+                        onClick={() => {
+                          const current = modalData.lookingFor || [];
+                          setModalData({...modalData, lookingFor: current.includes(type) ? current.filter((t: string) => t !== type) : [...current, type]});
+                        }}
+                        className={`px-4 py-2 border rounded-full ${(modalData.lookingFor || []).includes(type) ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'}`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-3">Availability to work</label>
+                  <div className="flex flex-wrap gap-3">
+                    {['15 Days or less', '1 Month', '2 Months', '3 Months', 'More than 3 Months'].map(time => (
+                      <button 
+                        key={time} 
+                        onClick={() => setModalData({...modalData, availability: time})}
+                        className={`px-4 py-2 border rounded-full ${modalData.availability === time ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'}`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-3">Preferred work location(s)</label>
+                  <select 
+                    className="w-full p-3 border rounded-lg mb-3"
+                    onChange={(e) => {
+                      if (e.target.value && !(modalData.locations || []).includes(e.target.value)) {
+                        setModalData({...modalData, locations: [...(modalData.locations || []), e.target.value]});
+                      }
+                    }}
+                  >
+                    <option>Select from the list</option>
+                    <option>Bengaluru</option>
+                    <option>Delhi / NCR</option>
+                    <option>Mumbai</option>
+                    <option>Hyderabad</option>
+                    <option>Pune</option>
+                  </select>
+                  <div className="flex gap-2 flex-wrap">
+                    {(modalData.locations || []).map((loc: string, idx: number) => (
+                      <span key={idx} className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-2">
+                        {loc}
+                        <button onClick={() => setModalData({...modalData, locations: modalData.locations.filter((_: string, i: number) => i !== idx)})}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">I'll add this later</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, careerPreferences: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, careerPreferences: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Key Skills Modal */}
+      {activeModal === 'skills' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Key skills</h2>
+                  <p className="text-gray-600">Recruiters look for candidates with specific keyskills. Add them here to appear in searches.</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="border rounded-lg p-4 mb-6">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {(Array.isArray(modalData) ? modalData : []).map((skill: string, idx: number) => (
+                    <span key={idx} className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-2">
+                      {skill}
+                      <button onClick={() => setModalData(modalData.filter((_: any, i: number) => i !== idx))}>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Enter your key skills"
+                  className="w-full p-2 border-0 focus:outline-none"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value) {
+                      setModalData([...(Array.isArray(modalData) ? modalData : []), e.currentTarget.value]);
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, skills: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, skills: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Languages Modal */}
+      {activeModal === 'languages' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Languages known</h2>
+                  <p className="text-gray-600">Strengthen your resume by letting recruiters know you can communicate in multiple languages</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="mb-6">
+                <label className="block font-medium mb-3">Language</label>
+                <select 
+                  className="w-full p-3 border rounded-lg mb-4"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const current = typeof modalData === 'string' ? modalData.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+                      if (!current.includes(e.target.value)) {
+                        setModalData([...current, e.target.value].join(', '));
+                      }
+                    }
+                  }}
+                >
+                  <option>Select Language</option>
+                  <option>English</option>
+                  <option>Hindi</option>
+                  <option>Tamil</option>
+                  <option>Telugu</option>
+                  <option>Kannada</option>
+                  <option>Malayalam</option>
+                </select>
+                <div className="flex gap-2 flex-wrap">
+                  {(typeof modalData === 'string' ? modalData.split(',').map((s: string) => s.trim()).filter(Boolean) : []).map((lang: string, idx: number) => (
+                    <span key={idx} className="px-4 py-2 bg-gray-100 rounded-full text-sm flex items-center gap-2">
+                      {lang}
+                      <button onClick={() => {
+                        const langs = modalData.split(',').map((s: string) => s.trim()).filter(Boolean);
+                        setModalData(langs.filter((_: string, i: number) => i !== idx).join(', '));
+                      }}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, languages: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, languages: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Education Modal */}
+      {activeModal === 'education' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Education</h2>
+                  <p className="text-gray-600">Add your educational qualifications</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <textarea
+                  value={modalData}
+                  onChange={(e) => setModalData(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                  rows={6}
+                  placeholder="Enter your education details"
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const field = activeModal;
+                    const updatedUser = { ...user, [field]: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, [field]: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Summary Modal */}
+      {activeModal === 'profileSummary' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Profile Summary</h2>
+                  <p className="text-gray-600">Write a meaningful summary of more than 50 characters</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <textarea
+                  value={modalData}
+                  onChange={(e) => setModalData(e.target.value)}
+                  className="w-full p-3 border rounded-lg"
+                  rows={6}
+                  placeholder="Your Profile Summary should mention the highlights of your career and education..."
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, profileSummary: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, profileSummary: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employment Modal */}
+      {activeModal === 'employment' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Employment details</h2>
+                  <p className="text-gray-600">Adding roles & companies you have worked with help employers understand your background</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Total work experience</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={modalData.experienceYears || ''}
+                      onChange={(e) => setModalData({...modalData, experienceYears: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Years"
+                    />
+                    <input
+                      type="text"
+                      value={modalData.experienceMonths || ''}
+                      onChange={(e) => setModalData({...modalData, experienceMonths: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Months"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Company name</label>
+                  <input
+                    type="text"
+                    value={modalData.companyName || ''}
+                    onChange={(e) => setModalData({...modalData, companyName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the name of the company you worked at"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Designation</label>
+                  <input
+                    type="text"
+                    value={modalData.designation || ''}
+                    onChange={(e) => setModalData({...modalData, designation: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the designation you held"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Working since</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.startMonth || ''}
+                      onChange={(e) => setModalData({...modalData, startMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.startYear || ''}
+                      onChange={(e) => setModalData({...modalData, startYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                    />
+                  </div>
+                  <p className="text-center text-gray-500 text-sm my-2">to</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.endMonth || ''}
+                      onChange={(e) => setModalData({...modalData, endMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      disabled={modalData.currentlyWorking}
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.endYear || ''}
+                      onChange={(e) => setModalData({...modalData, endYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                      disabled={modalData.currentlyWorking}
+                    />
+                  </div>
+                  <label className="flex items-center mt-3">
+                    <input
+                      type="checkbox"
+                      checked={modalData.currentlyWorking || false}
+                      onChange={(e) => setModalData({...modalData, currentlyWorking: e.target.checked, endMonth: '', endYear: ''})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">I currently work here</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Describe what you did at work</label>
+                  <textarea
+                    value={modalData.description || ''}
+                    onChange={(e) => setModalData({...modalData, description: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    rows={5}
+                    maxLength={4000}
+                    placeholder="Enter the responsibilities you held, anything you accomplished or learned while serving in your full time job"
+                  />
+                  <p className="text-xs text-gray-500 text-right">{(modalData.description || '').length}/4000</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, employment: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, employment: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Projects Modal */}
+      {activeModal === 'projects' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Projects</h2>
+                  <p className="text-gray-600">Talk about your projects that made you proud</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Project name</label>
+                  <input
+                    type="text"
+                    value={modalData.projectName || ''}
+                    onChange={(e) => setModalData({...modalData, projectName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the name of the project you undertook"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Describe what you did at internship</label>
+                  <textarea
+                    value={modalData.description || ''}
+                    onChange={(e) => setModalData({...modalData, description: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    rows={4}
+                    maxLength={1000}
+                    placeholder="Enter the responsibilities you held, anything you accomplished or learned while serving in your internship"
+                  />
+                  <p className="text-xs text-gray-500 text-right">{(modalData.description || '').length}/1000</p>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Key skills (optional)</label>
+                  <input
+                    type="text"
+                    value={modalData.skills || ''}
+                    onChange={(e) => setModalData({...modalData, skills: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the skills you used in this role"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Project URL (optional)</label>
+                  <input
+                    type="text"
+                    value={modalData.projectUrl || ''}
+                    onChange={(e) => setModalData({...modalData, projectUrl: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the website link of the project"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, projects: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, projects: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Internships Modal */}
+      {activeModal === 'internships' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Internships</h2>
+                  <p className="text-gray-600">Show your professional learnings</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Company name</label>
+                  <input
+                    type="text"
+                    value={modalData.companyName || ''}
+                    onChange={(e) => setModalData({...modalData, companyName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the name of the company"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Internship duration</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.startMonth || ''}
+                      onChange={(e) => setModalData({...modalData, startMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.startYear || ''}
+                      onChange={(e) => setModalData({...modalData, startYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                    />
+                  </div>
+                  <p className="text-center text-gray-500 text-sm my-2">to</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.endMonth || ''}
+                      onChange={(e) => setModalData({...modalData, endMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.endYear || ''}
+                      onChange={(e) => setModalData({...modalData, endYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Describe what you did at internship</label>
+                  <textarea
+                    value={modalData.description || ''}
+                    onChange={(e) => setModalData({...modalData, description: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    rows={4}
+                    maxLength={1000}
+                    placeholder="Enter the responsibilities you held, anything you accomplished or learned while serving in your internship"
+                  />
+                  <p className="text-xs text-gray-500 text-right">{(modalData.description || '').length}/1000</p>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Key skills (optional)</label>
+                  <input
+                    type="text"
+                    value={modalData.skills || ''}
+                    onChange={(e) => setModalData({...modalData, skills: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Enter the skills you used in this role"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, internships: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, internships: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Certifications Modal */}
+      {activeModal === 'certifications' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Certification</h2>
+                  <p className="text-gray-600">Add details of your certification. You can add up to 10 in your profile.</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Certification name</label>
+                  <input
+                    type="text"
+                    value={modalData.certificationName || ''}
+                    onChange={(e) => setModalData({...modalData, certificationName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Please enter your certification name"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Certification completion ID</label>
+                  <input
+                    type="text"
+                    value={modalData.completionId || ''}
+                    onChange={(e) => setModalData({...modalData, completionId: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Please mention your course completion ID"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Certification URL</label>
+                  <input
+                    type="text"
+                    value={modalData.certificationUrl || ''}
+                    onChange={(e) => setModalData({...modalData, certificationUrl: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Please mention your completion URL"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Certification validity</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.startMonth || ''}
+                      onChange={(e) => setModalData({...modalData, startMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.startYear || ''}
+                      onChange={(e) => setModalData({...modalData, startYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                    />
+                  </div>
+                  <p className="text-center text-gray-500 text-sm my-2">to</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.endMonth || ''}
+                      onChange={(e) => setModalData({...modalData, endMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      disabled={modalData.noExpiry}
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.endYear || ''}
+                      onChange={(e) => setModalData({...modalData, endYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                      disabled={modalData.noExpiry}
+                    />
+                  </div>
+                  <label className="flex items-center mt-3">
+                    <input
+                      type="checkbox"
+                      checked={modalData.noExpiry || false}
+                      onChange={(e) => setModalData({...modalData, noExpiry: e.target.checked, endMonth: '', endYear: ''})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">This certification does not expire</span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, certifications: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, certifications: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Awards Modal */}
+      {activeModal === 'awards' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Awards</h2>
+                  <p className="text-gray-600">Talk about any special recognitions that you received</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              </div>
+              <textarea value={modalData} onChange={(e) => setModalData(e.target.value)} className="w-full p-3 border rounded-lg" rows={6} placeholder="Enter your awards" />
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, awards: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, awards: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Club & Committees Modal */}
+      {activeModal === 'clubsCommittees' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Club & committees</h2>
+                  <p className="text-gray-600">Showcase your leadership skills by adding position of responsibilities that you have held</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Club or committee name</label>
+                  <input
+                    type="text"
+                    value={modalData.clubName || ''}
+                    onChange={(e) => setModalData({...modalData, clubName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Eg. E-Cell"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Designation/Position of responsibility</label>
+                  <input
+                    type="text"
+                    value={modalData.designation || ''}
+                    onChange={(e) => setModalData({...modalData, designation: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Eg. Head boy"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Associate with education (optional)</label>
+                  <select
+                    value={modalData.associatedEducation || ''}
+                    onChange={(e) => setModalData({...modalData, associatedEducation: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select an option</option>
+                    <option>College</option>
+                    <option>School</option>
+                    <option>University</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Duration</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.startMonth || ''}
+                      onChange={(e) => setModalData({...modalData, startMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.startYear || ''}
+                      onChange={(e) => setModalData({...modalData, startYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                    />
+                  </div>
+                  <p className="text-center text-gray-500 text-sm my-2">to</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={modalData.endMonth || ''}
+                      onChange={(e) => setModalData({...modalData, endMonth: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      disabled={modalData.currentlyWorking}
+                    >
+                      <option value="">Month</option>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m}>{m}</option>)}
+                    </select>
+                    <input
+                      type="text"
+                      value={modalData.endYear || ''}
+                      onChange={(e) => setModalData({...modalData, endYear: e.target.value})}
+                      className="p-3 border rounded-lg"
+                      placeholder="Year"
+                      disabled={modalData.currentlyWorking}
+                    />
+                  </div>
+                  <label className="flex items-center mt-3">
+                    <input
+                      type="checkbox"
+                      checked={modalData.currentlyWorking || false}
+                      onChange={(e) => setModalData({...modalData, currentlyWorking: e.target.checked, endMonth: '', endYear: ''})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">I am currently working in this role</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Description</label>
+                  <textarea
+                    value={modalData.description || ''}
+                    onChange={(e) => setModalData({...modalData, description: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    rows={4}
+                    maxLength={1000}
+                    placeholder="Describe your responsibilities and experiences at this position"
+                  />
+                  <p className="text-xs text-gray-500 text-right">{(modalData.description || '').length}/1000</p>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Media (optional)</label>
+                  <p className="text-xs text-gray-500 mb-2">Add media to support your work</p>
+                  <input
+                    type="file"
+                    accept=".doc,.docx,.pdf,.rtf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && file.size <= 2 * 1024 * 1024) {
+                        setModalData({...modalData, mediaFile: file.name});
+                      }
+                    }}
+                    className="w-full p-3 border rounded-lg"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Supported format: DOC, DOCx, PDF, RTF, PNG, JPG | Maximum file size: 2 MB</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, clubsCommittees: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, clubsCommittees: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Competitive Exams Modal */}
+      {activeModal === 'competitiveExams' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Competitive exams</h2>
+                  <p className="text-gray-600">Add details of competitive exams you have taken to enhance your profile.</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Competitive exam</label>
+                  <select
+                    value={modalData.examName || ''}
+                    onChange={(e) => setModalData({...modalData, examName: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Exam</option>
+                    <option>TOEFL</option>
+                    <option>GMAT</option>
+                    <option>GRE</option>
+                    <option>SAT</option>
+                    <option>IELTS</option>
+                    <option>CAT</option>
+                    <option>GATE</option>
+                    <option>JEE</option>
+                    <option>NEET</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, competitiveExams: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, competitiveExams: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Academic Achievements Modal */}
+      {activeModal === 'academicAchievements' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Academic achievements</h2>
+                  <p className="text-gray-600">Talk about any academic achievement whether in college or school that deserves a mention</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+              </div>
+              <textarea value={modalData} onChange={(e) => setModalData(e.target.value)} className="w-full p-3 border rounded-lg" rows={6} placeholder="Enter your academic achievements" />
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, academicAchievements: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, academicAchievements: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Education College Modal */}
+      {activeModal === 'educationCollege' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">College/University Education</h2>
+                  <p className="text-gray-600">Adding your educational details help recruiters know your value as a potential candidate</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Degree/Course</label>
+                  <input
+                    type="text"
+                    value={modalData.degree || ''}
+                    onChange={(e) => setModalData({...modalData, degree: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., B.Tech in Computer Science"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">College/University Name</label>
+                  <input
+                    type="text"
+                    value={modalData.college || ''}
+                    onChange={(e) => setModalData({...modalData, college: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., ABC College of Engineering"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Course Type</label>
+                  <select
+                    value={modalData.courseType || ''}
+                    onChange={(e) => setModalData({...modalData, courseType: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Course Type</option>
+                    <option>Full Time</option>
+                    <option>Part Time</option>
+                    <option>Distance Learning</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Percentage/CGPA</label>
+                  <input
+                    type="text"
+                    value={modalData.percentage || ''}
+                    onChange={(e) => setModalData({...modalData, percentage: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., 85% or 8.5 CGPA"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Passing Year</label>
+                  <input
+                    type="text"
+                    value={modalData.passingYear || ''}
+                    onChange={(e) => setModalData({...modalData, passingYear: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="YYYY"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, educationCollege: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, educationCollege: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Education Class 12 Modal */}
+      {activeModal === 'educationClass12' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Class XII Details</h2>
+                  <p className="text-gray-600">Adding your educational details help recruiters know your value as a potential candidate</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Examination board</label>
+                  <select
+                    value={modalData.board || ''}
+                    onChange={(e) => setModalData({...modalData, board: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Board Name</option>
+                    <option>CBSE</option>
+                    <option>ICSE</option>
+                    <option>State Board</option>
+                    <option>IB</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Medium of study</label>
+                  <select
+                    value={modalData.medium || ''}
+                    onChange={(e) => setModalData({...modalData, medium: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Medium</option>
+                    <option>English</option>
+                    <option>Hindi</option>
+                    <option>Tamil</option>
+                    <option>Telugu</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Percentage</label>
+                  <input
+                    type="text"
+                    value={modalData.percentage || ''}
+                    onChange={(e) => setModalData({...modalData, percentage: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g. 95"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Passing year</label>
+                  <input
+                    type="text"
+                    value={modalData.passingYear || ''}
+                    onChange={(e) => setModalData({...modalData, passingYear: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="YYYY"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, educationClass12: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, educationClass12: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Education Class 10 Modal */}
+      {activeModal === 'educationClass10' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Class X Details</h2>
+                  <p className="text-gray-600">Adding your educational details help recruiters know your value as a potential candidate</p>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-2">Examination board</label>
+                  <select
+                    value={modalData.board || ''}
+                    onChange={(e) => setModalData({...modalData, board: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Board Name</option>
+                    <option>CBSE</option>
+                    <option>ICSE</option>
+                    <option>State Board</option>
+                    <option>IB</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Medium of study</label>
+                  <select
+                    value={modalData.medium || ''}
+                    onChange={(e) => setModalData({...modalData, medium: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                  >
+                    <option value="">Select Medium</option>
+                    <option>English</option>
+                    <option>Hindi</option>
+                    <option>Tamil</option>
+                    <option>Telugu</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Percentage</label>
+                  <input
+                    type="text"
+                    value={modalData.percentage || ''}
+                    onChange={(e) => setModalData({...modalData, percentage: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g. 95"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-2">Passing year</label>
+                  <input
+                    type="text"
+                    value={modalData.passingYear || ''}
+                    onChange={(e) => setModalData({...modalData, passingYear: e.target.value})}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="YYYY"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setActiveModal(null)} className="text-blue-600 px-6 py-2">Cancel</button>
+                <button
+                  onClick={async () => {
+                    const updatedUser = { ...user, educationClass10: modalData };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    calculateProfileCompletion(updatedUser);
+                    try {
+                      await fetch(`${API_ENDPOINTS.BASE_URL}/api/profile/save`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, educationClass10: modalData })
+                      });
+                    } catch (error) {
+                      console.error('Error saving:', error);
+                    }
+                    setActiveModal(null);
+                  }}
+                  className="bg-blue-600 text-white px-8 py-2 rounded-full hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

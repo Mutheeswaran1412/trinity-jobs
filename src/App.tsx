@@ -51,7 +51,7 @@ import BackButton from './components/BackButton';
 import CompanyReviewsPage from './pages/CompanyReviewsPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import CompanyViewPage from './pages/CompanyViewPage';
-import CandidateProfilePage from './pages/CandidateProfilePage';
+import CandidateProfileView from './pages/CandidateProfileView';
 import JobApplicationPage from './pages/JobApplicationPage';
 import DailyJobsPage from './pages/DailyJobsPage';
 import JobRolePage from './pages/JobRolePage';
@@ -428,13 +428,13 @@ function App() {
     );
   }
 
-  if (currentPage === 'candidate-profile') {
+  if (currentPage === 'candidate-profile-view') {
     return (
-      <div className="min-h-screen bg-white">
-        <Header onNavigate={handleNavigation} user={user as any} onLogout={handleLogout} />
-        <CandidateProfilePage onNavigate={handleNavigation} />
-        <Footer onNavigate={handleNavigation} />
-      </div>
+      <CandidateProfileView 
+        candidateId={currentData?.candidateId}
+        onNavigate={handleNavigation}
+        onBack={handleBackNavigation}
+      />
     );
   }
 

@@ -69,7 +69,8 @@ router.post('/save', async (req, res) => {
         location: profileData.location,
         title: profileData.title,
         skills: profileData.skills,
-        profilePicture: profileData.profilePhoto
+        profilePicture: profileData.profilePhoto,
+        profilePhoto: profileData.profilePhoto
       }, {
         where: { id: userId }
       });

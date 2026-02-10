@@ -216,6 +216,7 @@ router.post('/login', async (req, res) => {
       companyLogo: user.companyLogo,
       companyWebsite: user.companyWebsite,
       location: user.location,
+      profilePhoto: user.profilePicture || profileData.profilePhoto,
       ...profileData
     };
 

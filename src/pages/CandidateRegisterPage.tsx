@@ -34,10 +34,9 @@ const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'inf
 
 interface CandidateRegisterPageProps {
   onNavigate: (page: string) => void;
-  onLogin: (userData: {name: string, type: 'candidate' | 'employer' | 'admin', email?: string}) => void;
 }
 
-const CandidateRegisterPage: React.FC<CandidateRegisterPageProps> = ({ onNavigate, onLogin }) => {
+const CandidateRegisterPage: React.FC<CandidateRegisterPageProps> = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
